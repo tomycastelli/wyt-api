@@ -1,6 +1,6 @@
 import { type } from "arktype";
-import { Candle, Coin, CoinMarketData } from "../../domain/entities";
-import { CoinsProvider } from "../../domain/ports";
+import { Candle, Coin, CoinMarketData } from "../../core/entities";
+import { CoinsProvider } from "../../core/ports";
 
 const coinsResponseSchema = type({
   id: "string",

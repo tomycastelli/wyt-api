@@ -5,7 +5,7 @@ import { getPath } from "hono/utils/url";
 import { prettyJSON } from "hono/pretty-json";
 import { requestId } from "hono/request-id";
 import { trimTrailingSlash } from "hono/trailing-slash";
-import { CoinsService } from "./domain/coins.service";
+import { CoinsService } from "@repo/domain";
 import { type } from "arktype";
 import "dotenv/config";
 import { logger } from "./logger";

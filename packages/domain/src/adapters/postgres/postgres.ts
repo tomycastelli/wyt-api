@@ -2,9 +2,9 @@ import { drizzle, PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./schema";
 import { and, count, eq, gte, inArray, lte, SQL, sql } from "drizzle-orm";
-import { Candle, Coin, CoinMarketData, SavedCoin } from "../../domain/entities";
-import { CoinsRepository } from "../../domain/ports";
-import { base_coins } from "../../domain/vars";
+import { Candle, Coin, CoinMarketData, SavedCoin } from "../../core/entities";
+import { CoinsRepository } from "../../core/ports";
+import { base_coins } from "../../core/vars";
 
 export default class CoinsPostgres implements CoinsRepository {
   private db: PostgresJsDatabase<typeof schema>;
@@ -174,7 +174,7 @@ export default class CoinsPostgres implements CoinsRepository {
 
   async saveMarketData(coin_market_data: CoinMarketData[]): Promise<void> {
     const names: string[] = [];
-    const sqlChunks: SQL[][] = [[]];
+    const sqlChunks: [SQL[], SQL[], SQL[]] = [[], [], []];
     sqlChunks[0].push(sql`(case`);
     sqlChunks[1].push(sql`(case`);
     sqlChunks[2].push(sql`(case`);

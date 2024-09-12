@@ -11,7 +11,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
-import { blockchains, providers } from "../../domain/vars";
+import { blockchains, providers } from "../../core/vars";
 
 const largeDecimalNumber = customType<{ data: number }>({
   dataType() {
