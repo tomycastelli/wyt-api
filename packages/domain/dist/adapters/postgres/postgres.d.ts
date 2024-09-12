@@ -8,7 +8,7 @@ export default class CoinsPostgres implements CoinsRepository {
     getCoinById(id: number): Promise<SavedCoin>;
     getCoinByName(coin_name: string): Promise<SavedCoin>;
     saveCandles(candles: Candle[]): Promise<void>;
-    getCandles(interval: "hourly" | "daily", coin_id: number, from_date: Date, to_date: Date): Promise<Candle[]>;
+    getCandles(frequency: "hourly" | "daily", coin_id: number, from_date: Date, to_date: Date): Promise<Candle[]>;
     getCoinsByBlockchain(blockchain: string, page_number: number, page_size: number, name_search: string | undefined): Promise<SavedCoin[]>;
     saveMarketData(coin_market_data: CoinMarketData[]): Promise<void>;
 }

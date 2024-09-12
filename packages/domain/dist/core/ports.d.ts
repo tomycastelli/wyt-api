@@ -9,7 +9,7 @@ export interface CoinsRepository {
     saveCandles(candles: Candle[]): Promise<void>;
     getAllCoins(): Promise<SavedCoin[]>;
     getCoinsByBlockchain(blockchain: string, page_number: number, page_size: number, name_search: string | undefined): Promise<SavedCoin[]>;
-    getCandles(interval: "hourly" | "daily", coin_id: number, from_date: Date, to_date: Date): Promise<Candle[]>;
+    getCandles(frequency: "hourly" | "daily", coin_id: number, from_date: Date, to_date: Date): Promise<Candle[]>;
     getCoinById(coin_id: number): Promise<SavedCoin>;
     getCoinByName(coin_name: string): Promise<SavedCoin>;
 }
@@ -22,6 +22,6 @@ export interface CoinsProvider {
     /** Consigue las ultimas coins añadidas */
     getLatestCoins(blockchains: string[], minimum_market_cap: number): Promise<Coin[]>;
     /** Consigue las candelas del tipo elegido */
-    getCandleData(interval: "hourly" | "daily", coin_name: string, frequency: number): Promise<Omit<Candle, "coin_id">[]>;
+    getCandleData(frequency: "hourly" | "daily", coin_name: string, refresh_rate: number): Promise<Omit<Candle, "coin_id">[]>;
 }
 //# sourceMappingURL=ports.d.ts.map

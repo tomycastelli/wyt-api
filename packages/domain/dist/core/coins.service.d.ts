@@ -15,9 +15,9 @@ export declare class CoinsService {
     /** Guardo todas las [Coin]s disponibles */
     saveAllCoins(): Promise<SavedCoin[]>;
     /** Devuelve todas las [Candle]s guardadas segun el rango */
-    getCandlesByDate(type: "daily" | "hourly", coin_id: number, from_date: Date, to_date: Date): Promise<Candle[]>;
-    /** Guarda las ultimas [Candle] mas recientes segun el intervalo y la frecuencia */
-    saveCandles(coin_id: number, interval: "hourly" | "daily", frequency: number): Promise<void>;
+    getCandlesByDate(frequency: "daily" | "hourly", coin_id: number, from_date?: Date, to_date?: Date): Promise<Candle[]>;
+    /** Guarda las ultimas [Candle] mas recientes segun la frecuencia y la tasa de refresco (cada cuanto se guarda) */
+    saveCandles(coin_id: number, frequency: "hourly" | "daily", refresh_rate: number): Promise<void>;
     updateMarketData(): Promise<void>;
 }
 //# sourceMappingURL=coins.service.d.ts.map

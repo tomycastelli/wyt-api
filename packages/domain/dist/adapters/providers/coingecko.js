@@ -38,8 +38,12 @@ const marketDataListSchema = type({
     "+": "delete",
 });
 const candlesResponseSchema = type([
-    ["number", "number", "number", "number", "number"],
-]);
+    "number",
+    "number",
+    "number",
+    "number",
+    "number",
+]).array();
 export default class CoinGecko {
     base_url = "https://pro-api.coingecko.com/api/v3";
     blockchains_categories = [
@@ -65,8 +69,12 @@ export default class CoinGecko {
             throw parsedList;
         // Filtrar los tokens que esten dentro de las blockchains que nos interesan
         const filteredList = parsedList.filter((coin) => {
-            return (base_coins.includes(coin.id) ||
-                Object.keys(coin.platforms).some((platform) => blockchains.includes(platform)));
+            return (coin.id === "uniswap"
+            // base_coins.includes(coin.id) ||
+            // Object.keys(coin.platforms).some((platform) =>
+            //   blockchains.includes(platform),
+            // )
+            );
         });
         const coinsList = [];
         // Ahora necesito para cada token consultar el resto de info: 'descripcion', 'image_url', 'market_data'
@@ -103,27 +111,26 @@ export default class CoinGecko {
         }
         return coinsList;
     }
-    async getCandleData(interval, coin_name, frequency) {
+    async getCandleData(frequency, coin_name, refresh_rate) {
         // Si es diario, quiero solo la ultima hora
         // Los datos estan disponibles 35 minutos despues
         // Minimo llamar a los 36 minutos para asegurarse tener la candela
         const now = new Date();
-        if (interval === "daily" && now.getUTCMinutes() <= 35) {
+        if (frequency === "daily" && now.getUTCMinutes() <= 35) {
             throw new Error("Must be called after the 35 minutes of the day");
         }
         // Pido los dias minimos para satisfacer el intervalo
-        const minimumDays = interval === "hourly" ? Math.ceil(frequency / 24) : frequency;
+        const minimumDays = frequency === "hourly" ? Math.ceil(refresh_rate / 24) : refresh_rate;
         // La API acepta estos numeros
         const acceptedDays = [1, 7, 14, 30, 90].filter((d) => d >= minimumDays);
         const daysToFetch = acceptedDays.length > 0 ? Math.min(...acceptedDays) : 1;
-        const response = await fetch(`${this.base_url}/coins/${coin_name}
-        /ohlc?vs_currency=usd&days=${daysToFetch}&precision=18&interval=${type}`, this.request_data).then((res) => res.json());
+        const response = await fetch(`${this.base_url}/coins/${coin_name}/ohlc?vs_currency=usd&days=${daysToFetch}&precision=18&interval=${frequency}`, this.request_data).then((res) => res.json());
         const parsedCandles = candlesResponseSchema(response);
         if (parsedCandles instanceof type.errors)
             throw parsedCandles;
         // Segun la frecuencia, agarro las ultimas velas
-        const mappedCandles = parsedCandles.slice(-frequency).map((c) => ({
-            interval,
+        const mappedCandles = parsedCandles.slice(-refresh_rate).map((c) => ({
+            frequency,
             timestamp: new Date(c[0]),
             open: c[1],
             high: c[2],
@@ -142,9 +149,7 @@ export default class CoinGecko {
         const latestCoinsResponse = [];
         for (const latestCoin of parsedLatestCoins) {
             const response = await fetch(`
-        ${this.base_url}/coins/${latestCoin.id}
-        ?localization=false&tickers=false&market_data=true&
-        sparkline=false&community_data=false&developer_data=false`, this.request_data).then((res) => res.json());
+        ${this.base_url}/coins/${latestCoin.id}?localization=false&tickers=false&market_data=true&sparkline=false&community_data=false&developer_data=false`, this.request_data).then((res) => res.json());
             const parsedCoinDetails = coinDetailsSchema.merge({
                 platforms: "Record<string, string>",
             })(response);
@@ -184,8 +189,7 @@ export default class CoinGecko {
             let is_last_page = false;
             let page = 1;
             while (!is_last_page) {
-                const response = await fetch(`${this.base_url}/coins/markets?vs_currency=usd&order=market_cap_desc
-        &per_page=250&price_change_percentage=24h&locale=en&precision=18&category=${category}&page=${page}`, this.request_data).then((res) => res.json());
+                const response = await fetch(`${this.base_url}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&price_change_percentage=24h&locale=en&precision=18&category=${category}&page=${page}`, this.request_data).then((res) => res.json());
                 page++;
                 const parsedMarketData = marketDataListSchema.array()(response);
                 if (parsedMarketData instanceof type.errors)

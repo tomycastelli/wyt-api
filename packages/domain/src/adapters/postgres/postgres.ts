@@ -111,7 +111,7 @@ export default class CoinsPostgres implements CoinsRepository {
       .onConflictDoUpdate({
         target: [
           schema.candles.coin_id,
-          schema.candles.interval,
+          schema.candles.frequency,
           schema.candles.timestamp,
         ],
         set: {
@@ -120,12 +120,11 @@ export default class CoinsPostgres implements CoinsRepository {
           close: sql.raw(`excluded.${schema.candles.close.name}`),
           low: sql.raw(`excluded.${schema.candles.low.name}`),
         },
-      })
-      .returning({ count: count() });
+      });
   }
 
   async getCandles(
-    interval: "hourly" | "daily",
+    frequency: "hourly" | "daily",
     coin_id: number,
     from_date: Date,
     to_date: Date,
@@ -136,7 +135,7 @@ export default class CoinsPostgres implements CoinsRepository {
       .where(
         and(
           eq(schema.candles.coin_id, coin_id),
-          eq(schema.candles.interval, interval),
+          eq(schema.candles.frequency, frequency),
           gte(schema.candles.timestamp, from_date),
           lte(schema.candles.timestamp, to_date),
         ),

@@ -19,7 +19,7 @@ export interface CoinsRepository {
     name_search: string | undefined,
   ): Promise<SavedCoin[]>;
   getCandles(
-    interval: "hourly" | "daily",
+    frequency: "hourly" | "daily",
     coin_id: number,
     from_date: Date,
     to_date: Date,
@@ -49,9 +49,9 @@ export interface CoinsProvider {
 
   /** Consigue las candelas del tipo elegido */
   getCandleData(
-    interval: "hourly" | "daily",
+    frequency: "hourly" | "daily",
     coin_name: string,
     // Cada cuantos dias o cada cuantas horas se ejecuta
-    frequency: number,
+    refresh_rate: number,
   ): Promise<Omit<Candle, "coin_id">[]>;
 }

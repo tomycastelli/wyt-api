@@ -30,7 +30,7 @@ const savedCoinType = coinType.merge({ id: "number.integer" });
 
 const candleType = type({
   coin_id: "number.integer",
-  interval: "'daily'|'hourly'",
+  frequency: "'daily'|'hourly'",
   timestamp: "Date",
   open: "number.integer",
   high: "number.integer",

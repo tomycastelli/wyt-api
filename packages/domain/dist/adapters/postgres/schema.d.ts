@@ -1,5 +1,6 @@
 export declare const blockchainsEnum: import("drizzle-orm/pg-core").PgEnum<[string, ...string[]]>;
 export declare const providersEnum: import("drizzle-orm/pg-core").PgEnum<[string, ...string[]]>;
+export declare const frequencyEnum: import("drizzle-orm/pg-core").PgEnum<["daily", "hourly"]>;
 export declare const coins: import("drizzle-orm/pg-core").PgTableWithColumns<{
     name: "coins";
     schema: undefined;
@@ -319,8 +320,8 @@ export declare const candles: import("drizzle-orm/pg-core").PgTableWithColumns<{
             baseColumn: never;
             generated: undefined;
         }, {}, {}>;
-        interval: import("drizzle-orm/pg-core").PgColumn<{
-            name: "interval";
+        frequency: import("drizzle-orm/pg-core").PgColumn<{
+            name: "frequency";
             tableName: "candles";
             dataType: "string";
             columnType: "PgEnumColumn";

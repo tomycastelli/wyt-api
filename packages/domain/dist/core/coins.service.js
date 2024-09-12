@@ -1,6 +1,7 @@
 import { base_coins, blockchains } from "./vars";
 import CoinsPostgres from "../adapters/postgres/postgres";
 import CoinGecko from "../adapters/providers/coingecko";
+import moment from "moment";
 /// Logica de negocio para el servicio de Tokens
 // Quiero que haga las siguientes acciones:
 // - Conseguir todas las [Blockchain]s existentes
@@ -46,13 +47,19 @@ export class CoinsService {
         return savedCoins;
     }
     /** Devuelve todas las [Candle]s guardadas segun el rango */
-    async getCandlesByDate(type, coin_id, from_date, to_date) {
-        return await this.coinsRepository.getCandles(type, coin_id, from_date, to_date);
+    async getCandlesByDate(frequency, coin_id, from_date, to_date) {
+        const from = from_date
+            ? from_date
+            : frequency === "daily"
+                ? moment().subtract(1, "month").toDate()
+                : moment().subtract(1, "day").toDate();
+        const to = to_date ? to_date : moment().add(1, "minute").toDate();
+        return await this.coinsRepository.getCandles(frequency, coin_id, from, to);
     }
-    /** Guarda las ultimas [Candle] mas recientes segun el intervalo y la frecuencia */
-    async saveCandles(coin_id, interval, frequency) {
+    /** Guarda las ultimas [Candle] mas recientes segun la frecuencia y la tasa de refresco (cada cuanto se guarda) */
+    async saveCandles(coin_id, frequency, refresh_rate) {
         const savedCoin = await this.coinsRepository.getCoinById(coin_id);
-        const candles = await this.coinsProvider.getCandleData(interval, savedCoin.name, frequency);
+        const candles = await this.coinsProvider.getCandleData(frequency, savedCoin.name, refresh_rate);
         await this.coinsRepository.saveCandles(candles.map((c) => ({ coin_id, ...c })));
     }
     async updateMarketData() {

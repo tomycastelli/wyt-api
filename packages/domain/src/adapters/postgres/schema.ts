@@ -59,6 +59,8 @@ export const providersEnum = pgEnum(
   providers as [string, ...string[]],
 );
 
+export const frequencyEnum = pgEnum("frequency", ["daily", "hourly"]);
+
 export const coins = pgTable(
   "coins",
   {
@@ -112,7 +114,7 @@ export const candles = pgTable(
     coin_id: integer("coin_id")
       .references(() => coins.id, { onDelete: "cascade", onUpdate: "cascade" })
       .notNull(),
-    interval: pgEnum("interval", ["daily", "hourly"])("interval").notNull(),
+    frequency: frequencyEnum("frequency").notNull(),
     timestamp: timestamp("timestamp", {
       mode: "date",
       withTimezone: false,
@@ -125,7 +127,7 @@ export const candles = pgTable(
   (table) => {
     return {
       pk: primaryKey({
-        columns: [table.coin_id, table.interval, table.timestamp],
+        columns: [table.coin_id, table.frequency, table.timestamp],
       }),
     };
   },

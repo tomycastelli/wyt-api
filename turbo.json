@@ -10,6 +10,12 @@
     "dev": {
       "persistent": true,
       "cache": false
+    },
+    "@repo/domain#generate": {
+      "dependsOn": []
+    },
+    "@repo/domain#db-push": {
+      "dependsOn": []
     }
   }
 }

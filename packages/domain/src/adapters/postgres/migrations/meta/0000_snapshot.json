@@ -1,5 +1,5 @@
 {
-  "id": "0fd9da15-0a1c-40b5-ad48-5c1814eeb39a",
+  "id": "3d426fa9-1548-470a-a5a2-90ff448e7e79",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -14,9 +14,9 @@
           "primaryKey": false,
           "notNull": true
         },
-        "interval": {
-          "name": "interval",
-          "type": "interval",
+        "frequency": {
+          "name": "frequency",
+          "type": "frequency",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
@@ -69,11 +69,11 @@
         }
       },
       "compositePrimaryKeys": {
-        "candles_coin_id_interval_timestamp_pk": {
-          "name": "candles_coin_id_interval_timestamp_pk",
+        "candles_coin_id_frequency_timestamp_pk": {
+          "name": "candles_coin_id_frequency_timestamp_pk",
           "columns": [
             "coin_id",
-            "interval",
+            "frequency",
             "timestamp"
           ]
         }
@@ -303,11 +303,20 @@
       "name": "blockchains_enum",
       "schema": "public",
       "values": [
+        "bitcoin",
         "ethereum",
         "solana",
         "avalanche",
         "polygon-pos",
         "binance-smart-chain"
+      ]
+    },
+    "public.frequency": {
+      "name": "frequency",
+      "schema": "public",
+      "values": [
+        "daily",
+        "hourly"
       ]
     },
     "public.providers_enum": {

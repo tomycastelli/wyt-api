@@ -20,7 +20,7 @@ app.onError((err, c) => {
   });
   console.error("Node server error", err);
 
-  return c.text(`Internal Server Error: ${err}`, 500);
+  return c.text(`Internal Server Error: ${err.message}`, 500);
 });
 
 // Genera un request-id
@@ -69,11 +69,31 @@ const coins_service = new CoinsService(
 
 const coins_routes = new Hono();
 
-// Probando el cronjob
+// Probando los jobs, estas llamadas al coins_service para guardar datos se pueden llamar desde un cronjob
+// En lambda por ej
 coins_routes.get("/run-coins-job", async (c) => {
   const coins = await coins_service.saveAllCoins();
   return c.json(coins);
 });
+
+coins_routes.post(
+  "/run-candles-job",
+  arktypeValidator(
+    "json",
+    type({
+      coin_name: "string",
+      frequency: "'hourly'|'daily'",
+      refresh_rate: "number",
+    }),
+  ),
+  async (c) => {
+    const { coin_name, frequency, refresh_rate } = c.req.valid("json");
+    const coin = await coins_service.getCoinByName(coin_name);
+    await coins_service.saveCandles(coin.id, frequency, refresh_rate);
+    const candles = await coins_service.getCandlesByDate(frequency, coin.id);
+    return c.json(candles);
+  },
+);
 
 coins_routes.get("/details/:coin_name", async (c) => {
   const coin_name = c.req.param("coin_name");
@@ -116,7 +136,7 @@ coins_routes.get(
   ),
   arktypeValidator(
     "query",
-    type({ from: milisecond_timestamp, to: milisecond_timestamp }),
+    type({ "from?": milisecond_timestamp, "to?": milisecond_timestamp }),
   ),
   async (c) => {
     const { candle_type, coin_name } = c.req.valid("param");

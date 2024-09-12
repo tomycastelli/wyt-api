@@ -35,6 +35,7 @@ const smallDecimalNumber = customType({
 });
 export const blockchainsEnum = pgEnum("blockchains_enum", blockchains);
 export const providersEnum = pgEnum("providers_enum", providers);
+export const frequencyEnum = pgEnum("frequency", ["daily", "hourly"]);
 export const coins = pgTable("coins", {
     id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
     name: varchar("name", { length: 50 }).notNull().unique(),
@@ -72,7 +73,7 @@ export const candles = pgTable("candles", {
     coin_id: integer("coin_id")
         .references(() => coins.id, { onDelete: "cascade", onUpdate: "cascade" })
         .notNull(),
-    interval: pgEnum("interval", ["daily", "hourly"])("interval").notNull(),
+    frequency: frequencyEnum("frequency").notNull(),
     timestamp: timestamp("timestamp", {
         mode: "date",
         withTimezone: false,
@@ -84,7 +85,7 @@ export const candles = pgTable("candles", {
 }, (table) => {
     return {
         pk: primaryKey({
-            columns: [table.coin_id, table.interval, table.timestamp],
+            columns: [table.coin_id, table.frequency, table.timestamp],
         }),
     };
 });

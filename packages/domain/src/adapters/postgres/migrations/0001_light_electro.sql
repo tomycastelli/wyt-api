@@ -1,1 +1,0 @@
-ALTER TYPE "blockchains_enum" ADD VALUE 'bitcoin';

@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./schema";
-import { and, count, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { base_coins } from "../../core/vars";
 export default class CoinsPostgres {
     db;
@@ -90,7 +90,7 @@ export default class CoinsPostgres {
             .onConflictDoUpdate({
             target: [
                 schema.candles.coin_id,
-                schema.candles.interval,
+                schema.candles.frequency,
                 schema.candles.timestamp,
             ],
             set: {
@@ -99,14 +99,13 @@ export default class CoinsPostgres {
                 close: sql.raw(`excluded.${schema.candles.close.name}`),
                 low: sql.raw(`excluded.${schema.candles.low.name}`),
             },
-        })
-            .returning({ count: count() });
+        });
     }
-    async getCandles(interval, coin_id, from_date, to_date) {
+    async getCandles(frequency, coin_id, from_date, to_date) {
         const candles = await this.db
             .select()
             .from(schema.candles)
-            .where(and(eq(schema.candles.coin_id, coin_id), eq(schema.candles.interval, interval), gte(schema.candles.timestamp, from_date), lte(schema.candles.timestamp, to_date)));
+            .where(and(eq(schema.candles.coin_id, coin_id), eq(schema.candles.frequency, frequency), gte(schema.candles.timestamp, from_date), lte(schema.candles.timestamp, to_date)));
         return candles;
     }
     async getCoinsByBlockchain(blockchain, page_number, page_size, name_search) {

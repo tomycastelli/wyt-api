@@ -46,7 +46,7 @@ declare const savedCoinType: import("arktype/internal/methods/object.ts").Object
 }, {}>;
 declare const candleType: import("arktype/internal/methods/object.ts").ObjectType<{
     coin_id: import("arktype/internal/keywords/number/integer.ts").integer;
-    interval: "daily" | "hourly";
+    frequency: "daily" | "hourly";
     timestamp: Date;
     open: import("arktype/internal/keywords/number/integer.ts").integer;
     high: import("arktype/internal/keywords/number/integer.ts").integer;
