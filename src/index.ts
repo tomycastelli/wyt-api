@@ -14,7 +14,10 @@ import { logger } from "./logger";
 const app = new Hono();
 
 app.onError((err, c) => {
-  logger.error("Node server error", err);
+  logger.error(err.message, {
+    message: err.message,
+    stack: err.stack,
+  });
   console.error("Node server error", err);
 
   return c.text(`Internal Server Error: ${err}`, 500);
