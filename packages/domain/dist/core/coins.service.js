@@ -1,7 +1,6 @@
 import { base_coins, blockchains } from "./vars";
-import CoinsPostgres from "../adapters/postgres/postgres";
-import CoinGecko from "../adapters/providers/coingecko";
 import moment from "moment";
+import Fuse from "fuse.js";
 /// Logica de negocio para el servicio de Tokens
 // Quiero que haga las siguientes acciones:
 // - Conseguir todas las [Blockchain]s existentes
@@ -14,9 +13,9 @@ import moment from "moment";
 export class CoinsService {
     coinsRepository;
     coinsProvider;
-    constructor(postgres_url, coingecko_api_key) {
-        this.coinsRepository = new CoinsPostgres(postgres_url);
-        this.coinsProvider = new CoinGecko(coingecko_api_key);
+    constructor(coinsRepository, coinsProvider) {
+        this.coinsRepository = coinsRepository;
+        this.coinsProvider = coinsProvider;
     }
     /** Devuelve todas las [Coin]s disponibles */
     async listAllCoins() {
@@ -31,7 +30,12 @@ export class CoinsService {
         return await this.coinsRepository.getCoinByName(coin_name);
     }
     async getCoinsByBlockchain(blockchain, page_number, page_size, name_search) {
-        return await this.coinsRepository.getCoinsByBlockchain(blockchain, page_number, page_size, name_search);
+        const coinsData = await this.coinsRepository.getCoinsByBlockchain(blockchain, page_number, page_size);
+        if (name_search) {
+            const coinsFuse = new Fuse(coinsData, { keys: ["name"] });
+            return coinsFuse.search(name_search).map((f) => f.item);
+        }
+        return coinsData;
     }
     /** Guarda las [Coin]s mas recientes */
     async saveLatestCoins() {
@@ -41,8 +45,8 @@ export class CoinsService {
     }
     /** Guardo todas las [Coin]s disponibles */
     async saveAllCoins() {
-        // Pido coins con capitalizacion mayor a 10_000 USD
-        const allCoins = await this.coinsProvider.getAllCoins(blockchains, base_coins, 10_000);
+        // Pido coins con capitalizacion mayor a 100_000 USD
+        const allCoins = await this.coinsProvider.getAllCoins(blockchains, base_coins, 100_000);
         const savedCoins = await this.coinsRepository.saveCoins(allCoins);
         return savedCoins;
     }
@@ -59,11 +63,20 @@ export class CoinsService {
     /** Guarda las ultimas [Candle] mas recientes segun la frecuencia y la tasa de refresco (cada cuanto se guarda) */
     async saveCandles(coin_id, frequency, refresh_rate) {
         const savedCoin = await this.coinsRepository.getCoinById(coin_id);
+        if (!savedCoin) {
+            return undefined;
+        }
         const candles = await this.coinsProvider.getCandleData(frequency, savedCoin.name, refresh_rate);
         await this.coinsRepository.saveCandles(candles.map((c) => ({ coin_id, ...c })));
     }
+    /** Actualiza los datos de mercado relacionados a las coins, para todas las coins disponibles */
     async updateMarketData() {
         const market_data = await this.coinsProvider.getAllCoinMarketData();
         await this.coinsRepository.saveMarketData(market_data);
+    }
+    async searchCoinsByName(name_search) {
+        const coinsData = await this.coinsRepository.getAllCoins();
+        const coinsFuse = new Fuse(coinsData, { keys: ["name"] });
+        return coinsFuse.search(name_search).map((f) => f.item);
     }
 }

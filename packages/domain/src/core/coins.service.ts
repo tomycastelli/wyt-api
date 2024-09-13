@@ -1,9 +1,8 @@
 import { Candle, SavedCoin } from "./entities";
 import { CoinsProvider, CoinsRepository } from "./ports";
 import { base_coins, blockchains } from "./vars";
-import CoinsPostgres from "../adapters/postgres/postgres";
-import CoinGecko from "../adapters/providers/coingecko";
 import moment from "moment";
+import Fuse from "fuse.js";
 
 /// Logica de negocio para el servicio de Tokens
 // Quiero que haga las siguientes acciones:
@@ -16,13 +15,16 @@ import moment from "moment";
 // Importante: Al servicio de Tokens no le importa la fuente de las coins
 // De eso se encarga el repositorio que interactua con la DB
 
-export class CoinsService {
-  private coinsRepository: CoinsRepository;
-  private coinsProvider: CoinsProvider;
+export class CoinsService<
+  TProvider extends CoinsProvider,
+  TRepository extends CoinsRepository,
+> {
+  private coinsRepository: TRepository;
+  private coinsProvider: TProvider;
 
-  constructor(postgres_url: string, coingecko_api_key: string) {
-    this.coinsRepository = new CoinsPostgres(postgres_url);
-    this.coinsProvider = new CoinGecko(coingecko_api_key);
+  constructor(coinsRepository: TRepository, coinsProvider: TProvider) {
+    this.coinsRepository = coinsRepository;
+    this.coinsProvider = coinsProvider;
   }
 
   /** Devuelve todas las [Coin]s disponibles */
@@ -31,12 +33,14 @@ export class CoinsService {
   }
 
   /** Devuelve una [Coin] por id */
-  public async getCoinById(id: number): Promise<SavedCoin> {
+  public async getCoinById(id: number): Promise<SavedCoin | undefined> {
     return await this.coinsRepository.getCoinById(id);
   }
 
   /** Devuelve una [Coin] por su nombre */
-  public async getCoinByName(coin_name: string): Promise<SavedCoin> {
+  public async getCoinByName(
+    coin_name: string,
+  ): Promise<SavedCoin | undefined> {
     return await this.coinsRepository.getCoinByName(coin_name);
   }
 
@@ -46,12 +50,17 @@ export class CoinsService {
     page_size: number,
     name_search: string | undefined,
   ): Promise<SavedCoin[]> {
-    return await this.coinsRepository.getCoinsByBlockchain(
+    const coinsData = await this.coinsRepository.getCoinsByBlockchain(
       blockchain,
       page_number,
       page_size,
-      name_search,
     );
+    if (name_search) {
+      const coinsFuse = new Fuse(coinsData, { keys: ["name"] });
+
+      return coinsFuse.search(name_search).map((f) => f.item);
+    }
+    return coinsData;
   }
 
   /** Guarda las [Coin]s mas recientes */
@@ -66,11 +75,11 @@ export class CoinsService {
 
   /** Guardo todas las [Coin]s disponibles */
   public async saveAllCoins(): Promise<SavedCoin[]> {
-    // Pido coins con capitalizacion mayor a 10_000 USD
+    // Pido coins con capitalizacion mayor a 100_000 USD
     const allCoins = await this.coinsProvider.getAllCoins(
       blockchains,
       base_coins,
-      10_000,
+      100_000,
     );
     const savedCoins = await this.coinsRepository.saveCoins(allCoins);
     return savedCoins;
@@ -82,7 +91,7 @@ export class CoinsService {
     coin_id: number,
     from_date?: Date,
     to_date?: Date,
-  ): Promise<Candle[]> {
+  ): Promise<Candle[] | undefined> {
     const from = from_date
       ? from_date
       : frequency === "daily"
@@ -100,6 +109,9 @@ export class CoinsService {
     refresh_rate: number,
   ) {
     const savedCoin = await this.coinsRepository.getCoinById(coin_id);
+    if (!savedCoin) {
+      return undefined;
+    }
     const candles = await this.coinsProvider.getCandleData(
       frequency,
       savedCoin.name,
@@ -110,8 +122,16 @@ export class CoinsService {
     );
   }
 
+  /** Actualiza los datos de mercado relacionados a las coins, para todas las coins disponibles */
   public async updateMarketData(): Promise<void> {
     const market_data = await this.coinsProvider.getAllCoinMarketData();
     await this.coinsRepository.saveMarketData(market_data);
+  }
+
+  public async searchCoinsByName(name_search: string): Promise<SavedCoin[]> {
+    const coinsData = await this.coinsRepository.getAllCoins();
+    const coinsFuse = new Fuse(coinsData, { keys: ["name"] });
+
+    return coinsFuse.search(name_search).map((f) => f.item);
   }
 }

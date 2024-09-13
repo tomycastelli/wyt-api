@@ -16,7 +16,6 @@ export interface CoinsRepository {
     blockchain: string,
     page_number: number,
     page_size: number,
-    name_search: string | undefined,
   ): Promise<SavedCoin[]>;
   getCandles(
     frequency: "hourly" | "daily",
@@ -24,8 +23,8 @@ export interface CoinsRepository {
     from_date: Date,
     to_date: Date,
   ): Promise<Candle[]>;
-  getCoinById(coin_id: number): Promise<SavedCoin>;
-  getCoinByName(coin_name: string): Promise<SavedCoin>;
+  getCoinById(coin_id: number): Promise<SavedCoin | undefined>;
+  getCoinByName(coin_name: string): Promise<SavedCoin | undefined>;
 }
 
 // El contrato al que se tienen que adherir las fuentes de informacion

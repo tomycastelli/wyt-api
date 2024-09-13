@@ -8,10 +8,10 @@ export interface CoinsRepository {
     saveMarketData(coin_market_data: CoinMarketData[]): Promise<void>;
     saveCandles(candles: Candle[]): Promise<void>;
     getAllCoins(): Promise<SavedCoin[]>;
-    getCoinsByBlockchain(blockchain: string, page_number: number, page_size: number, name_search: string | undefined): Promise<SavedCoin[]>;
+    getCoinsByBlockchain(blockchain: string, page_number: number, page_size: number): Promise<SavedCoin[]>;
     getCandles(frequency: "hourly" | "daily", coin_id: number, from_date: Date, to_date: Date): Promise<Candle[]>;
-    getCoinById(coin_id: number): Promise<SavedCoin>;
-    getCoinByName(coin_name: string): Promise<SavedCoin>;
+    getCoinById(coin_id: number): Promise<SavedCoin | undefined>;
+    getCoinByName(coin_name: string): Promise<SavedCoin | undefined>;
 }
 export interface CoinsProvider {
     /** Devuelve todos los [CoinMarketData] disponibles */

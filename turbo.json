@@ -11,10 +11,10 @@
       "persistent": true,
       "cache": false
     },
-    "@repo/domain#generate": {
+    "@repo/adapters#generate": {
       "dependsOn": []
     },
-    "@repo/domain#db-push": {
+    "@repo/adapters#db-push": {
       "dependsOn": []
     }
   }

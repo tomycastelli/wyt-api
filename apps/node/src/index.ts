@@ -1,11 +1,12 @@
 import { serve } from "@hono/node-server";
-import { Hono } from "hono";
+import { Context, Hono } from "hono";
 import { arktypeValidator } from "@hono/arktype-validator";
 import { getPath } from "hono/utils/url";
 import { prettyJSON } from "hono/pretty-json";
 import { requestId } from "hono/request-id";
 import { trimTrailingSlash } from "hono/trailing-slash";
-import { CoinsService } from "@repo/domain";
+import { blockchains, CoinsService } from "@repo/domain";
+import { CoinGecko, CoinsPostgres } from "@repo/adapters";
 import { type } from "arktype";
 import "dotenv/config";
 import { logger } from "./logger";
@@ -61,11 +62,25 @@ app.get("/", (c) => {
   return c.text("Hello Hono!");
 });
 
+// Funcion para sugerir coins
+const suggestCoins = async (
+  c: Context,
+  coin_name: string,
+): Promise<Response> => {
+  const close_by_name_coins = await coins_service
+    .searchCoinsByName(coin_name)
+    .then((coins) => coins.map((c) => c.name));
+
+  c.status(404);
+  return c.json({ related_coins: close_by_name_coins });
+};
+
+// Los adapters
+const coingecko = new CoinGecko(process.env.COINGECKO_API_KEY ?? "");
+const coins_postgres = new CoinsPostgres(process.env.POSTGRES_URL ?? "");
+
 // El servicio de Coins
-const coins_service = new CoinsService(
-  process.env.POSTGRES_URL ?? "",
-  process.env.COINGECKO_API_KEY ?? "",
-);
+const coins_service = new CoinsService(coins_postgres, coingecko);
 
 const coins_routes = new Hono();
 
@@ -89,6 +104,9 @@ coins_routes.post(
   async (c) => {
     const { coin_name, frequency, refresh_rate } = c.req.valid("json");
     const coin = await coins_service.getCoinByName(coin_name);
+    if (!coin) {
+      return suggestCoins(c, coin_name);
+    }
     await coins_service.saveCandles(coin.id, frequency, refresh_rate);
     const candles = await coins_service.getCandlesByDate(frequency, coin.id);
     return c.json(candles);
@@ -99,6 +117,11 @@ coins_routes.get("/details/:coin_name", async (c) => {
   const coin_name = c.req.param("coin_name");
 
   const coin = await coins_service.getCoinByName(coin_name);
+
+  if (!coin) {
+    return suggestCoins(c, coin_name);
+  }
+
   return c.json(coin);
 });
 
@@ -111,6 +134,10 @@ coins_routes.get(
   ),
   async (c) => {
     const blockchain = c.req.param("blockchain");
+    if (!blockchains.some((b) => b === blockchain)) {
+      c.status(404);
+      return c.json({ message: "invalid blockchain", blockchains });
+    }
     const { page, name_search } = c.req.valid("query");
 
     const page_size = 30;
@@ -125,7 +152,7 @@ coins_routes.get(
   },
 );
 
-const milisecond_timestamp = type("number").pipe((n) => new Date(n));
+const milisecond_timestamp = type("string").pipe((n) => new Date(Number(n)));
 
 // Todas las candelas de la moneda segun un rango de timestamps en milisegundos
 coins_routes.get(
@@ -142,11 +169,15 @@ coins_routes.get(
     const { candle_type, coin_name } = c.req.valid("param");
     const { from, to } = c.req.valid("query");
 
-    const { id: coin_id } = await coins_service.getCoinByName(coin_name);
+    const coin = await coins_service.getCoinByName(coin_name);
+
+    if (!coin) {
+      return suggestCoins(c, coin_name);
+    }
 
     const candles = await coins_service.getCandlesByDate(
       candle_type,
-      coin_id,
+      coin.id,
       from,
       to,
     );
