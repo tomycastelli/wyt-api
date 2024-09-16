@@ -178,7 +178,9 @@ export class CoinsPostgres implements CoinsRepository {
           eq(schema.contracts.blockchain, blockchain),
           base_coin ? eq(schema.coins.name, base_coin) : undefined,
         ),
-      );
+      )
+      .offset((page_number - 1) * page_size)
+      .limit(page_size);
 
     const mappedCoins = coinsData.reduce((acc, item) => {
       const coin = item.coins!;

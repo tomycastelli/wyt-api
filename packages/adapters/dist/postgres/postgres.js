@@ -127,7 +127,9 @@ export class CoinsPostgres {
             .select()
             .from(schema.coins)
             .leftJoin(schema.contracts, eq(schema.coins.id, schema.contracts.coin_id))
-            .where(or(eq(schema.contracts.blockchain, blockchain), base_coin ? eq(schema.coins.name, base_coin) : undefined));
+            .where(or(eq(schema.contracts.blockchain, blockchain), base_coin ? eq(schema.coins.name, base_coin) : undefined))
+            .offset((page_number - 1) * page_size)
+            .limit(page_size);
         const mappedCoins = coinsData.reduce((acc, item) => {
             const coin = item.coins;
             const acc_coin = acc.find((c) => c.id === coin.id);

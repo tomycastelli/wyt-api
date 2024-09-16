@@ -67,7 +67,7 @@ export class CoinsService<
   public async saveLatestCoins(): Promise<SavedCoin[]> {
     const latestCoins = await this.coinsProvider.getLatestCoins(
       blockchains,
-      10_000,
+      100_000,
     );
     const savedCoins = await this.coinsRepository.saveCoins(latestCoins);
     return savedCoins;
@@ -130,7 +130,7 @@ export class CoinsService<
 
   public async searchCoinsByName(name_search: string): Promise<SavedCoin[]> {
     const coinsData = await this.coinsRepository.getAllCoins();
-    const coinsFuse = new Fuse(coinsData, { keys: ["name"] });
+    const coinsFuse = new Fuse(coinsData, { keys: ["name"], threshold: 0.25 });
 
     return coinsFuse.search(name_search).map((f) => f.item);
   }

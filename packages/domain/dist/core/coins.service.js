@@ -39,7 +39,7 @@ export class CoinsService {
     }
     /** Guarda las [Coin]s mas recientes */
     async saveLatestCoins() {
-        const latestCoins = await this.coinsProvider.getLatestCoins(blockchains, 10_000);
+        const latestCoins = await this.coinsProvider.getLatestCoins(blockchains, 100_000);
         const savedCoins = await this.coinsRepository.saveCoins(latestCoins);
         return savedCoins;
     }
@@ -76,7 +76,7 @@ export class CoinsService {
     }
     async searchCoinsByName(name_search) {
         const coinsData = await this.coinsRepository.getAllCoins();
-        const coinsFuse = new Fuse(coinsData, { keys: ["name"] });
+        const coinsFuse = new Fuse(coinsData, { keys: ["name"], threshold: 0.25 });
         return coinsFuse.search(name_search).map((f) => f.item);
     }
 }

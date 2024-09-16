@@ -17,6 +17,7 @@
     "@repo/domain": "workspace:*",
     "arktype": "2.0.0-rc.6",
     "drizzle-orm": "^0.33.0",
+    "p-limit": "^6.1.0",
     "postgres": "^3.4.4"
   },
   "devDependencies": {

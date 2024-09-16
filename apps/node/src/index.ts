@@ -10,6 +10,7 @@ import { CoinGecko, CoinsPostgres } from "@repo/adapters";
 import { type } from "arktype";
 import "dotenv/config";
 import { logger } from "./logger";
+import { compress } from "hono/compress";
 
 // El servidor Node
 const app = new Hono();
@@ -21,7 +22,7 @@ app.onError((err, c) => {
   });
   console.error("Node server error", err);
 
-  return c.text(`Internal Server Error: ${err.message}`, 500);
+  return c.text(`Internal Server Error: ${JSON.stringify(err)}`, 500);
 });
 
 // Genera un request-id
@@ -32,6 +33,9 @@ app.use(trimTrailingSlash());
 
 // Formatea el JSON que devuelve la api para mejor redibilidad
 app.use(prettyJSON());
+
+// Compresión de gzip o deflate de acuerdo al Accept-Encoding header, defaultea a gzip
+app.use(compress());
 
 // Logging a winston, la libreria recomendada por DataDog
 app.use(async (c, next) => {
@@ -55,6 +59,7 @@ app.use(async (c, next) => {
     method,
     status: c.res.status,
     duration_ms: delta,
+    timestamp: new Date().getTime(),
   });
 });
 
@@ -86,13 +91,18 @@ const coins_routes = new Hono();
 
 // Probando los jobs, estas llamadas al coins_service para guardar datos se pueden llamar desde un cronjob
 // En lambda por ej
-coins_routes.get("/run-coins-job", async (c) => {
+coins_routes.post("/coins-job", async (c) => {
   const coins = await coins_service.saveAllCoins();
   return c.json(coins);
 });
 
+coins_routes.post("/latest-coins-job", async (c) => {
+  const coins = await coins_service.saveLatestCoins();
+  return c.json(coins);
+});
+
 coins_routes.post(
-  "/run-candles-job",
+  "/candles-job",
   arktypeValidator(
     "json",
     type({

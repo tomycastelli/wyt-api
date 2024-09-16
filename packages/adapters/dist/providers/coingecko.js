@@ -1,4 +1,5 @@
 import { type } from "arktype";
+import pLimit from "p-limit";
 const coinsResponseSchema = type({
     id: "string",
     symbol: "string",
@@ -16,13 +17,16 @@ const coinDetailsSchema = type({
     "image?": { large: "string", "+": "delete" },
     "market_data?": {
         "current_price?": {
-            usd: "number",
+            "usd?": "number",
+            "+": "delete",
         },
         market_cap: {
-            usd: "number",
+            "usd?": "number",
+            "+": "delete",
         },
         ath: {
-            usd: "number",
+            "usd?": "number",
+            "+": "delete",
         },
         price_change_percentage_24h: "number|null",
         "+": "delete",
@@ -52,6 +56,7 @@ export class CoinGecko {
         "avalanche-ecosystem",
         "polygon-ecosystem",
     ];
+    rate_limit = pLimit(6);
     request_data;
     constructor(api_key) {
         this.request_data = {
@@ -67,49 +72,52 @@ export class CoinGecko {
         const parsedList = coinsResponseSchema(response);
         if (parsedList instanceof type.errors)
             throw parsedList;
-        // Filtrar los tokens que esten dentro de las blockchains que nos interesan
+        // Se filtran los tokens que esten dentro de las blockchains que nos interesan
         const filteredList = parsedList
             .filter((coin) => {
             return (base_coins.includes(coin.id) ||
                 Object.keys(coin.platforms).some((platform) => blockchains.includes(platform)));
         })
             .slice(0, 8);
-        const coinsList = [];
-        // Ahora necesito para cada token consultar el resto de info: 'descripcion', 'image_url', 'market_data'
-        for (const coin of filteredList) {
-            const response = await fetch(`
-        ${this.base_url}/coins/${coin.id}?localization=false&tickers=false&market_data=true&sparkline=false&community_data=false&developer_data=false`, this.request_data).then((res) => res.json());
-            const parsedCoinDetails = coinDetailsSchema(response);
-            if (parsedCoinDetails instanceof type.errors)
-                throw parsedCoinDetails;
-            // Si no tiene estos datos o un market cap muy bajo, no es una coin relevante
-            if (!parsedCoinDetails.description ||
-                !parsedCoinDetails.image ||
-                !parsedCoinDetails.market_data ||
-                !parsedCoinDetails.market_data.ath ||
-                !parsedCoinDetails.market_data.current_price ||
-                !parsedCoinDetails.market_data.market_cap ||
-                !parsedCoinDetails.market_data.price_change_percentage_24h ||
-                parsedCoinDetails.market_data.market_cap.usd < minimum_market_cap) {
-                continue;
-            }
-            coinsList.push({
-                name: coin.id,
-                symbol: coin.symbol,
-                provider: "coin_gecko",
-                description: parsedCoinDetails.description.en,
-                image_url: parsedCoinDetails.image.large,
-                market_cap: parsedCoinDetails.market_data.market_cap.usd,
-                ath: parsedCoinDetails.market_data.ath.usd,
-                price: parsedCoinDetails.market_data.current_price.usd,
-                price_change_24h: parsedCoinDetails.market_data.price_change_percentage_24h,
-                // Me quedo con solo los contratos que me interesan
-                contracts: Object.entries(coin.platforms)
-                    .filter(([key]) => blockchains.includes(key))
-                    .map(([blockchain, address]) => ({ blockchain, address })),
+        // Para cada token se consulta el resto de info:
+        // 'descripcion', 'image_url', 'market_data'
+        const detailsListPromises = filteredList.map((coin) => {
+            // Rate limit de 360req/min, menos que el limite de CoinGecko (500)
+            // Para darle espacio a otras requests que puedan suceder
+            return this.rate_limit(async () => {
+                const response = await fetch(`
+          ${this.base_url}/coins/${coin.id}?localization=false&tickers=false&market_data=true&sparkline=false&community_data=false&developer_data=false`, this.request_data).then((res) => res.json());
+                const parsedCoinDetails = coinDetailsSchema(response);
+                if (parsedCoinDetails instanceof type.errors)
+                    throw parsedCoinDetails;
+                return { ...parsedCoinDetails, ...coin };
             });
-        }
-        return coinsList;
+        });
+        const coinDetails = await Promise.all(detailsListPromises);
+        const mappedCoinDetails = coinDetails
+            .filter((coin) => coin.description &&
+            coin.image &&
+            coin.market_data &&
+            coin.market_data.current_price?.usd &&
+            coin.market_data.ath?.usd &&
+            coin.market_data.price_change_percentage_24h &&
+            (coin.market_data.market_cap?.usd ?? 0) >= minimum_market_cap)
+            .map((coin) => ({
+            name: coin.id,
+            symbol: coin.symbol,
+            provider: "coin_gecko",
+            description: coin.description.en,
+            ath: coin.market_data.ath.usd,
+            image_url: coin.image.large,
+            market_cap: coin.market_data.market_cap.usd,
+            price: coin.market_data.current_price.usd,
+            price_change_24h: coin.market_data.price_change_percentage_24h,
+            // Me quedo con solo los contratos que me interesan
+            contracts: Object.entries(coin.platforms)
+                .filter(([key]) => blockchains.includes(key))
+                .map(([blockchain, address]) => ({ blockchain, address })),
+        }));
+        return mappedCoinDetails;
     }
     async getCandleData(frequency, coin_name, refresh_rate) {
         // Si es diario, quiero solo la ultima hora
@@ -144,45 +152,52 @@ export class CoinGecko {
         const parsedLatestCoins = latestCoinsResponseSchema(response);
         if (parsedLatestCoins instanceof type.errors)
             throw parsedLatestCoins;
-        // Voy a filtrar pidiendo los detalles de cada una, quedandome solo con las que estan en
-        // las blockchains que nos interesan y superan el market_cap minimo
-        const latestCoinsResponse = [];
-        for (const latestCoin of parsedLatestCoins) {
-            const response = await fetch(`
-        ${this.base_url}/coins/${latestCoin.id}?localization=false&tickers=false&market_data=true&sparkline=false&community_data=false&developer_data=false`, this.request_data).then((res) => res.json());
-            const parsedCoinDetails = coinDetailsSchema.merge({
-                platforms: "Record<string, string>",
-            })(response);
-            if (parsedCoinDetails instanceof type.errors)
-                throw parsedCoinDetails;
-            // Si no tiene estos datos, no es una coin relevante
-            if (!parsedCoinDetails.description ||
-                !parsedCoinDetails.image ||
-                !parsedCoinDetails.market_data ||
-                !parsedCoinDetails.market_data.ath ||
-                !parsedCoinDetails.market_data.current_price ||
-                !parsedCoinDetails.market_data.market_cap ||
-                !parsedCoinDetails.market_data.price_change_percentage_24h ||
-                minimum_market_cap > parsedCoinDetails.market_data.market_cap.usd ||
-                !Object.keys(parsedCoinDetails.platforms).some((platform) => blockchains.includes(platform))) {
-                continue;
-            }
-            latestCoinsResponse.push({
-                name: latestCoin.id,
-                symbol: latestCoin.symbol,
-                description: parsedCoinDetails.description.en,
-                image_url: parsedCoinDetails.image.large,
-                provider: "coin_gecko",
-                ath: parsedCoinDetails.market_data.ath.usd,
-                price: parsedCoinDetails.market_data.current_price.usd,
-                market_cap: parsedCoinDetails.market_data.market_cap.usd,
-                price_change_24h: parsedCoinDetails.market_data.price_change_percentage_24h,
-                contracts: Object.entries(parsedCoinDetails.platforms)
-                    .filter(([key]) => blockchains.includes(key))
-                    .map(([blockchain, address]) => ({ blockchain, address })),
+        // Para cada token se consulta el resto de info:
+        // 'descripcion', 'image_url', 'market_data'
+        const detailsListPromises = parsedLatestCoins.map((coin) => {
+            // Rate limit de 360req/min, menos que el limite de CoinGecko (500)
+            // Para darle espacio a otras requests que puedan suceder
+            return this.rate_limit(async () => {
+                const response = await fetch(`
+          ${this.base_url}/coins/${coin.id}?localization=false&tickers=false&market_data=true&sparkline=false&community_data=false&developer_data=false`, this.request_data).then((res) => res.json());
+                const parsedCoinDetails = coinDetailsSchema.merge({
+                    platforms: "Record<string, string|null>",
+                })(response);
+                if (parsedCoinDetails instanceof type.errors) {
+                    console.log("Error!: ", parsedCoinDetails.summary);
+                    console.log("Problem response: ", response);
+                    throw parsedCoinDetails;
+                }
+                return { ...parsedCoinDetails, ...coin };
             });
-        }
-        return latestCoinsResponse;
+        });
+        const coinDetails = await Promise.all(detailsListPromises);
+        console.log("Detailed list: ", coinDetails.slice(0, 2));
+        const mappedCoinDetails = coinDetails
+            .filter((coin) => coin.description &&
+            coin.image &&
+            coin.market_data &&
+            coin.market_data.current_price?.usd &&
+            coin.market_data.ath?.usd &&
+            coin.market_data.price_change_percentage_24h &&
+            Object.keys(coin.platforms).some((platform) => blockchains.includes(platform)) &&
+            (coin.market_data.market_cap?.usd ?? 0) >= minimum_market_cap)
+            .map((coin) => ({
+            name: coin.id,
+            symbol: coin.symbol,
+            provider: "coin_gecko",
+            description: coin.description.en,
+            ath: coin.market_data.ath.usd,
+            image_url: coin.image.large,
+            market_cap: coin.market_data.market_cap.usd,
+            price: coin.market_data.current_price.usd,
+            price_change_24h: coin.market_data.price_change_percentage_24h,
+            // Me quedo con solo los contratos que me interesan
+            contracts: Object.entries(coin.platforms)
+                .filter(([key]) => blockchains.includes(key))
+                .map(([blockchain, address]) => ({ blockchain, address: address })),
+        }));
+        return mappedCoinDetails;
     }
     async getAllCoinMarketData() {
         const market_data_array = [];
