@@ -5,7 +5,7 @@ import { getPath } from "hono/utils/url";
 import { prettyJSON } from "hono/pretty-json";
 import { requestId } from "hono/request-id";
 import { trimTrailingSlash } from "hono/trailing-slash";
-import { blockchains, CoinsService } from "@repo/domain";
+import { BlockainsName, blockchains, CoinsService } from "@repo/domain";
 import { CoinGecko, CoinsPostgres } from "@repo/adapters";
 import { type } from "arktype";
 import "dotenv/config";
@@ -135,6 +135,10 @@ coins_routes.get("/details/:coin_name", async (c) => {
   return c.json(coin);
 });
 
+coins_routes.get("/blockchains", async (c) => {
+  return c.json({ blockchains });
+});
+
 // Todas las coins por blockchain, paginadas y ordenadas por marketcap
 coins_routes.get(
   "/:blockchain",
@@ -144,7 +148,7 @@ coins_routes.get(
   ),
   async (c) => {
     const blockchain = c.req.param("blockchain");
-    if (!blockchains.some((b) => b === blockchain)) {
+    if (!(blockchain in blockchains)) {
       c.status(404);
       return c.json({ message: "invalid blockchain", blockchains });
     }
@@ -152,7 +156,7 @@ coins_routes.get(
 
     const page_size = 30;
     const savedCoins = await coins_service.getCoinsByBlockchain(
-      blockchain,
+      blockchain as BlockainsName,
       page ?? 1,
       page_size,
       name_search,

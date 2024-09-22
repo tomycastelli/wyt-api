@@ -1,5 +1,5 @@
-import { Candle, SavedCoin } from "./entities";
-import { CoinsProvider, CoinsRepository } from "./ports";
+import { Candle, SavedCoin, SavedNFT } from "./coins.entities";
+import { CoinsProvider, CoinsRepository } from "./coins.ports";
 import { base_coins, blockchains } from "./vars";
 import moment from "moment";
 import Fuse from "fuse.js";
@@ -22,9 +22,9 @@ export class CoinsService<
   private coinsRepository: TRepository;
   private coinsProvider: TProvider;
 
-  constructor(coinsRepository: TRepository, coinsProvider: TProvider) {
-    this.coinsRepository = coinsRepository;
-    this.coinsProvider = coinsProvider;
+  constructor(repository: TRepository, provider: TProvider) {
+    this.coinsRepository = repository;
+    this.coinsProvider = provider;
   }
 
   /** Devuelve todas las [Coin]s disponibles */
@@ -42,6 +42,34 @@ export class CoinsService<
     coin_name: string,
   ): Promise<SavedCoin | undefined> {
     return await this.coinsRepository.getCoinByName(coin_name);
+  }
+
+  /** Devuelve una [Coin] por su contract address */
+  public async getCoinByAddress(coin_address: string): Promise<SavedCoin> {
+    const coin = await this.coinsRepository.getCoinByAddress(coin_address);
+    // Si la [Coin] ya esta guardada la devuelvo, actualizando la market data antes
+    if (coin) {
+      const market_data = await this.coinsProvider.getCoinMarketData(coin.name);
+      await this.coinsRepository.saveMarketData([market_data]);
+      return coin;
+    }
+
+    const newCoin = await this.coinsProvider.getCoinByAddress(coin_address);
+    const [savedCoin] = await this.coinsRepository.saveCoins([newCoin]);
+    // Se que no es undefined porque le pase solo un elemento y estoy agarrando el primero
+    return savedCoin!;
+  }
+
+  /** Devuelve una [NFT] por su contract_address */
+  public async getNFTByAddress(contract_address: string): Promise<SavedNFT> {
+    let nft = await this.coinsRepository.getNFTByAddress(contract_address);
+    // Si la [NFT] ya esta guardada la devuelvo
+    if (nft) return nft;
+
+    const newNFT = await this.coinsProvider.getNFTByAddress(contract_address);
+    const [savedNFT] = await this.coinsRepository.saveNFTs([newNFT]);
+    // Se que no es undefined porque le pase solo un elemento y estoy agarrando el primero
+    return savedNFT!;
   }
 
   public async getCoinsByBlockchain(
@@ -66,7 +94,7 @@ export class CoinsService<
   /** Guarda las [Coin]s mas recientes */
   public async saveLatestCoins(): Promise<SavedCoin[]> {
     const latestCoins = await this.coinsProvider.getLatestCoins(
-      blockchains,
+      Object.keys(blockchains),
       100_000,
     );
     const savedCoins = await this.coinsRepository.saveCoins(latestCoins);
@@ -77,7 +105,7 @@ export class CoinsService<
   public async saveAllCoins(): Promise<SavedCoin[]> {
     // Pido coins con capitalizacion mayor a 100_000 USD
     const allCoins = await this.coinsProvider.getAllCoins(
-      blockchains,
+      Object.keys(blockchains),
       base_coins,
       100_000,
     );

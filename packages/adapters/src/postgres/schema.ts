@@ -11,7 +11,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
-import { blockchains, providers } from "@repo/domain";
+import { blockchains, providers, BlockchainsName } from "@repo/domain";
 
 const largeDecimalNumber = customType<{ data: number }>({
   dataType() {
@@ -42,7 +42,7 @@ const smallDecimalNumber = customType<{ data: number }>({
 
 export const blockchainsEnum = pgEnum(
   "blockchains_enum",
-  blockchains as [string, ...string[]],
+  Object.keys(blockchains) as [string, ...string[]],
 );
 
 export const providersEnum = pgEnum(
@@ -64,7 +64,10 @@ export const coins = pgTable(
     market_cap: largeDecimalNumber("market_cap").notNull(),
     price: decimalNumber("price").notNull(),
     ath: decimalNumber("ath").notNull(),
-    price_change_24h: smallDecimalNumber("price_change_24h").notNull(),
+    price_change_percentage_24h: smallDecimalNumber(
+      "price_change_percentage_24h",
+    ).notNull(),
+    price_change_24h: decimalNumber("price_change_24h").notNull(),
   },
   (table) => ({
     nameSearchIndex: index("name_search_index").using(
@@ -80,8 +83,11 @@ export const contracts = pgTable(
     coin_id: integer("coin_id")
       .references(() => coins.id, { onDelete: "cascade", onUpdate: "cascade" })
       .notNull(),
-    blockchain: blockchainsEnum("blockchain").notNull(),
-    address: varchar("address").notNull(),
+    blockchain: blockchainsEnum("blockchain")
+      .notNull()
+      .$type<BlockchainsName>(),
+    contract_address: varchar("contract_address").notNull(),
+    decimal_place: integer("decimal_place").notNull(),
   },
   (table) => {
     return {
@@ -105,6 +111,19 @@ export const coinsNames = pgTable(
     };
   },
 );
+
+export const nfts = pgTable("nfts", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  name: varchar("name", { length: 50 }).notNull().unique(),
+  symbol: varchar("symbol", { length: 50 }).notNull(),
+  provider: providersEnum("provider").notNull(),
+  image_url: varchar("image_url", { length: 256 }).notNull(),
+  description: text("description"),
+  token_id: integer("token_id").notNull(),
+  price: decimalNumber("price").notNull(),
+  blockchain: blockchainsEnum("blockchain").notNull().$type<BlockchainsName>(),
+  contract_address: varchar("contract_address").notNull(),
+});
 
 export const candles = pgTable(
   "candles",

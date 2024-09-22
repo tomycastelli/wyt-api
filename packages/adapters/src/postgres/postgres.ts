@@ -1,15 +1,17 @@
+import {
+  BlockchainsName,
+  blockchains,
+  Candle,
+  Coin,
+  CoinMarketData,
+  CoinsRepository,
+  SavedCoin,
+} from "@repo/domain";
+import { and, eq, gte, lte, or, sql } from "drizzle-orm";
 import { drizzle, PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./schema";
-import { and, count, eq, gte, inArray, lte, or, SQL, sql } from "drizzle-orm";
-import {
-  base_coins,
-  CoinsRepository,
-  Coin,
-  Candle,
-  CoinMarketData,
-  SavedCoin,
-} from "@repo/domain";
+import { NFT, SavedNFT } from "../../../domain/src/core/coins.entities";
 
 export class CoinsPostgres implements CoinsRepository {
   private db: PostgresJsDatabase<typeof schema>;
@@ -33,6 +35,9 @@ export class CoinsPostgres implements CoinsRepository {
             market_cap: sql.raw(`excluded.${schema.coins.market_cap.name}`),
             description: sql.raw(`excluded.${schema.coins.description.name}`),
             image_url: sql.raw(`excluded.${schema.coins.image_url.name}`),
+            price_change_percentage_24h: sql.raw(
+              `excluded.${schema.coins.price_change_percentage_24h.name}`,
+            ),
             price_change_24h: sql.raw(
               `excluded.${schema.coins.price_change_24h.name}`,
             ),
@@ -52,16 +57,7 @@ export class CoinsPostgres implements CoinsRepository {
       );
 
       const mappedCoins: SavedCoin[] = savedCoins.map((c) => ({
-        id: c.id,
-        description: c.description,
-        symbol: c.symbol,
-        image_url: c.image_url,
-        provider: c.provider,
-        name: c.name,
-        market_cap: c.market_cap,
-        price: c.price,
-        price_change_24h: c.price_change_24h,
-        ath: c.ath,
+        ...c,
         contracts: [],
       }));
 
@@ -74,7 +70,12 @@ export class CoinsPostgres implements CoinsRepository {
           .onConflictDoUpdate({
             target: [schema.contracts.coin_id, schema.contracts.blockchain],
             set: {
-              address: sql.raw(`excluded.${schema.contracts.address.name}`),
+              contract_address: sql.raw(
+                `excluded.${schema.contracts.contract_address.name}`,
+              ),
+              decimal_place: sql.raw(
+                `excluded.${schema.contracts.decimal_place.name}`,
+              ),
             },
           })
           .returning();
@@ -123,6 +124,37 @@ export class CoinsPostgres implements CoinsRepository {
     return coin;
   }
 
+  async getCoinByAddress(coin_address: string): Promise<SavedCoin | undefined> {
+    const coin = await this.db.query.coins.findFirst({
+      with: {
+        contracts: {
+          where: (contracts, { eq }) =>
+            eq(contracts.contract_address, coin_address),
+        },
+      },
+    });
+
+    return coin;
+  }
+
+  async saveNFTs(nfts: NFT[]): Promise<SavedNFT[]> {
+    const saved_nfts = await this.db
+      .insert(schema.nfts)
+      .values(nfts)
+      .returning();
+    return saved_nfts;
+  }
+
+  async getNFTByAddress(
+    contract_address: string,
+  ): Promise<SavedNFT | undefined> {
+    const saved_nft = await this.db.query.nfts.findFirst({
+      where: (nfts, { eq }) => eq(nfts.contract_address, contract_address),
+    });
+
+    return saved_nft;
+  }
+
   async saveCandles(candles: Candle[]): Promise<void> {
     await this.db
       .insert(schema.candles)
@@ -164,11 +196,11 @@ export class CoinsPostgres implements CoinsRepository {
   }
 
   async getCoinsByBlockchain(
-    blockchain: string,
+    blockchain: BlockchainsName,
     page_number: number,
     page_size: number,
   ): Promise<SavedCoin[]> {
-    const base_coin = base_coins.find((c) => c === blockchain);
+    const base_coin = blockchains[blockchain];
     const coinsData = await this.db
       .select()
       .from(schema.coins)
@@ -176,7 +208,7 @@ export class CoinsPostgres implements CoinsRepository {
       .where(
         or(
           eq(schema.contracts.blockchain, blockchain),
-          base_coin ? eq(schema.coins.name, base_coin) : undefined,
+          base_coin ? eq(schema.coins.name, base_coin.coin) : undefined,
         ),
       )
       .offset((page_number - 1) * page_size)
@@ -190,7 +222,8 @@ export class CoinsPostgres implements CoinsRepository {
         if (item.contracts) {
           acc_coin.contracts.push({
             blockchain: item.contracts.blockchain,
-            address: item.contracts.blockchain,
+            contract_address: item.contracts.contract_address,
+            decimal_place: item.contracts.decimal_place,
           });
         }
       } else {
@@ -200,7 +233,8 @@ export class CoinsPostgres implements CoinsRepository {
             ? [
                 {
                   blockchain: item.contracts.blockchain,
-                  address: item.contracts.address,
+                  contract_address: item.contracts.contract_address,
+                  decimal_place: item.contracts.decimal_place,
                 },
               ]
             : [],
@@ -214,35 +248,15 @@ export class CoinsPostgres implements CoinsRepository {
   }
 
   async saveMarketData(coin_market_data: CoinMarketData[]): Promise<void> {
-    const names: string[] = [];
-    const sqlChunks: [SQL[], SQL[], SQL[]] = [[], [], []];
-    sqlChunks[0].push(sql`(case`);
-    sqlChunks[1].push(sql`(case`);
-    sqlChunks[2].push(sql`(case`);
-
-    for (const coin of coin_market_data) {
-      sqlChunks[0].push(
-        sql`when ${schema.coins.name} = ${coin.name} then ${coin.price}`,
+    await this.db.transaction(async (tx) => {
+      coin_market_data.forEach((market_data) =>
+        tx
+          .update(schema.coins)
+          .set({
+            ...market_data,
+          })
+          .where(eq(schema.coins.name, market_data.name)),
       );
-      sqlChunks[1].push(
-        sql`when ${schema.coins.name} = ${coin.name} then ${coin.market_cap}`,
-      );
-      sqlChunks[2].push(
-        sql`when ${schema.coins.name} = ${coin.name} then ${coin.ath}`,
-      );
-      names.push(coin.name);
-    }
-    sqlChunks[0].push(sql`end)`);
-    sqlChunks[1].push(sql`end)`);
-    sqlChunks[2].push(sql`end)`);
-
-    const finalSql1: SQL = sql.join(sqlChunks[0], sql.raw(" "));
-    const finalSql2: SQL = sql.join(sqlChunks[1], sql.raw(" "));
-    const finalSql3: SQL = sql.join(sqlChunks[2], sql.raw(" "));
-
-    await this.db
-      .update(schema.coins)
-      .set({ price: finalSql1, market_cap: finalSql2, ath: finalSql3 })
-      .where(inArray(schema.coins.name, names));
+    });
   }
 }
