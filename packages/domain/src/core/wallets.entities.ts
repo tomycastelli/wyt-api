@@ -1,5 +1,5 @@
 import { type } from "arktype";
-import { coinType, nftType } from "./coins.entities";
+import { coinType, nftType, savedCoinType } from "./coins.entities";
 import { EveryBlockainsName } from "./vars";
 
 // Things to think:
@@ -8,11 +8,11 @@ import { EveryBlockainsName } from "./vars";
 
 export const walletCoin = type({
   coin_address: "string",
-  value: "number.integer",
+  value: "bigint",
 });
 
 export const coinedWalletCoin = walletCoin.merge({
-  coin: coinType,
+  coin: savedCoinType,
 });
 
 export const valuedWalletCoin = coinedWalletCoin.merge({
@@ -23,11 +23,11 @@ export const valuedWalletCoin = coinedWalletCoin.merge({
 export const walletType = type({
   address: "string",
   blockchain: ["===", ...EveryBlockainsName],
-  label: "string|null",
-  native_value: "number.integer",
+  alias: "string|null",
+  native_value: "bigint",
   coins: walletCoin.array(),
-  first_transfer_date: "Date",
-  status: "'pending'|'ready'",
+  first_transfer_date: "Date|null",
+  backfill_status: "'pending'|'complete'",
 });
 
 export const coinedWalletType = walletType.merge({
@@ -42,15 +42,18 @@ export const valuedWalletType = coinedWalletType.merge({
 });
 
 export const transactionType = type({
+  blockchain: ["===", ...EveryBlockainsName],
   hash: "string",
   block_timestamp: "Date",
   type: "'native'|'erc20'|'nft'",
   // Esto es si es un NFT
   "token_id?": "number",
-  coin_address: "string",
-  value: "number.integer",
+  // Si es de tipo 'native', la coin es la nativa de la blockchain
+  "coin_address?": "string",
+  value: "bigint",
   from_address: "string",
   to_address: "string",
+  summary: "string",
 });
 
 export const coinedTransactionType = transactionType.merge({

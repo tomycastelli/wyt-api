@@ -14,9 +14,12 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
+    "@moralisweb3/common-evm-utils": "^2.27.2",
     "@repo/domain": "workspace:*",
+    "@solana/web3.js": "^1.95.3",
     "arktype": "2.0.0-rc.6",
     "drizzle-orm": "^0.33.0",
+    "moralis": "^2.27.2",
     "p-limit": "^6.1.0",
     "postgres": "^3.4.4"
   },

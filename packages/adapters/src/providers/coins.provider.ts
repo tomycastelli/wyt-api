@@ -77,6 +77,7 @@ const tokenDataByAddressSchema = type({
     attributes: {
       symbol: "string",
       coingecko_coin_id: "string",
+      description: "string",
       "+": "delete",
     },
     "+": "delete",
@@ -95,23 +96,31 @@ const nftByAddressSchema = type({
   "+": "delete",
 });
 
-const coinDetailsSchemaWithPlatforms = coinDetailsSchema.merge({
-  platforms: "Record<string, string|null>",
-});
-
 export class CoinGecko implements CoinsProvider {
   readonly base_url: string = "https://pro-api.coingecko.com/api/v3";
 
-  readonly blockchains_categories = [
+  private readonly blockchains_categories = [
     "ethereum-ecosystem",
     "solana-ecosystem",
     "avalanche-ecosystem",
     "polygon-ecosystem",
   ];
 
+  private readonly blockchains_to_networks_mapper: Record<
+    BlockchainsName,
+    string
+  > = {
+    "binance-smart-chain": "bsc",
+    "polygon-pos": "polygon_pos",
+    ethereum: "eth",
+    avalanche: "avax",
+    bitcoin: "",
+    solana: "solana",
+  };
+
   readonly rate_limit: LimitFunction = pLimit(6);
 
-  private request_data: RequestInit;
+  request_data: RequestInit;
 
   constructor(api_key: string) {
     this.request_data = {
@@ -334,7 +343,7 @@ export class CoinGecko implements CoinsProvider {
   ): Promise<Coin> {
     // Consigo la id de coingecko
     const response = await fetch(
-      `${this.base_url}/onchain/networks/${blockchain}/tokens/${coin_address}`,
+      `${this.base_url}/onchain/networks/${this.blockchains_to_networks_mapper[blockchain]}/tokens/${coin_address}/info`,
       this.request_data,
     ).then((res) => res.json());
 
@@ -362,7 +371,7 @@ export class CoinGecko implements CoinsProvider {
       name: coin_data.coingecko_coin_id,
       symbol: coin_data.symbol,
       provider: "coingecko",
-      description: parsedCoinDetails.description!.en,
+      description: coin_data.description,
       ath: parsedCoinDetails.market_data!.ath.usd!,
       image_url: parsedCoinDetails.image!.large,
       market_cap: parsedCoinDetails.market_data!.market_cap.usd!,
