@@ -6,6 +6,7 @@ import {
   SavedCoin,
   SavedNFT,
 } from "./coins.entities";
+import { BlockchainsName } from "./vars";
 
 export type SavedCandles = {
   amount: number;
@@ -35,7 +36,10 @@ export interface CoinsRepository {
   getCoinByName(coin_name: string): Promise<SavedCoin | undefined>;
   getCoinByAddress(coin_address: string): Promise<SavedCoin | undefined>;
 
-  getNFTByAddress(contract_address: string): Promise<SavedNFT | undefined>;
+  getNFTByAddress(
+    contract_address: string,
+    token_id: number,
+  ): Promise<SavedNFT | undefined>;
 }
 
 // El contrato al que se tienen que adherir las fuentes de informacion
@@ -48,10 +52,7 @@ export interface CoinsProvider {
 
   /** Consigue todas las tokens existentes
   # Se debe correr de vez en cuando ya es una query grande */
-  getAllCoins(
-    base_coins: string[],
-    minimum_market_cap: number,
-  ): Promise<Coin[]>;
+  getAllCoins(minimum_market_cap: number): Promise<Coin[]>;
 
   /** Consigue las ultimas coins añadidas */
   getLatestCoins(
@@ -60,10 +61,16 @@ export interface CoinsProvider {
   ): Promise<Coin[]>;
 
   /** Consigue una [Coin] por su contract address */
-  getCoinByAddress(coin_address: string): Promise<Coin>;
+  getCoinByAddress(
+    coin_address: string,
+    blockchain: BlockchainsName,
+  ): Promise<Coin>;
 
   /** Consigue una [NFT] por su contract address */
-  getNFTByAddress(contract_address: string): Promise<NFT>;
+  getNFTByAddress(
+    contract_address: string,
+    blockchain: BlockchainsName,
+  ): Promise<Omit<NFT, "token_id">>;
 
   /** Consigue las candelas del tipo elegido */
   getCandleData(
@@ -74,7 +81,7 @@ export interface CoinsProvider {
     refresh_rate: number,
   ): Promise<Omit<Candle, "coin_id">[]>;
 
-  /** Consigue todas las candelas historicas */
+  /** Consigue todas las candelas historicas, puede ser un array muy largo, habria que testear eso */
   getAllHistoricalCandles(
     frequency: "hourly" | "daily",
     coin_name: string,

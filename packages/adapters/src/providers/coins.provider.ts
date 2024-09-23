@@ -7,6 +7,9 @@ import {
   BlockchainsName,
   blockchains,
   EveryBlockainsName,
+  NFT,
+  base_coins,
+  BlockchainCoin,
 } from "@repo/domain";
 import pLimit, { LimitFunction } from "p-limit";
 
@@ -69,6 +72,33 @@ const candlesResponseSchema = type([
   "number",
 ]).array();
 
+const tokenDataByAddressSchema = type({
+  data: {
+    attributes: {
+      symbol: "string",
+      coingecko_coin_id: "string",
+      "+": "delete",
+    },
+    "+": "delete",
+  },
+});
+
+const nftByAddressSchema = type({
+  id: "string",
+  symbol: "string",
+  image: { small: "string", "+": "delete" },
+  description: "string",
+  floor_price: {
+    usd: "number",
+    "+": "delete",
+  },
+  "+": "delete",
+});
+
+const coinDetailsSchemaWithPlatforms = coinDetailsSchema.merge({
+  platforms: "Record<string, string|null>",
+});
+
 export class CoinGecko implements CoinsProvider {
   readonly base_url: string = "https://pro-api.coingecko.com/api/v3";
 
@@ -93,10 +123,7 @@ export class CoinGecko implements CoinsProvider {
     };
   }
 
-  async getAllCoins(
-    base_coins: string[],
-    minimum_market_cap: number,
-  ): Promise<Coin[]> {
+  async getAllCoins(minimum_market_cap: number): Promise<Coin[]> {
     const response = await fetch(
       `${this.base_url}/coins/list?include_platform=true`,
       this.request_data,
@@ -109,7 +136,7 @@ export class CoinGecko implements CoinsProvider {
     // Se filtran los tokens que esten dentro de las blockchains que nos interesan
     const filteredList = parsedList.filter((coin) => {
       return (
-        base_coins.includes(coin.id) ||
+        base_coins.includes(coin.id as BlockchainCoin) ||
         Object.keys(coin.platforms).some((platform) =>
           EveryBlockainsName.includes(platform as BlockchainsName),
         )
@@ -153,7 +180,7 @@ export class CoinGecko implements CoinsProvider {
       .map((coin) => ({
         name: coin.id,
         symbol: coin.symbol,
-        provider: "coin_gecko",
+        provider: "coingecko",
         description: coin.description!.en,
         ath: coin.market_data!.ath.usd!,
         image_url: coin.image!.large,
@@ -250,8 +277,6 @@ export class CoinGecko implements CoinsProvider {
         })(response);
 
         if (parsedCoinDetails instanceof type.errors) {
-          console.log("Error!: ", parsedCoinDetails.summary);
-          console.log("Problem response: ", response);
           throw parsedCoinDetails;
         }
 
@@ -260,8 +285,6 @@ export class CoinGecko implements CoinsProvider {
     });
 
     const coinDetails = await Promise.all(detailsListPromises);
-
-    console.log("Detailed list: ", coinDetails.slice(0, 2));
 
     const mappedCoinDetails: Coin[] = coinDetails
       .filter(
@@ -281,7 +304,7 @@ export class CoinGecko implements CoinsProvider {
       .map((coin) => ({
         name: coin.id,
         symbol: coin.symbol,
-        provider: "coin_gecko",
+        provider: "coingecko",
         description: coin.description!.en,
         ath: coin.market_data!.ath.usd!,
         image_url: coin.image!.large,
@@ -301,6 +324,62 @@ export class CoinGecko implements CoinsProvider {
             decimal_place: detail.decimal_place!,
           })),
       }));
+
+    return mappedCoinDetails;
+  }
+
+  async getCoinByAddress(
+    coin_address: string,
+    blockchain: BlockchainsName,
+  ): Promise<Coin> {
+    // Consigo la id de coingecko
+    const response = await fetch(
+      `${this.base_url}/onchain/networks/${blockchain}/tokens/${coin_address}`,
+      this.request_data,
+    ).then((res) => res.json());
+
+    const parsedCoinData = tokenDataByAddressSchema(response);
+
+    if (parsedCoinData instanceof type.errors) throw parsedCoinData;
+
+    const coin_data = parsedCoinData.data.attributes;
+
+    const coinDetailsResponse = await fetch(
+      `
+      ${this.base_url}/coins/${coin_data.coingecko_coin_id}?localization=false&tickers=false&market_data=true&sparkline=false&community_data=false&developer_data=false`,
+      this.request_data,
+    ).then((res) => res.json());
+
+    const parsedCoinDetails = coinDetailsSchema.merge({
+      platforms: "Record<string, string|null>",
+    })(coinDetailsResponse);
+
+    if (parsedCoinDetails instanceof type.errors) {
+      throw parsedCoinDetails;
+    }
+
+    const mappedCoinDetails: Coin = {
+      name: coin_data.coingecko_coin_id,
+      symbol: coin_data.symbol,
+      provider: "coingecko",
+      description: parsedCoinDetails.description!.en,
+      ath: parsedCoinDetails.market_data!.ath.usd!,
+      image_url: parsedCoinDetails.image!.large,
+      market_cap: parsedCoinDetails.market_data!.market_cap.usd!,
+      price: parsedCoinDetails.market_data!.current_price!.usd!,
+      price_change_percentage_24h:
+        parsedCoinDetails.market_data!.price_change_percentage_24h!,
+      price_change_24h: parsedCoinDetails.market_data!.price_change_24h!,
+      // Me quedo con solo los contratos que me interesan
+      contracts: Object.entries(parsedCoinDetails.detail_platforms)
+        .filter(([key]) => EveryBlockainsName.includes(key as BlockchainsName))
+        .map(([blockchain, detail]) => ({
+          blockchain: blockchain as BlockchainsName,
+          contract_address: detail.contract_address,
+          decimal_place: detail.decimal_place!,
+        })),
+    };
+
     return mappedCoinDetails;
   }
 
@@ -340,5 +419,123 @@ export class CoinGecko implements CoinsProvider {
     }
 
     return market_data_array;
+  }
+
+  async getCoinMarketData(coin_name: string): Promise<CoinMarketData> {
+    const response = await fetch(
+      `
+      ${this.base_url}/coins/${coin_name}?localization=false&tickers=false&market_data=true&sparkline=false&community_data=false&developer_data=false`,
+      this.request_data,
+    ).then((res) => res.json());
+
+    const parsedCoinDetails = coinDetailsSchema(response);
+
+    if (parsedCoinDetails instanceof type.errors) throw parsedCoinDetails;
+
+    const market_data = parsedCoinDetails.market_data;
+
+    if (
+      !market_data ||
+      !market_data.ath.usd ||
+      !market_data.current_price?.usd ||
+      !market_data.market_cap.usd ||
+      !market_data.price_change_24h ||
+      !market_data.price_change_percentage_24h
+    )
+      throw Error("Unavailable market data: ", {
+        cause: `Got this response: ${JSON.stringify(parsedCoinDetails)}`,
+      });
+
+    // Asumo que como es una [Coin] que ya tenemos, va a haber Market data disponible
+    const coin_market_data: CoinMarketData = {
+      name: coin_name,
+      ath: market_data.ath.usd,
+      market_cap: market_data.market_cap.usd,
+      price: market_data.current_price.usd,
+      price_change_24h: market_data.price_change_24h,
+      price_change_percentage_24h: market_data.price_change_percentage_24h,
+    };
+
+    return coin_market_data;
+  }
+
+  async getAllHistoricalCandles(
+    frequency: "hourly" | "daily",
+    coin_name: string,
+  ): Promise<Omit<Candle, "coin_id">[]> {
+    const candle_data: Omit<Candle, "coin_id">[] = [];
+
+    // Hourly: Up to 744 hourly interval candles per req
+    // Daily: Up to 180 daily interval candles per req
+    // Earliest date: 9 February 2018 (1518147224 epoch time)
+
+    // Como muchas [Coin]s van a tener candles mucho mas recientes que 2018, vamos de adelante para atrás
+    let date_cursor = Date.now();
+    let is_oldest_page = false;
+    const max_intervals_in_ms =
+      frequency === "hourly" ? 744 * 60 * 60 * 1000 : 180 * 24 * 60 * 60 * 1000;
+
+    while (!is_oldest_page && date_cursor > 1518147224000) {
+      const response = await fetch(
+        `${this.base_url}/coins/${coin_name}/ohlc/range?vs_currency=usd&interval=${frequency}&from=${date_cursor - max_intervals_in_ms}&to=${date_cursor}`,
+        this.request_data,
+      );
+
+      const parsedCandles = candlesResponseSchema(response);
+
+      if (parsedCandles instanceof type.errors) throw parsedCandles;
+
+      const mappedCandles = parsedCandles.map((c) => ({
+        frequency,
+        timestamp: new Date(c[0]),
+        open: c[1],
+        high: c[2],
+        low: c[3],
+        close: c[4],
+      }));
+
+      // Si la cantidad de candelas devueltas es menor al tamaño maximo de la paginación, corto el loop
+      if (
+        frequency === "hourly"
+          ? mappedCandles.length < 744
+          : mappedCandles.length < 180
+      ) {
+        is_oldest_page = true;
+      }
+
+      candle_data.push(...mappedCandles);
+
+      // Resto 1 más para que la proxima request no overlapee en el query param 'to'
+      date_cursor -= max_intervals_in_ms + 1;
+    }
+
+    return candle_data;
+  }
+
+  async getNFTByAddress(
+    contract_address: string,
+    blockchain: BlockchainsName,
+  ): Promise<Omit<NFT, "token_id">> {
+    const response = await fetch(
+      `${this.base_url}/nfts/${blockchain}/contract/${contract_address}`,
+      this.request_data,
+    ).then((res) => res.json());
+
+    const parsedNFTData = nftByAddressSchema(response);
+
+    if (parsedNFTData instanceof type.errors) throw parsedNFTData;
+
+    const nft_data: Omit<NFT, "token_id"> = {
+      blockchain,
+      contract_address,
+      description: parsedNFTData.description,
+      image_url: parsedNFTData.image.small,
+      name: parsedNFTData.id,
+      provider: "coingecko",
+      price: parsedNFTData.floor_price.usd,
+      symbol: parsedNFTData.symbol,
+    };
+
+    return nft_data;
   }
 }

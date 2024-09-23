@@ -163,11 +163,22 @@ export class WalletsService<
       transaction_data.map(async (c) => {
         // Consigo la [Coin] o [NFT]
         if (c.type === "nft") {
-          const nft = await this.coinsService.getNFTByAddress(c.coin_address);
-          return { ...c, coin: nft, value_usd: nft.price };
+          const nft = await this.coinsService.getNFTByAddress(
+            blockchain,
+            c.coin_address,
+            c.token_id!,
+          );
+          return {
+            ...c,
+            coin: { ...nft, token_id: c.token_id! },
+            value_usd: nft.price,
+          };
         }
 
-        const coin = await this.coinsService.getCoinByAddress(c.coin_address);
+        const coin = await this.coinsService.getCoinByAddress(
+          c.coin_address,
+          blockchain,
+        );
 
         // Agarro los decimales que tiene en esta red esta [Coin]
         const decimal_place = coin.contracts.find(
@@ -193,7 +204,10 @@ export class WalletsService<
     >[] = await Promise.all(
       wallet_data.coins.map(async (c) => {
         // Consigo la [Coin] por su address, si no existe la busco y añado
-        const coin = await this.coinsService.getCoinByAddress(c.coin_address);
+        const coin = await this.coinsService.getCoinByAddress(
+          c.coin_address,
+          wallet_data.blockchain,
+        );
 
         // Agarro los decimales que tiene en esta red esta [Coin]
         const decimal_place = coin.contracts.find(

@@ -5,5 +5,7 @@ export type {
   Coin,
   CoinMarketData,
   SavedCoin,
+  NFT,
+  SavedNFT,
 } from "./core/coins.entities";
 export * from "./core/vars";

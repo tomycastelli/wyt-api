@@ -32,4 +32,7 @@ export const base_coins = Object.values(blockchains).map(
   (blockchain) => blockchain.coin,
 );
 
-export const providers = ["coin_gecko"];
+export type BlockchainCoin =
+  (typeof blockchains)[keyof typeof blockchains]["coin"];
+
+export const providers = ["coingecko"];

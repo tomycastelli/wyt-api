@@ -45,6 +45,8 @@ export const transactionType = type({
   hash: "string",
   block_timestamp: "Date",
   type: "'native'|'erc20'|'nft'",
+  // Esto es si es un NFT
+  "token_id?": "number",
   coin_address: "string",
   value: "number.integer",
   from_address: "string",

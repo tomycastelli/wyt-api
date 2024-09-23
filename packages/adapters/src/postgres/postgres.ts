@@ -6,12 +6,13 @@ import {
   CoinMarketData,
   CoinsRepository,
   SavedCoin,
+  NFT,
+  SavedNFT,
 } from "@repo/domain";
 import { and, eq, gte, lte, or, sql } from "drizzle-orm";
 import { drizzle, PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./schema";
-import { NFT, SavedNFT } from "../../../domain/src/core/coins.entities";
 
 export class CoinsPostgres implements CoinsRepository {
   private db: PostgresJsDatabase<typeof schema>;
@@ -147,9 +148,14 @@ export class CoinsPostgres implements CoinsRepository {
 
   async getNFTByAddress(
     contract_address: string,
+    token_id: number,
   ): Promise<SavedNFT | undefined> {
     const saved_nft = await this.db.query.nfts.findFirst({
-      where: (nfts, { eq }) => eq(nfts.contract_address, contract_address),
+      where: (nfts, { eq, and }) =>
+        and(
+          eq(nfts.contract_address, contract_address),
+          eq(nfts.token_id, token_id),
+        ),
     });
 
     return saved_nft;
