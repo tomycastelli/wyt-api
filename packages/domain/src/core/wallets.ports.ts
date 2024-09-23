@@ -20,7 +20,7 @@ export interface WalletsRepository {
   getWallet(
     address: string,
     blockchain: BlockchainsName,
-  ): Promise<CoinedWallet>;
+  ): Promise<CoinedWallet | undefined>;
   /** Consigue una lista de [Wallet]s segun la blockchain */
   getWalletsByBlockchain(
     blockchain: BlockchainsName,
@@ -28,15 +28,17 @@ export interface WalletsRepository {
   ): Promise<CoinedWallet[]>;
   /** Consigue las [Transaction]s de una [Wallet] de manera paginada */
   getTransactions(
-    address: string,
-    blockchain: BlockchainsName,
+    wallet_data: Wallet,
     transactions_page: number,
   ): Promise<Transaction[]>;
   /** Guarda una lista de [Transaction]s sin afectar el estado de la [Wallet].
   _Pensado para hacer backfill inicial del historial_ */
   saveTransactions(transactions: Transaction[]): Promise<void>;
   /** Actualiza el backfill status de una [Wallet] */
-  updateWalletBackfillStatus(status: "complete" | "pending"): Promise<void>;
+  updateWalletBackfillStatus(
+    wallet_data: Wallet,
+    status: "complete" | "pending",
+  ): Promise<void>;
   /** Guarda una [Transaction] y actualiza el estado de la o las [Wallet]s involucradas  */
   saveTransactionAndUpdateWallet(
     transaction_data: Transaction,

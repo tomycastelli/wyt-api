@@ -110,18 +110,19 @@ export class WalletsService<
     address: string,
     blockchain: BlockchainsName,
     transactions_page: number,
-  ): Promise<CoinedWalletWithTransactions> {
+  ): Promise<CoinedWalletWithTransactions | undefined> {
     // Consigo la [Wallet]
     const coined_wallet = await this.walletsRepository.getWallet(
       address,
       blockchain,
     );
+    if (!coined_wallet) return undefined;
+
     const valued_wallet = await this.getValuedWallet(coined_wallet);
 
     // Consigo las [Transaction]s
     const transaction_data = await this.walletsRepository.getTransactions(
-      address,
-      blockchain,
+      coined_wallet,
       transactions_page,
     );
     const valued_transactions: CoinedTransaction[] =
@@ -164,7 +165,10 @@ export class WalletsService<
     } while (loop_cursor !== undefined);
 
     // Si llego hasta acá sin tirar error, actualizo su status
-    await this.walletsRepository.updateWalletBackfillStatus("complete");
+    await this.walletsRepository.updateWalletBackfillStatus(
+      wallet_data,
+      "complete",
+    );
   }
 
   /** Recibe una [Transaction] y la guarda, cambiando el estado de la [Wallet] relacionada */

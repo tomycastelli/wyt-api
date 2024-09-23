@@ -47,7 +47,7 @@ export const transactionType = type({
   block_timestamp: "Date",
   type: "'native'|'erc20'|'nft'",
   // Esto es si es un NFT
-  "token_id?": "number",
+  token_id: "number|null",
   // Si es de tipo 'native', la coin es la nativa de la blockchain
   "coin_address?": "string",
   value: "bigint",
