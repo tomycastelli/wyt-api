@@ -11,6 +11,12 @@
 # deps
 node_modules/
 
+# builds
+**/dist/
+
+# migrations
+**/migrations/
+
 # env
 .env
 .env.production
