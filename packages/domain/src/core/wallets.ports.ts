@@ -1,5 +1,11 @@
 import { BlockchainsName, blockchains } from "./vars";
-import { CoinedWallet, Transaction, Wallet } from "./wallets.entities";
+import {
+  CoinedTransaction,
+  CoinedWallet,
+  SavedWallet,
+  Transaction,
+  Wallet,
+} from "./wallets.entities";
 
 export interface WalletsProvider {
   /** Busca una [Wallet] de acuerdo al address y el blockchain */
@@ -14,34 +20,34 @@ export interface WalletsProvider {
 }
 
 export interface WalletsRepository {
-  /** Guarda una [Wallet] */
-  saveWallet(wallet_data: CoinedWallet): Promise<void>;
-  /** Consigue una [Wallet] guardada con sus [Coin] relacionadas */
+  /** Guarda una [Wallet] y sus [Coin]s relacionadas */
+  saveWallet(coined_wallet: CoinedWallet): Promise<SavedWallet>;
+  /** Consigue una [Wallet] guardada */
   getWallet(
     address: string,
     blockchain: BlockchainsName,
-  ): Promise<CoinedWallet | undefined>;
+  ): Promise<SavedWallet | undefined>;
   /** Consigue una lista de [Wallet]s segun la blockchain */
   getWalletsByBlockchain(
     blockchain: BlockchainsName,
     wallets_page: number,
-  ): Promise<CoinedWallet[]>;
+  ): Promise<SavedWallet[]>;
   /** Consigue las [Transaction]s de una [Wallet] de manera paginada */
   getTransactions(
-    wallet_data: Wallet,
+    wallet_data: SavedWallet,
     transactions_page: number,
   ): Promise<Transaction[]>;
   /** Guarda una lista de [Transaction]s sin afectar el estado de la [Wallet].
   _Pensado para hacer backfill inicial del historial_ */
-  saveTransactions(transactions: Transaction[]): Promise<void>;
+  saveTransactions(transactions: CoinedTransaction[]): Promise<void>;
   /** Actualiza el backfill status de una [Wallet] */
   updateWalletBackfillStatus(
-    wallet_data: Wallet,
+    wallet_data: SavedWallet,
     status: "complete" | "pending",
   ): Promise<void>;
   /** Guarda una [Transaction] y actualiza el estado de la o las [Wallet]s involucradas  */
   saveTransactionAndUpdateWallet(
-    transaction_data: Transaction,
+    transaction_data: CoinedTransaction,
     blockchain: BlockchainsName,
   ): Promise<void>;
 }

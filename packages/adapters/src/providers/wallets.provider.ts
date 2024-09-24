@@ -2,7 +2,9 @@ import {
   blockchains,
   BlockchainsName,
   Transaction,
+  Transfer,
   Wallet,
+  WalletCoin,
   WalletsProvider,
 } from "@repo/domain";
 import {
@@ -100,6 +102,8 @@ class EthereumProvider implements WalletsProvider {
       alias: null,
       native_value: 0n,
     };
+
+    // Busco las coins que tiene
     let balances_data =
       await Moralis.EvmApi.wallets.getWalletTokenBalancesPrice({
         chain: this.blockchain_mapper[blockchain],
@@ -114,17 +118,41 @@ class EthereumProvider implements WalletsProvider {
 
     // Agrego coins hasta que no haya mas páginas
     do {
-      const coins = balances_data.result
+      const coins: WalletCoin[] = balances_data.result
         .filter((c) => !c.nativeToken && c.tokenAddress)
         .map((c) => ({
-          coin_address: String(c.tokenAddress!),
+          coin_address: c.tokenAddress!.checksum,
           value: c.balance.value.toBigInt(),
+          type: "coin",
+          token_id: null,
         }));
       wallet_data.coins.push(...coins);
       if (balances_data.hasNext()) {
         balances_data = await balances_data.next();
       }
     } while (balances_data.hasNext());
+
+    // Busco las nft que tiene
+    let nfts_data = await Moralis.EvmApi.nft.getWalletNFTs({
+      chain: this.blockchain_mapper[blockchain],
+      address,
+      excludeSpam: true,
+      mediaItems: false,
+    });
+
+    // Agrego nfts hasta que no haya mas páginas
+    do {
+      const coins: WalletCoin[] = nfts_data.result.map((c) => ({
+        coin_address: c.tokenAddress.checksum,
+        value: 0n,
+        type: "nft",
+        token_id: Number(c.tokenId),
+      }));
+      wallet_data.coins.push(...coins);
+      if (nfts_data.hasNext()) {
+        nfts_data = await nfts_data.next();
+      }
+    } while (nfts_data.hasNext());
 
     // Veo si tiene alias (ens domain en Ethereum)
     const ens_domain = await Moralis.EvmApi.resolve.resolveAddress({ address });
@@ -187,72 +215,61 @@ class EthereumProvider implements WalletsProvider {
     };
   }
 
+  // Helpers
+
   transactionsFromWalletHistory(
     transaction_history_data: EvmWalletHistoryTransaction[],
     wallet_data: Wallet,
   ): Transaction[] {
-    const transactions_data: Transaction[] = [];
-    for (const tx of transaction_history_data.filter(
-      (rt) => !rt.possibleSpam,
-    )) {
-      const block_timestamp = new Date(tx.blockTimestamp);
-      for (const erc20tx of tx.erc20Transfers) {
-        transactions_data.push({
+    const transactions_data: Transaction[] = transaction_history_data.map(
+      (th) => {
+        const transfers: Transfer[] = [];
+
+        for (const erc20tx of th.erc20Transfers) {
+          transfers.push({
+            type: "erc20",
+            coin_address: erc20tx.address.checksum,
+            from_address: erc20tx.fromAddress.checksum,
+            to_address: erc20tx.toAddress!.checksum,
+            value: BigInt(erc20tx.value),
+            token_id: null,
+          });
+        }
+
+        for (const nativeTx of th.nativeTransfers) {
+          transfers.push({
+            type: "native",
+            from_address: nativeTx.fromAddress.checksum,
+            to_address: nativeTx.toAddress!.checksum,
+            value: BigInt(nativeTx.value),
+            token_id: null,
+          });
+        }
+
+        for (const nftTx of th.nftTransfers) {
+          transfers.push({
+            type: "nft",
+            from_address: nftTx.fromAddress.checksum,
+            to_address: nftTx.toAddress!.checksum,
+            value: 0n,
+            coin_address: nftTx.tokenAddress.checksum,
+            token_id: Number(nftTx.tokenId),
+          });
+        }
+
+        return {
           blockchain: wallet_data.blockchain,
-          hash: tx.hash,
-          block_timestamp,
-          type: "erc20",
-          coin_address: erc20tx.address.checksum,
-          from_address: erc20tx.fromAddress.checksum,
-          to_address: erc20tx.toAddress!.checksum,
-          value: BigInt(erc20tx.value),
+          hash: th.hash,
+          block_timestamp: new Date(th.blockTimestamp),
+          transfers,
           fee: BigInt(
-            Number(tx.transactionFee!) *
+            Number(th.transactionFee!) *
               10 ** blockchains[wallet_data.blockchain].decimal_places,
           ),
-          summary: tx.summary,
-          token_id: null,
-        });
-      }
-
-      for (const nativeTx of tx.nativeTransfers) {
-        transactions_data.push({
-          blockchain: wallet_data.blockchain,
-          hash: tx.hash,
-          block_timestamp,
-          type: "native",
-          from_address: nativeTx.fromAddress.checksum,
-          to_address: nativeTx.toAddress!.checksum,
-          value: BigInt(nativeTx.value),
-          fee: BigInt(
-            Number(tx.transactionFee!) *
-              10 ** blockchains[wallet_data.blockchain].decimal_places,
-          ),
-          summary: tx.summary,
-          token_id: null,
-        });
-      }
-
-      for (const nftTx of tx.nftTransfers) {
-        transactions_data.push({
-          blockchain: wallet_data.blockchain,
-          hash: tx.hash,
-          block_timestamp,
-          type: "nft",
-          from_address: nftTx.fromAddress.checksum,
-          to_address: nftTx.toAddress!.checksum,
-          value: 0n,
-          coin_address: nftTx.tokenAddress.checksum,
-          token_id: Number(nftTx.tokenId),
-          fee: BigInt(
-            Number(tx.transactionFee!) *
-              10 ** blockchains[wallet_data.blockchain].decimal_places,
-          ),
-          summary: tx.summary,
-        });
-      }
-    }
-
+          summary: th.summary,
+        };
+      },
+    );
     return transactions_data;
   }
 }

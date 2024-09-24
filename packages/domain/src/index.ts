@@ -16,8 +16,11 @@ export type {
   CoinedWalletCoin,
   CoinedWalletWithTransactions,
   Transaction,
+  Transfer,
   ValuedWallet,
   ValuedWalletCoin,
   Wallet,
+  WalletCoin,
+  SavedWallet,
 } from "./core/wallets.entities";
 export * from "./core/vars";

@@ -1,5 +1,5 @@
 import { type } from "arktype";
-import { coinType, nftType, savedCoinType } from "./coins.entities";
+import { savedCoinType, savedNftType } from "./coins.entities";
 import { EveryBlockainsName } from "./vars";
 
 // Things to think:
@@ -9,10 +9,12 @@ import { EveryBlockainsName } from "./vars";
 export const walletCoin = type({
   coin_address: "string",
   value: "bigint",
+  type: "'nft'|'coin'",
+  token_id: "number|null",
 });
 
 export const coinedWalletCoin = walletCoin.merge({
-  coin: savedCoinType,
+  coin: type.enumerated(savedCoinType.infer, savedNftType.infer),
 });
 
 export const valuedWalletCoin = coinedWalletCoin.merge({
@@ -30,8 +32,12 @@ export const walletType = type({
   backfill_status: "'pending'|'complete'",
 });
 
+export const savedWalletType = walletType.merge({
+  id: "number.integer",
+});
+
 export const coinedWalletType = walletType.merge({
-  native_coin: coinType,
+  native_coin: savedCoinType,
   coins: coinedWalletCoin.array(),
 });
 
@@ -41,33 +47,54 @@ export const valuedWalletType = coinedWalletType.merge({
   coins: valuedWalletCoin.array(),
 });
 
-export const transactionType = type({
-  blockchain: ["===", ...EveryBlockainsName],
-  hash: "string",
-  block_timestamp: "Date",
+export const transferType = type({
   type: "'native'|'erc20'|'nft'",
+  value: "bigint",
+  from_address: "string",
+  to_address: "string",
   // Esto es si es un NFT
   token_id: "number|null",
   // Si es de tipo 'native', la coin es la nativa de la blockchain
   "coin_address?": "string",
-  value: "bigint",
+});
+
+export const coinedTransferType = transferType.merge({
+  coin: type.enumerated(savedCoinType.infer, savedNftType.infer),
+});
+
+export const valuedTransferType = coinedTransferType.merge({
+  value_usd: "number",
+});
+
+export const transactionType = type({
+  blockchain: ["===", ...EveryBlockainsName],
+  hash: "string",
+  block_timestamp: "Date",
+  transfers: transferType.array(),
   fee: "bigint",
-  from_address: "string",
-  to_address: "string",
   summary: "string",
 });
 
 export const coinedTransactionType = transactionType.merge({
-  value_usd: "number",
-  coin: type.enumerated(coinType.infer, nftType.infer),
+  transfers: coinedTransferType.array(),
+});
+
+export const valuedTransactionType = transactionType.merge({
+  transfers: valuedTransferType.array(),
 });
 
 export const coinedWalletWithTransactions = valuedWalletType.merge({
-  transactions: coinedTransactionType.array(),
+  transactions: valuedTransactionType.array(),
 });
 
-/** # Una [Wallet] en una blockchain */
+/** # Un balance de alguna coin o nft de una wallet */
+export type WalletCoin = typeof walletCoin.infer;
+
+/** # Una wallet en una blockchain */
 export type Wallet = typeof walletType.infer;
+
+/** # Una [Wallet] guardada */
+export type SavedWallet = typeof savedWalletType.infer;
 
 /** # Una [Wallet] con las [Coin] integradas */
 export type CoinedWallet = typeof coinedWalletType.infer;
@@ -78,14 +105,26 @@ export type ValuedWallet = typeof valuedWalletType.infer;
 /** # Una [WalletCoin] con la [Coin] integrada */
 export type CoinedWalletCoin = typeof coinedWalletCoin.infer;
 
-/** # Una transacción en una blockchain */
-export type Transaction = typeof transactionType.infer;
-
 /** # Una [WalletCoin] con su valor en USD y la [Coin] integrada */
 export type ValuedWalletCoin = typeof valuedWalletCoin.infer;
 
-/** # Una transferencia con su valor en USD en su momento */
+/** # Una transferencia dentro de una transacción */
+export type Transfer = typeof transferType.infer;
+
+/** # Una [Transfer] con la [Coin] integrada */
+export type CoinedTransfer = typeof coinedTransferType.infer;
+
+/** # Una [Transfer] con su valor en USD y la [Coin] integrada */
+export type ValuedTransfer = typeof valuedTransferType.infer;
+
+/** # Una transacción en una blockchain */
+export type Transaction = typeof transactionType.infer;
+
+/** # Una [Transaction] con [CoinedTransfer]s */
 export type CoinedTransaction = typeof coinedTransactionType.infer;
+
+/** # Una [Transaction] con [ValuedTransfer]s */
+export type ValuedTransaction = typeof valuedTransactionType.infer;
 
 /** # Una [Wallet] con sus transacciones valuadas */
 export type CoinedWalletWithTransactions =

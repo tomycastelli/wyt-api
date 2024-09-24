@@ -24,7 +24,10 @@ import {
   CoinedWallet,
   CoinedWalletCoin,
   CoinedWalletWithTransactions,
+  SavedWallet,
   Transaction,
+  ValuedTransaction,
+  ValuedTransfer,
   ValuedWallet,
   ValuedWalletCoin,
   Wallet,
@@ -63,46 +66,22 @@ export class WalletsService<
       blockchain,
     );
 
-    // Añado nuevas [Coin]s que pueda tener la nueva [Wallet] y no existan de antemano
-    const coins: CoinedWalletCoin[] = await Promise.all(
-      wallet_data.coins.map(async (c) => {
-        const coin = await this.coinsService.getCoinByAddress(
-          c.coin_address,
-          wallet_data.blockchain,
-        );
-        return { ...c, coin };
-      }),
-    );
-
-    const native_coin = await this.coinsService.getCoinByName(
-      blockchains[wallet_data.blockchain].coin,
-    );
-
-    const coined_wallet: CoinedWallet = {
-      ...wallet_data,
-      native_coin: native_coin!,
-      coins,
-    };
+    const valued_wallet = await this.getValuedWallet(wallet_data);
 
     // La guardo
-    await this.walletsRepository.saveWallet(coined_wallet);
-
-    // Tengo que convertirla en CoinedWallet
-    // Para eso busco las coins que tiene la wallet, puede pasar que no existan y las tenga que añadir
-    const valued_wallet = await this.getValuedWallet(coined_wallet);
+    await this.walletsRepository.saveWallet(valued_wallet);
 
     // Devuelvo las ultimas X transacciones de la [Wallet]
-    // Llamemoslas las 'mas recientes'
     // Y despues por atrás ya habiendo devuelto la Wallet, con mas tiempo, guardo todas
     const recent_transactions: Transaction[] =
       await this.walletsProvider.getRecentTransactions(wallet_data);
 
-    const coined_recent_transactions = await this.getCoinDataForTransactions(
+    const valued_recent_transactions = await this.getValuedTransactions(
       recent_transactions,
       blockchain,
     );
 
-    return { ...valued_wallet, transactions: coined_recent_transactions };
+    return { ...valued_wallet, transactions: valued_recent_transactions };
   }
 
   /** Consigue una [CoinedWalletWithTransactions] ya guardada en la DB */
@@ -112,21 +91,23 @@ export class WalletsService<
     transactions_page: number,
   ): Promise<CoinedWalletWithTransactions | undefined> {
     // Consigo la [Wallet]
-    const coined_wallet = await this.walletsRepository.getWallet(
+    const saved_wallet = await this.walletsRepository.getWallet(
       address,
       blockchain,
     );
-    if (!coined_wallet) return undefined;
+    if (!saved_wallet) return undefined;
 
-    const valued_wallet = await this.getValuedWallet(coined_wallet);
+    const valued_wallet = await this.getValuedWallet(saved_wallet);
 
     // Consigo las [Transaction]s
     const transaction_data = await this.walletsRepository.getTransactions(
-      coined_wallet,
+      saved_wallet,
       transactions_page,
     );
-    const valued_transactions: CoinedTransaction[] =
-      await this.getCoinDataForTransactions(transaction_data, blockchain);
+    const valued_transactions = await this.getValuedTransactions(
+      transaction_data,
+      blockchain,
+    );
 
     return { ...valued_wallet, transactions: valued_transactions };
   }
@@ -149,24 +130,29 @@ export class WalletsService<
 
   /** Hace el backfill de una [Wallet], osea conseguir todo su historial de transacciones
   Puede ser corrido en otro servidor para no congestionar la API, usando una queue */
-  public async backfillWallet(wallet_data: Wallet): Promise<void> {
+  public async backfillWallet(saved_wallet: SavedWallet): Promise<void> {
     let loop_cursor: string | undefined = undefined;
     do {
       const { transactions, cursor } =
         await this.walletsProvider.getTransactionHistory(
-          wallet_data,
+          saved_wallet,
           loop_cursor,
         );
 
       // Actualizo el cursor para la siguiente query
       loop_cursor = cursor;
 
-      await this.walletsRepository.saveTransactions(transactions);
+      const valued_transactions = await this.getValuedTransactions(
+        transactions,
+        saved_wallet.blockchain,
+      );
+
+      await this.walletsRepository.saveTransactions(valued_transactions);
     } while (loop_cursor !== undefined);
 
     // Si llego hasta acá sin tirar error, actualizo su status
     await this.walletsRepository.updateWalletBackfillStatus(
-      wallet_data,
+      saved_wallet,
       "complete",
     );
   }
@@ -176,94 +162,124 @@ export class WalletsService<
     transaction_data: Transaction,
     blockchain: BlockchainsName,
   ): Promise<void> {
+    const [valued_transaction] = await this.getValuedTransactions(
+      [transaction_data],
+      blockchain,
+    );
     await this.walletsRepository.saveTransactionAndUpdateWallet(
-      transaction_data,
+      valued_transaction!,
       blockchain,
     );
   }
 
   /// Helper functions:
 
-  /** Consigue las [Coins] relacionadas a las transacciones, incluyendo valuaciones  */
-  async getCoinDataForTransactions(
+  /** Consigue las [Coins] relacionadas a las transacciones, insertandolas si no existían, incluyendo valuaciones  */
+  async getValuedTransactions(
     transaction_data: Transaction[],
     blockchain: BlockchainsName,
-  ): Promise<CoinedTransaction[]> {
-    const coined_transactions = await Promise.all(
+  ): Promise<ValuedTransaction[]> {
+    const valued_transactions = await Promise.all(
       transaction_data.map(async (c) => {
-        // Consigo la [Coin] o [NFT]
+        const valued_transfers: ValuedTransfer[] = await Promise.all(
+          c.transfers.map(async (tr) => {
+            let coin, value_usd;
 
-        if (c.type === "nft") {
-          const nft = await this.coinsService.getNFTByAddress(
-            blockchain,
-            c.coin_address!,
-            c.token_id!,
-          );
-          return {
-            ...c,
-            coin: { ...nft, token_id: c.token_id! },
-            value_usd: nft.price,
-          };
-        }
-
-        // Puedo asumir que no es undefined porque si es nativa, la coin ya existe por su nombre
-        const coin =
-          c.type === "native"
-            ? await this.coinsService.getCoinByName(
-                blockchains[blockchain].coin,
-              )
-            : await this.coinsService.getCoinByAddress(
-                c.coin_address!,
+            if (tr.type === "nft") {
+              const nft = await this.coinsService.getNFTByAddress(
                 blockchain,
+                tr.coin_address!,
+                tr.token_id!,
               );
+              coin = { ...nft, token_id: tr.token_id! };
+              value_usd = nft.price;
+            } else {
+              coin =
+                tr.type === "native"
+                  ? await this.coinsService.getCoinByName(
+                      blockchains[blockchain].coin,
+                    )
+                  : await this.coinsService.getCoinByAddress(
+                      tr.coin_address!,
+                      blockchain,
+                    );
 
-        const decimal_places =
-          c.type === "native"
-            ? blockchains[c.blockchain].decimal_places
-            : coin!.contracts.find((co) => co.blockchain === c.blockchain)!
-                .decimal_place;
+              const decimal_places =
+                tr.type === "native"
+                  ? blockchains[c.blockchain].decimal_places
+                  : coin!.contracts.find(
+                      (co) => co.blockchain === c.blockchain,
+                    )!.decimal_place;
 
-        // El valor en la wallet dividido por los decimales en la blockchain multiplicado por el precio guardado
-        const value_usd =
-          (Number(c.value) * coin!.price) /
-          Number(BigInt(10 ** decimal_places));
+              value_usd =
+                (Number(tr.value) * coin!.price) /
+                Number(BigInt(10 ** decimal_places));
+            }
 
-        return { ...c, coin: coin!, value_usd };
+            return { ...tr, coin: coin!, value_usd };
+          }),
+        );
+
+        return { ...c, transfers: valued_transfers };
       }),
     );
-
-    return coined_transactions;
+    return valued_transactions;
   }
 
-  /** Consigue las [Coin]s relacionadas con la [Wallet], incluyendo valuaciones */
-  async getValuedWallet(wallet_data: CoinedWallet): Promise<ValuedWallet> {
+  /** Consigue las [Coin]s relacionadas con la [Wallet], añadiendolas si no existen e incluyendo valuaciones */
+  async getValuedWallet(wallet_data: Wallet): Promise<ValuedWallet> {
     let total_value_usd = 0;
     const partial_valued_wallet_coins: Omit<
       ValuedWalletCoin,
       "percentage_in_wallet"
     >[] = await Promise.all(
       wallet_data.coins.map(async (c) => {
-        // Agarro los decimales que tiene en esta red esta [Coin]
-        const decimal_place = c.coin.contracts.find(
-          (c) => c.blockchain === wallet_data.blockchain,
-        )!.decimal_place;
+        if (c.type === "coin") {
+          const coin = await this.coinsService.getCoinByAddress(
+            c.coin_address,
+            wallet_data.blockchain,
+          );
+          // Agarro los decimales que tiene en esta red esta [Coin]
+          const decimal_place = coin.contracts.find(
+            (c) => c.blockchain === wallet_data.blockchain,
+          )!.decimal_place;
 
-        // El valor en la wallet dividido por los decimales en la blockchain multiplicado por el precio guardado
-        const value_usd =
-          Number(c.value / BigInt(10 ** decimal_place)) * c.coin.price;
+          // El valor en la wallet dividido por los decimales en la blockchain multiplicado por el precio guardado
+          const value_usd =
+            Number(c.value / BigInt(10 ** decimal_place)) * coin.price;
 
-        // Sumo al valor total de la wallet
-        total_value_usd += value_usd;
+          // Sumo al valor total de la wallet
+          total_value_usd += value_usd;
 
-        return { ...c, value_usd };
+          return { ...c, value_usd, coin };
+        } else {
+          // Es un NFT
+          const nft = await this.coinsService.getNFTByAddress(
+            wallet_data.blockchain,
+            c.coin_address,
+            c.token_id!,
+          );
+
+          // El valor en la wallet dividido por los decimales en la blockchain multiplicado por el precio guardado
+          const value_usd = nft.price;
+
+          // Sumo al valor total de la wallet
+          total_value_usd += value_usd;
+
+          return { ...c, value_usd, coin: nft };
+        }
       }),
+    );
+
+    const native_coin = await this.coinsService.getCoinByName(
+      blockchains[wallet_data.blockchain].coin,
     );
 
     // Sumo el valor de la coin nativa
     const decimal_places = blockchains[wallet_data.blockchain].decimal_places;
 
     const native_value_usd =
-      (Number(wallet_data.native_value) * wallet_data.native_coin.price) /
+      (Number(wallet_data.native_value) * native_coin!.price) /
       Number(BigInt(10 ** decimal_places));
 
     total_value_usd += native_value_usd;
@@ -279,6 +295,7 @@ export class WalletsService<
 
     const valued_wallet: ValuedWallet = {
       ...wallet_data,
+      native_coin: native_coin!,
       coins: valued_wallet_coins,
       native_value_usd,
       total_value_usd,

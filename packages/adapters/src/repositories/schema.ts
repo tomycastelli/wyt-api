@@ -196,7 +196,30 @@ export const walletCoins = pgTable(
   },
 );
 
+export const walletNFTs = pgTable(
+  "wallet_nfts",
+  {
+    wallet_id: integer("wallet_id")
+      .references(() => wallets.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      })
+      .notNull(),
+    nft_id: integer("nft_id")
+      .references(() => nfts.id, { onDelete: "cascade", onUpdate: "cascade" })
+      .notNull(),
+  },
+  (table) => {
+    return {
+      pk: primaryKey({
+        columns: [table.wallet_id, table.nft_id],
+      }),
+    };
+  },
+);
+
 export const transactions = pgTable("transactions", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   hash: varchar("hash", { length: 100 }).notNull(),
   blockchain: blockchainsEnum("blockchain")
     .notNull()
@@ -206,6 +229,18 @@ export const transactions = pgTable("transactions", {
     mode: "date",
     withTimezone: false,
   }).notNull(),
+  fee: blockchainValue("fee").notNull(),
+  summary: text("summary").notNull(),
+});
+
+export const transfers = pgTable("transfers", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  transaction_id: integer("transaction_id")
+    .references(() => transactions.id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+    })
+    .notNull(),
   type: transactionTypeEnum("type").notNull(),
   coin_id: integer("coin_id")
     .references(() => coins.id, { onDelete: "cascade", onUpdate: "cascade" })
@@ -214,8 +249,6 @@ export const transactions = pgTable("transactions", {
   from_address: varchar("from_address", { length: 50 }).notNull(),
   to_address: varchar("to_address", { length: 50 }).notNull(),
   value: blockchainValue("value").notNull(),
-  fee: blockchainValue("fee").notNull(),
-  summary: text("summary").notNull(),
 });
 
 export const candles = pgTable(
@@ -248,6 +281,11 @@ export const coinsRelations = relations(coins, ({ many }) => ({
   walletCoins: many(walletCoins),
 }));
 
+export const nftsRelations = relations(nfts, ({ one }) => ({
+  // Relación one-to-one entre nfts y wallets
+  walletNFTs: one(walletNFTs),
+}));
+
 export const contractsRelations = relations(contracts, ({ one }) => ({
   coin: one(coins, {
     fields: [contracts.coin_id],
@@ -257,6 +295,7 @@ export const contractsRelations = relations(contracts, ({ one }) => ({
 
 export const walletRelations = relations(wallets, ({ many }) => ({
   walletCoins: many(walletCoins),
+  walletNFTs: many(walletNFTs),
 }));
 
 export const walletCoinsRelations = relations(walletCoins, ({ one }) => ({
@@ -267,5 +306,27 @@ export const walletCoinsRelations = relations(walletCoins, ({ one }) => ({
   wallet: one(wallets, {
     fields: [walletCoins.wallet_id],
     references: [wallets.id],
+  }),
+}));
+
+export const walletNFTsRelations = relations(walletNFTs, ({ one }) => ({
+  wallet: one(wallets, {
+    fields: [walletNFTs.wallet_id],
+    references: [wallets.id],
+  }),
+  nft: one(nfts, {
+    fields: [walletNFTs.nft_id],
+    references: [nfts.id],
+  }),
+}));
+
+export const transactionsRelations = relations(transactions, ({ many }) => ({
+  transfers: many(transfers),
+}));
+
+export const transfersRelations = relations(transfers, ({ one }) => ({
+  transaction: one(transactions, {
+    fields: [transfers.transaction_id],
+    references: [transactions.id],
   }),
 }));
