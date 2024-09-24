@@ -49,7 +49,10 @@ export class CoinsService<
     coin_address: string,
     blockchain: BlockchainsName,
   ): Promise<SavedCoin> {
-    const coin = await this.coinsRepository.getCoinByAddress(coin_address);
+    const coin = await this.coinsRepository.getCoinByAddress(
+      coin_address,
+      blockchain,
+    );
     // Si la [Coin] ya esta guardada la devuelvo, actualizando la market data antes
     if (coin) {
       const market_data = await this.coinsProvider.getCoinMarketData(coin.name);

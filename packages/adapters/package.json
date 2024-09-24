@@ -6,9 +6,9 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "generate": "drizzle-kit generate --config=src/postgres/drizzle.config.ts",
-    "migrate": "drizzle-kit migrate --config=src/postgres/drizzle.config.ts",
-    "db-push": "drizzle-kit push --config=src/postgres/drizzle.config.ts"
+    "generate": "drizzle-kit generate --config=src/repositories/drizzle.config.ts",
+    "migrate": "drizzle-kit migrate --config=src/repositories/drizzle.config.ts",
+    "db-push": "drizzle-kit push --config=src/repositories/drizzle.config.ts"
   },
   "exports": {
     ".": "./src/index.ts"

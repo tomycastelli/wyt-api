@@ -5,12 +5,34 @@ import { getPath } from "hono/utils/url";
 import { prettyJSON } from "hono/pretty-json";
 import { requestId } from "hono/request-id";
 import { trimTrailingSlash } from "hono/trailing-slash";
-import { BlockainsName, blockchains, CoinsService } from "@repo/domain";
-import { CoinGecko, CoinsPostgres } from "@repo/adapters";
+import {
+  BlockchainsName,
+  blockchains,
+  CoinsService,
+  EveryBlockainsName,
+  WalletsService,
+} from "@repo/domain";
+import {
+  CoinGecko,
+  CoinsPostgres,
+  WalletsPostgres,
+  WalletsProviderAdapters,
+} from "@repo/adapters";
 import { type } from "arktype";
 import "dotenv/config";
 import { logger } from "./logger";
 import { compress } from "hono/compress";
+
+// Deserialización de BigInts
+declare global {
+  interface BigInt {
+    toJSON(): Number;
+  }
+}
+
+BigInt.prototype.toJSON = function () {
+  return Number(this);
+};
 
 // El servidor Node
 const app = new Hono();
@@ -156,7 +178,7 @@ coins_routes.get(
 
     const page_size = 30;
     const savedCoins = await coins_service.getCoinsByBlockchain(
-      blockchain as BlockainsName,
+      blockchain as BlockchainsName,
       page ?? 1,
       page_size,
       name_search,
@@ -199,7 +221,41 @@ coins_routes.get(
   },
 );
 
+const wallets_routes = new Hono();
+
+const wallets_repository = new WalletsPostgres(process.env.POSTGRES_URL ?? "");
+const wallets_provider = new WalletsProviderAdapters(
+  process.env.MORALIS_API_KEY ?? "",
+  "",
+  "",
+);
+
+await wallets_provider.initialize();
+
+// El servicio de Wallets
+const wallets_service = new WalletsService(
+  wallets_repository,
+  wallets_provider,
+  coins_service,
+);
+
+wallets_routes.post(
+  "/add",
+  arktypeValidator(
+    "json",
+    type({ address: "string", blockchain: ["===", ...EveryBlockainsName] }),
+  ),
+  async (c) => {
+    const { address, blockchain } = c.req.valid("json");
+
+    const wallet_with_tx = await wallets_service.addWallet(address, blockchain);
+
+    return c.json(wallet_with_tx);
+  },
+);
+
 app.route("/coins", coins_routes);
+app.route("/wallets", wallets_routes);
 
 const port = 3000;
 console.log(`Server is running on port ${port}`);

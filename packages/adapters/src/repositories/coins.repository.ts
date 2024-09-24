@@ -125,17 +125,31 @@ export class CoinsPostgres implements CoinsRepository {
     return coin;
   }
 
-  async getCoinByAddress(coin_address: string): Promise<SavedCoin | undefined> {
+  async getCoinByAddress(
+    coin_address: string,
+    blockchain: BlockchainsName,
+  ): Promise<SavedCoin | undefined> {
+    const [contract] = await this.db
+      .select()
+      .from(schema.contracts)
+      .where(
+        and(
+          eq(schema.contracts.contract_address, coin_address),
+          eq(schema.contracts.blockchain, blockchain),
+        ),
+      )
+      .limit(1);
+
+    if (!contract) return undefined;
+
     const coin = await this.db.query.coins.findFirst({
+      where: (coins, { eq }) => eq(coins.id, contract.coin_id),
       with: {
-        contracts: {
-          where: (contracts, { eq }) =>
-            eq(contracts.contract_address, coin_address),
-        },
+        contracts: true,
       },
     });
 
-    return coin;
+    return coin!;
   }
 
   async saveNFTs(nfts: NFT[]): Promise<SavedNFT[]> {

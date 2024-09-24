@@ -214,6 +214,7 @@ export const transactions = pgTable("transactions", {
   from_address: varchar("from_address", { length: 50 }).notNull(),
   to_address: varchar("to_address", { length: 50 }).notNull(),
   value: blockchainValue("value").notNull(),
+  fee: blockchainValue("fee").notNull(),
   summary: text("summary").notNull(),
 });
 

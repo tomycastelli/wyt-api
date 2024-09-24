@@ -1,4 +1,4 @@
-import { base_coins, blockchains } from "./vars";
+import { blockchains } from "./vars";
 import moment from "moment";
 import Fuse from "fuse.js";
 /// Logica de negocio para el servicio de Tokens
@@ -13,9 +13,9 @@ import Fuse from "fuse.js";
 export class CoinsService {
     coinsRepository;
     coinsProvider;
-    constructor(coinsRepository, coinsProvider) {
-        this.coinsRepository = coinsRepository;
-        this.coinsProvider = coinsProvider;
+    constructor(repository, provider) {
+        this.coinsRepository = repository;
+        this.coinsProvider = provider;
     }
     /** Devuelve todas las [Coin]s disponibles */
     async listAllCoins() {
@@ -29,6 +29,33 @@ export class CoinsService {
     async getCoinByName(coin_name) {
         return await this.coinsRepository.getCoinByName(coin_name);
     }
+    /** Devuelve una [Coin] por su contract address */
+    async getCoinByAddress(coin_address, blockchain) {
+        const coin = await this.coinsRepository.getCoinByAddress(coin_address, blockchain);
+        // Si la [Coin] ya esta guardada la devuelvo, actualizando la market data antes
+        if (coin) {
+            const market_data = await this.coinsProvider.getCoinMarketData(coin.name);
+            await this.coinsRepository.saveMarketData([market_data]);
+            return coin;
+        }
+        const newCoin = await this.coinsProvider.getCoinByAddress(coin_address, blockchain);
+        const [savedCoin] = await this.coinsRepository.saveCoins([newCoin]);
+        // Se que no es undefined porque le pase solo un elemento y estoy agarrando el primero
+        return savedCoin;
+    }
+    /** Devuelve una [NFT] por su contract_address y token_id */
+    async getNFTByAddress(blockchain, contract_address, token_id) {
+        let nft = await this.coinsRepository.getNFTByAddress(contract_address, token_id);
+        // Si la [NFT] ya esta guardada la devuelvo
+        if (nft)
+            return nft;
+        const newNFT = await this.coinsProvider.getNFTByAddress(contract_address, blockchain);
+        const [savedNFT] = await this.coinsRepository.saveNFTs([
+            { ...newNFT, token_id },
+        ]);
+        // Se que no es undefined porque le pase solo un elemento y estoy agarrando el primero
+        return savedNFT;
+    }
     async getCoinsByBlockchain(blockchain, page_number, page_size, name_search) {
         const coinsData = await this.coinsRepository.getCoinsByBlockchain(blockchain, page_number, page_size);
         if (name_search) {
@@ -39,14 +66,14 @@ export class CoinsService {
     }
     /** Guarda las [Coin]s mas recientes */
     async saveLatestCoins() {
-        const latestCoins = await this.coinsProvider.getLatestCoins(blockchains, 100_000);
+        const latestCoins = await this.coinsProvider.getLatestCoins(Object.keys(blockchains), 100_000);
         const savedCoins = await this.coinsRepository.saveCoins(latestCoins);
         return savedCoins;
     }
     /** Guardo todas las [Coin]s disponibles */
     async saveAllCoins() {
         // Pido coins con capitalizacion mayor a 100_000 USD
-        const allCoins = await this.coinsProvider.getAllCoins(blockchains, base_coins, 100_000);
+        const allCoins = await this.coinsProvider.getAllCoins(100_000);
         const savedCoins = await this.coinsRepository.saveCoins(allCoins);
         return savedCoins;
     }

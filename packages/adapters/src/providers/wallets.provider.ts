@@ -1,4 +1,5 @@
 import {
+  blockchains,
   BlockchainsName,
   Transaction,
   Wallet,
@@ -24,6 +25,10 @@ export class WalletsProviderAdapters implements WalletsProvider {
     this.ethereumProvider = new EthereumProvider(moralis_api_key);
     // this.bitcoinProvider = new BitcoinProvider();
     // this.solanaProvider = new SolanaProvider();
+  }
+
+  async initialize() {
+    await this.ethereumProvider.initialize();
   }
 
   async getWallet(
@@ -116,7 +121,9 @@ class EthereumProvider implements WalletsProvider {
           value: c.balance.value.toBigInt(),
         }));
       wallet_data.coins.push(...coins);
-      balances_data = await balances_data.next();
+      if (balances_data.hasNext()) {
+        balances_data = await balances_data.next();
+      }
     } while (balances_data.hasNext());
 
     // Veo si tiene alias (ens domain en Ethereum)
@@ -195,11 +202,16 @@ class EthereumProvider implements WalletsProvider {
           hash: tx.hash,
           block_timestamp,
           type: "erc20",
-          coin_address: String(erc20tx.address),
-          from_address: String(erc20tx.fromAddress),
-          to_address: String(erc20tx.toAddress),
+          coin_address: erc20tx.address.checksum,
+          from_address: erc20tx.fromAddress.checksum,
+          to_address: erc20tx.toAddress!.checksum,
           value: BigInt(erc20tx.value),
+          fee: BigInt(
+            Number(tx.transactionFee!) *
+              10 ** blockchains[wallet_data.blockchain].decimal_places,
+          ),
           summary: tx.summary,
+          token_id: null,
         });
       }
 
@@ -209,10 +221,15 @@ class EthereumProvider implements WalletsProvider {
           hash: tx.hash,
           block_timestamp,
           type: "native",
-          from_address: String(nativeTx.fromAddress),
-          to_address: String(nativeTx.toAddress),
+          from_address: nativeTx.fromAddress.checksum,
+          to_address: nativeTx.toAddress!.checksum,
           value: BigInt(nativeTx.value),
+          fee: BigInt(
+            Number(tx.transactionFee!) *
+              10 ** blockchains[wallet_data.blockchain].decimal_places,
+          ),
           summary: tx.summary,
+          token_id: null,
         });
       }
 
@@ -222,11 +239,15 @@ class EthereumProvider implements WalletsProvider {
           hash: tx.hash,
           block_timestamp,
           type: "nft",
-          from_address: String(nftTx.fromAddress),
-          to_address: String(nftTx.toAddress),
+          from_address: nftTx.fromAddress.checksum,
+          to_address: nftTx.toAddress!.checksum,
           value: 0n,
-          coin_address: String(nftTx.tokenAddress),
+          coin_address: nftTx.tokenAddress.checksum,
           token_id: Number(nftTx.tokenId),
+          fee: BigInt(
+            Number(tx.transactionFee!) *
+              10 ** blockchains[wallet_data.blockchain].decimal_places,
+          ),
           summary: tx.summary,
         });
       }

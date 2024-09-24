@@ -34,7 +34,10 @@ export interface CoinsRepository {
   ): Promise<Candle[]>;
   getCoinById(coin_id: number): Promise<SavedCoin | undefined>;
   getCoinByName(coin_name: string): Promise<SavedCoin | undefined>;
-  getCoinByAddress(coin_address: string): Promise<SavedCoin | undefined>;
+  getCoinByAddress(
+    coin_address: string,
+    blockchain: BlockchainsName,
+  ): Promise<SavedCoin | undefined>;
 
   getNFTByAddress(
     contract_address: string,

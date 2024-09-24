@@ -34,14 +34,16 @@ export class WalletsPostgres implements WalletsRepository {
         })
         .returning();
 
-      // Guardo las relaciones wallet-coins
-      await tx.insert(schema.walletCoins).values(
-        coined_wallet.coins.map((c) => ({
-          coin_id: c.coin.id,
-          wallet_id: saved_wallet!.id,
-          value: c.value,
-        })),
-      );
+      if (coined_wallet.coins.length > 0) {
+        // Guardo las relaciones wallet-coins
+        await tx.insert(schema.walletCoins).values(
+          coined_wallet.coins.map((c) => ({
+            coin_id: c.coin.id,
+            wallet_id: saved_wallet!.id,
+            value: c.value,
+          })),
+        );
+      }
     });
   }
 
@@ -183,14 +185,15 @@ export class WalletsPostgres implements WalletsRepository {
           ),
         );
 
-      // En este caso tengo que restarle
+      // En este caso tengo que restarle el value de la transaction y la fee
+      // Probablemente tenga que modelar mejor las transacciones para que puedan incluir mas de un movimiento :)
       if (from_wallet) {
         // Si es nativa, cambio directamente el valor de la tabla wallets
         if (transaction_data.type === "native") {
           await tx
             .update(schema.wallets)
             .set({
-              native_value: sql`${schema.wallets.native_value} - ${transaction_data.value}`,
+              native_value: sql`${schema.wallets.native_value} - ${transaction_data.value + transaction_data.fee}`,
             })
             .where(eq(schema.wallets.id, from_wallet.id));
         } else {

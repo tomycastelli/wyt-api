@@ -51,6 +51,7 @@ export const transactionType = type({
   // Si es de tipo 'native', la coin es la nativa de la blockchain
   "coin_address?": "string",
   value: "bigint",
+  fee: "bigint",
   from_address: "string",
   to_address: "string",
   summary: "string",

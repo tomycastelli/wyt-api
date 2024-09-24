@@ -144,12 +144,10 @@ export class CoinGecko implements CoinsProvider {
 
     // Se filtran los tokens que esten dentro de las blockchains que nos interesan
     const filteredList = parsedList.filter((coin) => {
-      return (
-        base_coins.includes(coin.id as BlockchainCoin) ||
-        Object.keys(coin.platforms).some((platform) =>
-          EveryBlockainsName.includes(platform as BlockchainsName),
-        )
-      );
+      return base_coins.includes(coin.id as BlockchainCoin);
+      // || Object.keys(coin.platforms).some((platform) =>
+      //   EveryBlockainsName.includes(platform as BlockchainsName),
+      // )
     });
 
     // Para cada token se consulta el resto de info:

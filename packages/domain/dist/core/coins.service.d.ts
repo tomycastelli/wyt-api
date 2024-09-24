@@ -1,15 +1,20 @@
-import { Candle, SavedCoin } from "./entities";
-import { CoinsProvider, CoinsRepository } from "./ports";
+import { Candle, SavedCoin, SavedNFT } from "./coins.entities";
+import { CoinsProvider, CoinsRepository } from "./coins.ports";
+import { BlockchainsName } from "./vars";
 export declare class CoinsService<TProvider extends CoinsProvider, TRepository extends CoinsRepository> {
     private coinsRepository;
     private coinsProvider;
-    constructor(coinsRepository: TRepository, coinsProvider: TProvider);
+    constructor(repository: TRepository, provider: TProvider);
     /** Devuelve todas las [Coin]s disponibles */
     listAllCoins(): Promise<SavedCoin[]>;
     /** Devuelve una [Coin] por id */
     getCoinById(id: number): Promise<SavedCoin | undefined>;
     /** Devuelve una [Coin] por su nombre */
     getCoinByName(coin_name: string): Promise<SavedCoin | undefined>;
+    /** Devuelve una [Coin] por su contract address */
+    getCoinByAddress(coin_address: string, blockchain: BlockchainsName): Promise<SavedCoin>;
+    /** Devuelve una [NFT] por su contract_address y token_id */
+    getNFTByAddress(blockchain: BlockchainsName, contract_address: string, token_id: number): Promise<SavedNFT>;
     getCoinsByBlockchain(blockchain: string, page_number: number, page_size: number, name_search: string | undefined): Promise<SavedCoin[]>;
     /** Guarda las [Coin]s mas recientes */
     saveLatestCoins(): Promise<SavedCoin[]>;

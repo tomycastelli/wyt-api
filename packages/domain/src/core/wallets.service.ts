@@ -217,14 +217,16 @@ export class WalletsService<
                 blockchain,
               );
 
-        // Agarro los decimales que tiene en esta red esta [Coin]
-        const decimal_place = coin!.contracts.find(
-          (c) => c.blockchain === blockchain,
-        )!.decimal_place;
+        const decimal_places =
+          c.type === "native"
+            ? blockchains[c.blockchain].decimal_places
+            : coin!.contracts.find((co) => co.blockchain === c.blockchain)!
+                .decimal_place;
 
         // El valor en la wallet dividido por los decimales en la blockchain multiplicado por el precio guardado
         const value_usd =
-          Number(c.value / BigInt(10 ** decimal_place)) * coin!.price;
+          (Number(c.value) * coin!.price) /
+          Number(BigInt(10 ** decimal_places));
 
         return { ...c, coin: coin!, value_usd };
       }),
@@ -258,12 +260,12 @@ export class WalletsService<
     );
 
     // Sumo el valor de la coin nativa
-    const decimal_places =
-      blockchains[wallet_data.blockchain as BlockchainsName].decimal_places;
+    const decimal_places = blockchains[wallet_data.blockchain].decimal_places;
 
     const native_value_usd =
-      Number(wallet_data.native_value / BigInt(10 ** decimal_places)) *
-      wallet_data.native_coin.price;
+      (Number(wallet_data.native_value) * wallet_data.native_coin.price) /
+      Number(BigInt(10 ** decimal_places));
+
     total_value_usd += native_value_usd;
 
     // Calculo porcentajes
