@@ -218,6 +218,19 @@ export class WalletsPostgres implements WalletsRepository {
         .values({ ...transaction_data, fee: Number(transaction_data) })
         .returning({ id: schema.transactions.id });
 
+      // Si es from_wallet, le tengo que restar el fee
+      await tx
+        .update(schema.wallets)
+        .set({
+          native_value: sql`${schema.wallets.native_value} - ${Number(transaction_data.fee)}`,
+        })
+        .where(
+          and(
+            eq(schema.wallets.address, transaction_data.from_address),
+            eq(schema.wallets.blockchain, transaction_data.blockchain),
+          ),
+        );
+
       await Promise.all(
         transaction_data.transfers.map(async (transfer) => {
           const coin_id = await this.getCoinIdOfTransfer(
@@ -254,7 +267,7 @@ export class WalletsPostgres implements WalletsRepository {
               ),
             );
 
-          // En este caso tengo que restarle el value de la transaction y la fee
+          // En este caso tengo que restarle el value de la transaction
           // Asumo que la las nfts y las coins ya existen en esa [Wallet], sino no podrían salir de ella
           if (from_wallet) {
             // Si es nativa, cambio directamente el valor de la tabla wallets
@@ -262,15 +275,15 @@ export class WalletsPostgres implements WalletsRepository {
               await tx
                 .update(schema.wallets)
                 .set({
-                  native_value: sql`${schema.wallets.native_value} - ${transfer.value + transaction_data.fee}`,
+                  native_value: sql`${schema.wallets.native_value} - ${Number(transfer.value)}`,
                 })
                 .where(eq(schema.wallets.id, from_wallet.id));
-            } else if (transfer.type === "erc20") {
+            } else if (transfer.type === "token") {
               // Cambio en la tabla walletCoins
               await tx
                 .update(schema.walletCoins)
                 .set({
-                  value: sql`${schema.walletCoins.value} - ${transfer.value}`,
+                  value: sql`${schema.walletCoins.value} - ${Number(transfer.value)}`,
                 })
                 .where(
                   and(
@@ -298,10 +311,10 @@ export class WalletsPostgres implements WalletsRepository {
               await tx
                 .update(schema.wallets)
                 .set({
-                  native_value: sql`${schema.wallets.native_value} - ${transfer.value}`,
+                  native_value: sql`${schema.wallets.native_value} - ${Number(transfer.value)}`,
                 })
                 .where(eq(schema.wallets.id, to_wallet.id));
-            } else if (transfer.type === "erc20") {
+            } else if (transfer.type === "token") {
               const where_coinditions = and(
                 eq(schema.walletCoins.coin_id, coin_id),
                 eq(schema.walletCoins.wallet_id, to_wallet.id),
@@ -318,7 +331,7 @@ export class WalletsPostgres implements WalletsRepository {
                 await tx
                   .update(schema.walletCoins)
                   .set({
-                    value: sql`${schema.walletCoins.value} - ${transfer.value}`,
+                    value: sql`${schema.walletCoins.value} - ${Number(transfer.value)}`,
                   })
                   .where(where_coinditions);
               } else {
@@ -448,7 +461,7 @@ export class WalletsPostgres implements WalletsRepository {
         .where(and(eq(schema.coins.name, blockchains[blockchain].coin)))
         .limit(1);
       return coin!.id;
-    } else if (transfer_data.type === "erc20") {
+    } else if (transfer_data.type === "token") {
       const [coin] = await tx
         .select({ id: schema.contracts.coin_id })
         .from(schema.contracts)

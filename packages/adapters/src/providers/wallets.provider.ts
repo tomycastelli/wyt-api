@@ -215,6 +215,71 @@ class EthereumProvider implements WalletsProvider {
     };
   }
 
+  async createStream(
+    webhook_url: string,
+    description: string,
+    tag: string,
+    blockchain: BlockchainsName,
+  ): Promise<string> {
+    const stream = await Moralis.Streams.add({
+      webhookUrl: webhook_url,
+      description,
+      tag,
+      chains: [this.blockchain_mapper[blockchain]],
+      includeAllTxLogs: false,
+      includeContractLogs: false,
+      includeNativeTxs: true,
+      allAddresses: false,
+      topic0: ["Transfer(address,address,uint256)"],
+      advancedOptions: [
+        {
+          topic0: "Transfer(address,address,uint256)",
+          filter: { eq: ["moralis_streams_possibleSpam", "false"] },
+        },
+      ],
+      abi: [
+        {
+          anonymous: false,
+          inputs: [
+            {
+              indexed: true,
+              name: "from",
+              type: "address",
+            },
+            {
+              indexed: true,
+              name: "to",
+              type: "address",
+            },
+            {
+              indexed: false,
+              name: "value",
+              type: "uint256",
+            },
+            { indexed: true, name: "tokenId", type: "uint256" },
+          ],
+          name: "Transfer",
+          type: "event",
+        },
+      ],
+    });
+
+    return stream.result.id;
+  }
+
+  async addAddressToStream(stream_id: string, address: string): Promise<void> {
+    await Moralis.Streams.addAddress({
+      id: stream_id,
+      address,
+    });
+  }
+
+  async deleteStream(stream_id: string): Promise<void> {
+    await Moralis.Streams.delete({
+      id: stream_id,
+    });
+  }
+
   // Helpers
 
   transactionsFromWalletHistory(
@@ -230,7 +295,7 @@ class EthereumProvider implements WalletsProvider {
           (erc) => erc.possibleSpam === false,
         )) {
           transfers.push({
-            type: "erc20",
+            type: "token",
             coin_address: erc20tx.address.lowercase,
             from_address: erc20tx.fromAddress.lowercase,
             to_address: erc20tx.toAddress!.lowercase,
@@ -278,6 +343,8 @@ class EthereumProvider implements WalletsProvider {
           block_timestamp: new Date(th.blockTimestamp),
           transfers,
           fee: BigInt((fee * 10 ** decimal_places).toFixed(0)),
+          from_address: th.fromAddress.lowercase,
+          to_address: th.toAddress!.lowercase,
           summary: th.summary,
         };
       });

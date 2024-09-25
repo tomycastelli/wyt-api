@@ -6,6 +6,8 @@ import { EveryBlockainsName } from "./vars";
 // A wallet or transaction might involve coins which aren't in the system what then? Add them somehow?
 // Maybe use the address to ask for this token data and add it to the coin list
 
+const blockchain = type(["===", ...EveryBlockainsName]);
+
 export const walletCoin = type({
   coin_address: "string",
   value: "bigint",
@@ -24,7 +26,7 @@ export const valuedWalletCoin = coinedWalletCoin.merge({
 
 export const walletType = type({
   address: "string",
-  blockchain: ["===", ...EveryBlockainsName],
+  blockchain: blockchain,
   alias: "string|null",
   native_value: "bigint",
   coins: walletCoin.array(),
@@ -48,7 +50,7 @@ export const valuedWalletType = coinedWalletType.merge({
 });
 
 export const transferType = type({
-  type: "'native'|'erc20'|'nft'",
+  type: "'native'|'token'|'nft'",
   value: "bigint",
   from_address: "string",
   to_address: "string",
@@ -67,9 +69,11 @@ export const valuedTransferType = coinedTransferType.merge({
 });
 
 export const transactionType = type({
-  blockchain: ["===", ...EveryBlockainsName],
+  blockchain: blockchain,
   hash: "string",
   block_timestamp: "Date",
+  from_address: "string",
+  to_address: "string",
   transfers: transferType.array(),
   fee: "bigint",
   summary: "string",
@@ -87,6 +91,17 @@ export const coinedWalletWithTransactions = valuedWalletType.merge({
   transactions: valuedTransactionType.array(),
   id: "number.integer",
 });
+
+export const streamsType = type({
+  webhook_url: "string",
+  description: "string",
+  tag: "string",
+  chains: blockchain.array(),
+  addresses: "string[]",
+});
+
+/** # Un [Stream] que escucha transacciones de las [Wallets] */
+export type Stream = typeof streamsType.infer;
 
 /** # Un balance de alguna coin o nft de una wallet */
 export type WalletCoin = typeof walletCoin.infer;

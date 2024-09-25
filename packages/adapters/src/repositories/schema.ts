@@ -69,7 +69,7 @@ export const backfillStatusEnum = pgEnum("backfillStatus", [
 
 export const transactionTypeEnum = pgEnum("transactionType", [
   "native",
-  "erc20",
+  "token",
   "nft",
 ]);
 
@@ -237,6 +237,8 @@ export const transactions = pgTable(
       mode: "date",
       withTimezone: false,
     }).notNull(),
+    from_address: varchar("from_address", { length: 50 }).notNull(),
+    to_address: varchar("to_address", { length: 50 }).notNull(),
     fee: blockchainValue("fee").notNull(),
     summary: text("summary").notNull(),
   },
