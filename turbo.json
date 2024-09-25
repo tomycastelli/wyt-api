@@ -12,10 +12,12 @@
       "cache": false
     },
     "@repo/adapters#generate": {
-      "dependsOn": []
+      "dependsOn": [],
+      "cache": false
     },
     "@repo/adapters#db-push": {
-      "dependsOn": []
+      "dependsOn": [],
+      "cache": false
     }
   }
 }

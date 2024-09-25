@@ -16,7 +16,6 @@ export type SavedCandles = {
 // El contrato al que se tienen que adherir los repositorios de informacion
 export interface CoinsRepository {
   saveCoins(coins: Coin[]): Promise<SavedCoin[]>;
-  saveNFTs(nfts: NFT[]): Promise<SavedNFT[]>;
   saveMarketData(coin_market_data: CoinMarketData[]): Promise<void>;
   saveCandles(candles: Candle[]): Promise<void>;
 
@@ -39,10 +38,12 @@ export interface CoinsRepository {
     blockchain: BlockchainsName,
   ): Promise<SavedCoin | undefined>;
 
+  // Devuelve una [NFT], la inserta si no existe
   getNFTByAddress(
     contract_address: string,
     token_id: number,
-  ): Promise<SavedNFT | undefined>;
+    blockchain: BlockchainsName,
+  ): Promise<SavedNFT>;
 }
 
 // El contrato al que se tienen que adherir las fuentes de informacion
@@ -68,12 +69,6 @@ export interface CoinsProvider {
     coin_address: string,
     blockchain: BlockchainsName,
   ): Promise<Coin>;
-
-  /** Consigue una [NFT] por su contract address */
-  getNFTByAddress(
-    contract_address: string,
-    blockchain: BlockchainsName,
-  ): Promise<Omit<NFT, "token_id">>;
 
   /** Consigue las candelas del tipo elegido */
   getCandleData(

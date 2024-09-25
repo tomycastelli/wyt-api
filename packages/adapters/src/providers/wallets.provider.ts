@@ -109,6 +109,7 @@ class EthereumProvider implements WalletsProvider {
         chain: this.blockchain_mapper[blockchain],
         address,
         excludeSpam: true,
+        excludeUnverifiedContracts: true,
       });
 
     // Agrego el balance de la coin nativa
@@ -121,10 +122,8 @@ class EthereumProvider implements WalletsProvider {
       const coins: WalletCoin[] = balances_data.result
         .filter((c) => !c.nativeToken && c.tokenAddress)
         .map((c) => ({
-          coin_address: c.tokenAddress!.checksum,
+          coin_address: c.tokenAddress!.lowercase,
           value: c.balance.value.toBigInt(),
-          type: "coin",
-          token_id: null,
         }));
       wallet_data.coins.push(...coins);
       if (balances_data.hasNext()) {
@@ -138,22 +137,23 @@ class EthereumProvider implements WalletsProvider {
       address,
       excludeSpam: true,
       mediaItems: false,
+      normalizeMetadata: true,
     });
 
     // Agrego nfts hasta que no haya mas páginas
     do {
-      const coins: WalletCoin[] = nfts_data.result.map((c) => ({
-        coin_address: c.tokenAddress.checksum,
-        value: 0n,
-        type: "nft",
-        token_id: Number(c.tokenId),
-      }));
+      const coins: WalletCoin[] = nfts_data.result
+        .filter((c) => !!c.metadata)
+        .map((c) => ({
+          coin_address: c.tokenAddress.lowercase,
+          value: 0n,
+          token_id: Number(c.tokenId),
+        }));
       wallet_data.coins.push(...coins);
       if (nfts_data.hasNext()) {
         nfts_data = await nfts_data.next();
       }
     } while (nfts_data.hasNext());
-
     // Veo si tiene alias (ens domain en Ethereum)
     const ens_domain = await Moralis.EvmApi.resolve.resolveAddress({ address });
     if (ens_domain) {
@@ -221,16 +221,19 @@ class EthereumProvider implements WalletsProvider {
     transaction_history_data: EvmWalletHistoryTransaction[],
     wallet_data: Wallet,
   ): Transaction[] {
-    const transactions_data: Transaction[] = transaction_history_data.map(
-      (th) => {
+    const transactions_data: Transaction[] = transaction_history_data
+      .filter((th) => th.possibleSpam === false)
+      .map((th) => {
         const transfers: Transfer[] = [];
 
-        for (const erc20tx of th.erc20Transfers) {
+        for (const erc20tx of th.erc20Transfers.filter(
+          (erc) => erc.possibleSpam === false,
+        )) {
           transfers.push({
             type: "erc20",
-            coin_address: erc20tx.address.checksum,
-            from_address: erc20tx.fromAddress.checksum,
-            to_address: erc20tx.toAddress!.checksum,
+            coin_address: erc20tx.address.lowercase,
+            from_address: erc20tx.fromAddress.lowercase,
+            to_address: erc20tx.toAddress!.lowercase,
             value: BigInt(erc20tx.value),
             token_id: null,
           });
@@ -239,37 +242,45 @@ class EthereumProvider implements WalletsProvider {
         for (const nativeTx of th.nativeTransfers) {
           transfers.push({
             type: "native",
-            from_address: nativeTx.fromAddress.checksum,
-            to_address: nativeTx.toAddress!.checksum,
+            from_address: nativeTx.fromAddress.lowercase,
+            to_address: nativeTx.toAddress!.lowercase,
             value: BigInt(nativeTx.value),
             token_id: null,
+            coin_address: null,
           });
         }
 
-        for (const nftTx of th.nftTransfers) {
+        for (const nftTx of th.nftTransfers.filter(
+          (nft) => nft.possibleSpam === false,
+        )) {
           transfers.push({
             type: "nft",
-            from_address: nftTx.fromAddress.checksum,
-            to_address: nftTx.toAddress!.checksum,
+            from_address: nftTx.fromAddress.lowercase,
+            to_address: nftTx.toAddress!.lowercase,
             value: 0n,
-            coin_address: nftTx.tokenAddress.checksum,
+            coin_address: nftTx.tokenAddress.lowercase,
             token_id: Number(nftTx.tokenId),
           });
         }
+
+        const decimal_places =
+          blockchains[wallet_data.blockchain].decimal_places;
+
+        const fee = Number(
+          th.transactionFee
+            ? th.transactionFee.toString().slice(0, decimal_places)
+            : 0,
+        );
 
         return {
           blockchain: wallet_data.blockchain,
           hash: th.hash,
           block_timestamp: new Date(th.blockTimestamp),
           transfers,
-          fee: BigInt(
-            Number(th.transactionFee!) *
-              10 ** blockchains[wallet_data.blockchain].decimal_places,
-          ),
+          fee: BigInt((fee * 10 ** decimal_places).toFixed(0)),
           summary: th.summary,
         };
-      },
-    );
+      });
     return transactions_data;
   }
 }

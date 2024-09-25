@@ -152,27 +152,33 @@ export class CoinsPostgres implements CoinsRepository {
     return coin!;
   }
 
-  async saveNFTs(nfts: NFT[]): Promise<SavedNFT[]> {
-    const saved_nfts = await this.db
-      .insert(schema.nfts)
-      .values(nfts)
-      .returning();
-    return saved_nfts;
-  }
-
   async getNFTByAddress(
     contract_address: string,
     token_id: number,
-  ): Promise<SavedNFT | undefined> {
-    const saved_nft = await this.db.query.nfts.findFirst({
-      where: (nfts, { eq, and }) =>
-        and(
-          eq(nfts.contract_address, contract_address),
-          eq(nfts.token_id, token_id),
-        ),
-    });
+    blockchain: BlockchainsName,
+  ): Promise<SavedNFT> {
+    return await this.db.transaction(async (tx) => {
+      const [saved_nft] = await tx
+        .select()
+        .from(schema.nfts)
+        .where(
+          and(
+            eq(schema.nfts.contract_address, contract_address),
+            eq(schema.nfts.token_id, token_id),
+            eq(schema.nfts.blockchain, blockchain),
+          ),
+        )
+        .limit(1);
 
-    return saved_nft;
+      if (saved_nft) return saved_nft;
+
+      const [new_nft] = await tx
+        .insert(schema.nfts)
+        .values({ contract_address, blockchain, token_id })
+        .returning();
+
+      return new_nft!;
+    });
   }
 
   async saveCandles(candles: Candle[]): Promise<void> {

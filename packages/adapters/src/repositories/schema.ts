@@ -41,12 +41,12 @@ const smallDecimalNumber = customType<{ data: number }>({
   },
 });
 
-const blockchainValue = customType<{ data: bigint }>({
+const blockchainValue = customType<{ data: number }>({
   dataType() {
     return "numeric(24, 0)";
   },
   fromDriver(value) {
-    return BigInt(Number(value));
+    return Number(value);
   },
 });
 
@@ -133,18 +133,24 @@ export const coinsNames = pgTable(
   },
 );
 
-export const nfts = pgTable("nfts", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  name: varchar("name", { length: 50 }).notNull().unique(),
-  symbol: varchar("symbol", { length: 50 }).notNull(),
-  provider: providersEnum("provider").notNull(),
-  image_url: varchar("image_url", { length: 256 }).notNull(),
-  description: text("description"),
-  token_id: integer("token_id").notNull(),
-  price: decimalNumber("price").notNull(),
-  blockchain: blockchainsEnum("blockchain").notNull().$type<BlockchainsName>(),
-  contract_address: varchar("contract_address").notNull(),
-});
+export const nfts = pgTable(
+  "nfts",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    token_id: integer("token_id").notNull(),
+    blockchain: blockchainsEnum("blockchain")
+      .notNull()
+      .$type<BlockchainsName>(),
+    contract_address: varchar("contract_address").notNull(),
+  },
+  (table) => {
+    return {
+      uniqueAddressBlockchainTokenId: uniqueIndex(
+        "unique_address_blockchain_tokenid",
+      ).on(table.contract_address, table.blockchain, table.token_id),
+    };
+  },
+);
 
 export const wallets = pgTable(
   "wallets",
@@ -218,20 +224,31 @@ export const walletNFTs = pgTable(
   },
 );
 
-export const transactions = pgTable("transactions", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  hash: varchar("hash", { length: 100 }).notNull(),
-  blockchain: blockchainsEnum("blockchain")
-    .notNull()
-    .$type<BlockchainsName>()
-    .notNull(),
-  block_timestamp: timestamp("timestamp", {
-    mode: "date",
-    withTimezone: false,
-  }).notNull(),
-  fee: blockchainValue("fee").notNull(),
-  summary: text("summary").notNull(),
-});
+export const transactions = pgTable(
+  "transactions",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    hash: varchar("hash", { length: 100 }).notNull(),
+    blockchain: blockchainsEnum("blockchain")
+      .notNull()
+      .$type<BlockchainsName>()
+      .notNull(),
+    block_timestamp: timestamp("timestamp", {
+      mode: "date",
+      withTimezone: false,
+    }).notNull(),
+    fee: blockchainValue("fee").notNull(),
+    summary: text("summary").notNull(),
+  },
+  (table) => {
+    return {
+      uniqueHashBlockchain: uniqueIndex("unique_hash_blockchain").on(
+        table.hash,
+        table.blockchain,
+      ),
+    };
+  },
+);
 
 export const transfers = pgTable("transfers", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
@@ -242,10 +259,14 @@ export const transfers = pgTable("transfers", {
     })
     .notNull(),
   type: transactionTypeEnum("type").notNull(),
-  coin_id: integer("coin_id")
-    .references(() => coins.id, { onDelete: "cascade", onUpdate: "cascade" })
-    .notNull(),
-  token_id: integer("token_id"),
+  coin_id: integer("coin_id").references(() => coins.id, {
+    onDelete: "cascade",
+    onUpdate: "cascade",
+  }),
+  nft_id: integer("nft_id").references(() => nfts.id, {
+    onDelete: "cascade",
+    onUpdate: "cascade",
+  }),
   from_address: varchar("from_address", { length: 50 }).notNull(),
   to_address: varchar("to_address", { length: 50 }).notNull(),
   value: blockchainValue("value").notNull(),
@@ -281,9 +302,10 @@ export const coinsRelations = relations(coins, ({ many }) => ({
   walletCoins: many(walletCoins),
 }));
 
-export const nftsRelations = relations(nfts, ({ one }) => ({
+export const nftsRelations = relations(nfts, ({ one, many }) => ({
   // Relación one-to-one entre nfts y wallets
-  walletNFTs: one(walletNFTs),
+  walletNFT: one(walletNFTs),
+  transfer: many(transfers),
 }));
 
 export const contractsRelations = relations(contracts, ({ one }) => ({

@@ -43,16 +43,29 @@ export class WalletsPostgres implements WalletsRepository {
         .insert(schema.wallets)
         .values({
           ...coined_wallet,
+          native_value: Number(coined_wallet.native_value),
         })
         .returning();
 
-      if (coined_wallet.coins.length > 0) {
-        // Guardo las relaciones wallet-coins
+      const wallet_coins = coined_wallet.coins.filter((c) => !c.token_id);
+
+      if (wallet_coins.length > 0) {
         await tx.insert(schema.walletCoins).values(
-          coined_wallet.coins.map((c) => ({
+          wallet_coins.map((c) => ({
             coin_id: c.coin.id,
             wallet_id: saved_wallet!.id,
-            value: c.value,
+            value: Number(c.value),
+          })),
+        );
+      }
+
+      const wallet_nfts = coined_wallet.coins.filter((c) => c.token_id);
+
+      if (wallet_nfts.length > 0) {
+        await tx.insert(schema.walletNFTs).values(
+          wallet_nfts.map((c) => ({
+            nft_id: c.coin.id,
+            wallet_id: saved_wallet!.id,
           })),
         );
       }
@@ -60,7 +73,11 @@ export class WalletsPostgres implements WalletsRepository {
       return saved_wallet!;
     });
 
-    return { ...saved_wallet, coins: coined_wallet.coins };
+    return {
+      ...saved_wallet,
+      native_value: BigInt(saved_wallet.native_value),
+      coins: coined_wallet.coins,
+    };
   }
 
   async getWallet(
@@ -93,19 +110,25 @@ export class WalletsPostgres implements WalletsRepository {
     const wallet_coins: WalletCoin[] = saved_wallet.walletCoins.map((wc) => ({
       coin_address: wc.coin.contracts.find((c) => c.blockchain === blockchain)!
         .contract_address,
-      token_id: null,
-      type: "coin",
-      value: wc.value,
+      value: BigInt(wc.value),
     }));
 
     const wallet_nfts: WalletCoin[] = saved_wallet.walletNFTs.map((wn) => ({
       coin_address: wn.nft.contract_address,
       token_id: wn.nft.token_id,
-      type: "nft",
       value: 0n,
     }));
 
-    return { ...saved_wallet, coins: [...wallet_coins, ...wallet_nfts] };
+    return {
+      id: saved_wallet.id,
+      address: saved_wallet.address,
+      alias: saved_wallet.alias,
+      backfill_status: saved_wallet.backfill_status,
+      blockchain: saved_wallet.blockchain,
+      first_transfer_date: saved_wallet.first_transfer_date,
+      native_value: BigInt(saved_wallet.native_value),
+      coins: [...wallet_coins, ...wallet_nfts],
+    };
   }
 
   async getWalletsByBlockchain(
@@ -140,19 +163,20 @@ export class WalletsPostgres implements WalletsRepository {
         coin_address: wc.coin.contracts.find(
           (c) => c.blockchain === blockchain,
         )!.contract_address,
-        token_id: null,
-        type: "coin",
-        value: wc.value,
+        value: BigInt(wc.value),
       }));
 
       const wallet_nfts: WalletCoin[] = saved_wallet.walletNFTs.map((wn) => ({
         coin_address: wn.nft.contract_address,
         token_id: wn.nft.token_id,
-        type: "nft",
         value: 0n,
       }));
 
-      return { ...saved_wallet, coins: [...wallet_coins, ...wallet_nfts] };
+      return {
+        ...saved_wallet,
+        native_value: BigInt(saved_wallet.native_value),
+        coins: [...wallet_coins, ...wallet_nfts],
+      };
     });
 
     return mapped_wallets;
@@ -160,35 +184,26 @@ export class WalletsPostgres implements WalletsRepository {
 
   async saveTransactions(transactions: Transaction[]): Promise<void> {
     await this.db.transaction(async (tx) => {
-      // Insertar todas las [Transaction]s y obtengo su ID
-      const transactionIds = await tx
-        .insert(schema.transactions)
-        .values(transactions)
-        .returning({ id: schema.transactions.id });
-
-      // Preparo el array de [Transfer]s
-      const transferInserts = [];
-      for (let i = 0; i < transactions.length; i++) {
-        const transaction_data = transactions[i]!;
-        const transaction_id = transactionIds[i]!.id;
-
-        for (const transfer_data of transaction_data.transfers) {
+      for (const transaction of transactions) {
+        const [id] = await tx
+          .insert(schema.transactions)
+          .values({ ...transaction, fee: Number(transaction.fee) })
+          .returning({ id: schema.transactions.id });
+        for (const transfer of transaction.transfers) {
           const coin_id = await this.getCoinIdOfTransfer(
-            transfer_data,
-            transaction_data.blockchain,
+            transfer,
+            transaction.blockchain,
             tx,
           );
-
-          transferInserts.push({
-            coin_id,
-            transaction_id,
-            ...transfer_data,
+          await tx.insert(schema.transfers).values({
+            ...transfer,
+            coin_id: transfer.type !== "nft" ? coin_id : null,
+            nft_id: transfer.type === "nft" ? coin_id : null,
+            transaction_id: id!.id,
+            value: Number(transfer.value),
           });
         }
       }
-
-      // Inserto todas las [Transfer]s en un sola operación
-      await tx.insert(schema.transfers).values(transferInserts);
     });
   }
 
@@ -200,7 +215,7 @@ export class WalletsPostgres implements WalletsRepository {
       // tengo que cambiar el estado de la o las [Wallet]s relacionadas en cada [Transfer] hecha
       const [transaction_id] = await tx
         .insert(schema.transactions)
-        .values(transaction_data)
+        .values({ ...transaction_data, fee: Number(transaction_data) })
         .returning({ id: schema.transactions.id });
 
       await Promise.all(
@@ -213,9 +228,10 @@ export class WalletsPostgres implements WalletsRepository {
 
           // Inserto la [Transfer]
           await tx.insert(schema.transfers).values({
+            ...transfer,
             transaction_id: transaction_id!.id,
             coin_id,
-            ...transfer,
+            value: Number(transfer.value),
           });
 
           // Busco [Wallet] del from y el to
@@ -310,7 +326,7 @@ export class WalletsPostgres implements WalletsRepository {
                 await tx.insert(schema.walletCoins).values({
                   coin_id: coin_id,
                   wallet_id: to_wallet.id,
-                  value: transfer.value,
+                  value: Number(transfer.value),
                 });
               }
             } else if (transfer.type === "nft") {
@@ -351,6 +367,15 @@ export class WalletsPostgres implements WalletsRepository {
         schema.transfers,
         eq(schema.transfers.transaction_id, schema.transactions.id),
       )
+      .leftJoin(schema.coins, eq(schema.coins.id, schema.transfers.coin_id))
+      .leftJoin(schema.nfts, eq(schema.nfts.id, schema.transfers.nft_id))
+      .leftJoin(
+        schema.contracts,
+        and(
+          eq(schema.contracts.coin_id, schema.transfers.coin_id),
+          eq(schema.contracts.blockchain, schema.transactions.blockchain),
+        ),
+      )
       .where(inArray(schema.transactions.id, transfers_query))
       .orderBy(desc(schema.transactions.id))
       .prepare("transactions_query");
@@ -367,16 +392,22 @@ export class WalletsPostgres implements WalletsRepository {
         (tx) => tx.hash === transaction.transactions.hash,
       );
 
+      const transfer_to_add: Transfer = {
+        ...transaction.transfers!,
+        token_id: transaction.nfts?.token_id ?? null,
+        value: BigInt(transaction.transfers!.value),
+        coin_address: transaction.contracts?.contract_address ?? null,
+      };
+
       if (!existing_transaction) {
         const new_transaction: Transaction = {
           ...transaction.transactions,
-          transfers: [transaction.transfers!],
+          fee: BigInt(transaction.transactions.fee),
+          transfers: [transfer_to_add],
         };
         acc.push(new_transaction);
       } else {
-        const new_transfer = transaction.transfers!;
-
-        existing_transaction.transfers.push(new_transfer);
+        existing_transaction.transfers.push(transfer_to_add);
       }
 
       return acc;
@@ -401,7 +432,7 @@ export class WalletsPostgres implements WalletsRepository {
   }
 
   // Helpers
-  async getCoinIdOfTransfer(
+  private async getCoinIdOfTransfer(
     transfer_data: Transfer,
     blockchain: BlockchainsName,
     tx: PgTransaction<

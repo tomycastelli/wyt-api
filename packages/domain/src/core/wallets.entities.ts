@@ -1,5 +1,5 @@
 import { type } from "arktype";
-import { savedCoinType, savedNftType } from "./coins.entities";
+import { nftType, savedCoinType, savedNftType } from "./coins.entities";
 import { EveryBlockainsName } from "./vars";
 
 // Things to think:
@@ -9,8 +9,8 @@ import { EveryBlockainsName } from "./vars";
 export const walletCoin = type({
   coin_address: "string",
   value: "bigint",
-  type: "'nft'|'coin'",
-  token_id: "number|null",
+  // Si es NFT
+  "token_id?": "number",
 });
 
 export const coinedWalletCoin = walletCoin.merge({
@@ -55,7 +55,7 @@ export const transferType = type({
   // Esto es si es un NFT
   token_id: "number|null",
   // Si es de tipo 'native', la coin es la nativa de la blockchain
-  "coin_address?": "string",
+  coin_address: "string|null",
 });
 
 export const coinedTransferType = transferType.merge({
@@ -85,6 +85,7 @@ export const valuedTransactionType = transactionType.merge({
 
 export const coinedWalletWithTransactions = valuedWalletType.merge({
   transactions: valuedTransactionType.array(),
+  id: "number.integer",
 });
 
 /** # Un balance de alguna coin o nft de una wallet */

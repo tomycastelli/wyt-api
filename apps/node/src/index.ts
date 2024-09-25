@@ -11,6 +11,7 @@ import {
   CoinsService,
   EveryBlockainsName,
   WalletsService,
+  SavedWallet,
 } from "@repo/domain";
 import {
   CoinGecko,
@@ -22,6 +23,7 @@ import { type } from "arktype";
 import "dotenv/config";
 import { logger } from "./logger";
 import { compress } from "hono/compress";
+import { Queue } from "bullmq";
 
 // Deserialización de BigInts
 declare global {
@@ -44,7 +46,7 @@ app.onError((err, c) => {
   });
   console.error("Node server error", err);
 
-  return c.text(`Internal Server Error: ${JSON.stringify(err)}`, 500);
+  return c.text(JSON.stringify(err), 500);
 });
 
 // Genera un request-id
@@ -239,16 +241,53 @@ const wallets_service = new WalletsService(
   coins_service,
 );
 
+// BullMQ para procesos de larga duración
+const backfillQueue = new Queue<SavedWallet>("backfillQueue", {
+  connection: {
+    host: "127.0.0.1",
+    port: 6379,
+  },
+});
+
 wallets_routes.post(
   "/add",
   arktypeValidator(
     "json",
-    type({ address: "string", blockchain: ["===", ...EveryBlockainsName] }),
+    type({
+      address: type("string").pipe((s) => s.toLowerCase()),
+      blockchain: ["===", ...EveryBlockainsName],
+    }),
   ),
   async (c) => {
     const { address, blockchain } = c.req.valid("json");
 
     const wallet_with_tx = await wallets_service.addWallet(address, blockchain);
+
+    // Send the backfill to a queue
+    await backfillQueue.add("backfillWallet", wallet_with_tx);
+
+    return c.json(wallet_with_tx);
+  },
+);
+
+wallets_routes.get(
+  "/wallet/:blockchain/:address",
+  arktypeValidator(
+    "param",
+    type({
+      blockchain: ["===", ...EveryBlockainsName],
+      address: type("string").pipe((s) => s.toLowerCase()),
+    }),
+  ),
+  async (c) => {
+    const { blockchain, address } = c.req.valid("param");
+    const wallet_with_tx = await wallets_service.getWallet(
+      address,
+      blockchain,
+      1,
+    );
+
+    if (!wallet_with_tx) return c.notFound();
 
     return c.json(wallet_with_tx);
   },

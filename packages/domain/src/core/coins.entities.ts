@@ -41,15 +41,9 @@ const candleType = type({
 });
 
 export const nftType = type({
-  name: "string",
-  symbol: "string",
-  provider: type.enumerated(...providers),
   contract_address: "string",
   blockchain: ["===", ...EveryBlockainsName],
-  image_url: "string",
-  description: "string|null",
   token_id: "number",
-  price: "number",
 });
 
 export const savedNftType = nftType.merge({ id: "number.integer" });

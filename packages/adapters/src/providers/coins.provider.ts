@@ -5,7 +5,6 @@ import {
   Coin,
   CoinMarketData,
   BlockchainsName,
-  blockchains,
   EveryBlockainsName,
   NFT,
   base_coins,
@@ -84,18 +83,6 @@ const tokenDataByAddressSchema = type({
   },
 });
 
-const nftByAddressSchema = type({
-  id: "string",
-  symbol: "string",
-  image: { small: "string", "+": "delete" },
-  description: "string",
-  floor_price: {
-    usd: "number",
-    "+": "delete",
-  },
-  "+": "delete",
-});
-
 export class CoinGecko implements CoinsProvider {
   readonly base_url: string = "https://pro-api.coingecko.com/api/v3";
 
@@ -120,7 +107,7 @@ export class CoinGecko implements CoinsProvider {
 
   readonly rate_limit: LimitFunction = pLimit(6);
 
-  request_data: RequestInit;
+  readonly request_data: RequestInit;
 
   constructor(api_key: string) {
     this.request_data = {
@@ -343,9 +330,9 @@ export class CoinGecko implements CoinsProvider {
     const response = await fetch(
       `${this.base_url}/onchain/networks/${this.blockchains_to_networks_mapper[blockchain]}/tokens/${coin_address}/info`,
       this.request_data,
-    ).then((res) => res.json());
+    );
 
-    const parsedCoinData = tokenDataByAddressSchema(response);
+    const parsedCoinData = tokenDataByAddressSchema(await response.json());
 
     if (parsedCoinData instanceof type.errors) throw parsedCoinData;
 
@@ -443,11 +430,16 @@ export class CoinGecko implements CoinsProvider {
 
     if (
       !market_data ||
-      !market_data.ath.usd ||
-      !market_data.current_price?.usd ||
-      !market_data.market_cap.usd ||
-      !market_data.price_change_24h ||
-      !market_data.price_change_percentage_24h
+      market_data.ath.usd === undefined ||
+      market_data.ath.usd === null ||
+      market_data.current_price?.usd === undefined ||
+      market_data.current_price?.usd === null ||
+      market_data.market_cap.usd === undefined ||
+      market_data.market_cap.usd === null ||
+      market_data.price_change_24h === undefined ||
+      market_data.price_change_24h === null ||
+      market_data.price_change_percentage_24h === undefined ||
+      market_data.price_change_percentage_24h === null
     )
       throw Error("Unavailable market data: ", {
         cause: `Got this response: ${JSON.stringify(parsedCoinDetails)}`,
@@ -517,32 +509,5 @@ export class CoinGecko implements CoinsProvider {
     }
 
     return candle_data;
-  }
-
-  async getNFTByAddress(
-    contract_address: string,
-    blockchain: BlockchainsName,
-  ): Promise<Omit<NFT, "token_id">> {
-    const response = await fetch(
-      `${this.base_url}/nfts/${blockchain}/contract/${contract_address}`,
-      this.request_data,
-    ).then((res) => res.json());
-
-    const parsedNFTData = nftByAddressSchema(response);
-
-    if (parsedNFTData instanceof type.errors) throw parsedNFTData;
-
-    const nft_data: Omit<NFT, "token_id"> = {
-      blockchain,
-      contract_address,
-      description: parsedNFTData.description,
-      image_url: parsedNFTData.image.small,
-      name: parsedNFTData.id,
-      provider: "coingecko",
-      price: parsedNFTData.floor_price.usd,
-      symbol: parsedNFTData.symbol,
-    };
-
-    return nft_data;
   }
 }
