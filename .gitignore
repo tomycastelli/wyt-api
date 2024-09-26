@@ -11,9 +11,6 @@
 # deps
 node_modules/
 
-# linter
-biome.json
-
 # builds
 **/dist/
 
