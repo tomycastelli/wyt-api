@@ -1,23 +1,30 @@
 {
-  "$schema": "https://turbo.build/schema.json",
-  "tasks": {
-    "build": {
-      "outputs": ["dist/**"]
-    },
-    "check-types": {
-      "dependsOn": ["^check-types"]
-    },
-    "dev": {
-      "persistent": true,
-      "cache": false
-    },
-    "@repo/adapters#generate": {
-      "dependsOn": [],
-      "cache": false
-    },
-    "@repo/adapters#db-push": {
-      "dependsOn": [],
-      "cache": false
-    }
-  }
+	"$schema": "https://turbo.build/schema.json",
+	"tasks": {
+		"build": {
+			"outputs": ["dist/**"]
+		},
+		"check-types": {
+			"dependsOn": ["^check-types"]
+		},
+		"//#format-and-lint": {},
+		"//#format-and-lint:fix": {
+			"cache": false
+		},
+		"//#format-and-lint:fix-unsafe": {
+			"cache": false
+		},
+		"dev": {
+			"persistent": true,
+			"cache": false
+		},
+		"@repo/adapters#generate": {
+			"dependsOn": [],
+			"cache": false
+		},
+		"@repo/adapters#db-push": {
+			"dependsOn": [],
+			"cache": false
+		}
+	}
 }
