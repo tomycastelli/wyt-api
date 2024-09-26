@@ -1,5 +1,7 @@
 import {
 	EvmChain,
+	EvmChainList,
+	EvmChainParser,
 	type EvmWalletHistoryTransaction,
 } from "@moralisweb3/common-evm-utils";
 import {
@@ -12,8 +14,44 @@ import {
 	type WalletsProvider,
 	blockchains,
 } from "@repo/domain";
+import { type } from "arktype";
 import Moralis from "moralis";
-import type { IWebhook } from "moralis/streams-typings";
+import { sha3 } from "web3-utils";
+
+const ethWebhookTransactionType = type({
+	confirmed: "boolean",
+	chainId: "string",
+	block: {
+		timestamp: "string",
+		"+": "delete",
+	},
+	txs: type({
+		hash: "string",
+		gas: "string",
+		gasPrice: "string",
+		fromAddress: "string",
+		toAddress: "string",
+		value: "string",
+		"+": "delete",
+	}).array(),
+	erc20Transfers: type({
+		transactionHash: "string",
+		contract: "string",
+		from: "string",
+		to: "string",
+		value: "string",
+		"+": "delete",
+	}).array(),
+	nftTransfers: type({
+		transactionHash: "string",
+		contract: "string",
+		from: "string",
+		to: "string",
+		tokenId: "string",
+		"+": "delete",
+	}).array(),
+	"+": "delete",
+});
 
 /** Esta clase agrupa varios providers de distintas blockchains */
 export class WalletsProviderAdapters implements WalletsProvider {
@@ -62,6 +100,50 @@ export class WalletsProviderAdapters implements WalletsProvider {
 		return this.ethereumProvider.getTransactionHistory(
 			wallet_data,
 			loop_cursor,
+		);
+	}
+
+	async addAddressToStream(stream_id: string, address: string): Promise<void> {
+		return this.ethereumProvider.addAddressToStream(stream_id, address);
+	}
+
+	async createStream(
+		webhook_url: string,
+		description: string,
+		tag: string,
+		blockchain: BlockchainsName,
+	): Promise<Stream> {
+		return this.ethereumProvider.createStream(
+			webhook_url,
+			description,
+			tag,
+			blockchain,
+		);
+	}
+
+	async deleteStream(stream_id: string): Promise<void> {
+		return this.ethereumProvider.deleteStream(stream_id);
+	}
+
+	async getAddresesByStream(stream_id: string): Promise<string[]> {
+		return this.ethereumProvider.getAddresesByStream(stream_id);
+	}
+
+	async getAllStreams(): Promise<Stream[]> {
+		return this.ethereumProvider.getAllStreams();
+	}
+
+	parseWebhookTransaction(
+		body: any,
+		secret_key: string,
+		headers: Record<string, string>,
+		blockchain: BlockchainsName,
+	): Transaction[] | undefined {
+		return this.ethereumProvider.parseWebhookTransaction(
+			body,
+			secret_key,
+			headers,
+			blockchain,
 		);
 	}
 }
@@ -271,6 +353,7 @@ class EthereumProvider implements WalletsProvider {
 			id: stream.result.id,
 			tag: stream.result.tag,
 			webhook_url: stream.result.webhookUrl,
+			blockchain,
 		};
 	}
 
@@ -291,6 +374,7 @@ class EthereumProvider implements WalletsProvider {
 			description: s.description,
 			tag: s.tag,
 			webhook_url: s.webhookUrl,
+			blockchain: this.getBlockchainName(s.chains[0]!)!,
 		}));
 
 		return mapped_streams;
@@ -304,13 +388,89 @@ class EthereumProvider implements WalletsProvider {
 		return stream.result.map((a) => a.address!.lowercase);
 	}
 
-	verifyWebhook(body: IWebhook, headers: Headers): boolean {
-		const is_valid = Moralis.Streams.verifySignature({
-			body,
-			signature: headers.get("x-signature")!,
-		});
+	parseWebhookTransaction(
+		body: any,
+		secret_key: string,
+		headers: Record<string, string>,
+		blockchain: BlockchainsName,
+	): Transaction[] | undefined {
+		const provided_signature = headers["x-signature"];
+		if (!provided_signature) throw new Error("Signature not provided");
 
-		return is_valid;
+		const generated_signature = sha3(body + secret_key);
+		if (generated_signature !== provided_signature)
+			throw new Error("Invalid signature");
+
+		const parsed_webhook_transaction = ethWebhookTransactionType(body);
+
+		if (parsed_webhook_transaction instanceof type.errors)
+			throw parsed_webhook_transaction;
+
+		// Solo me interesan las confirmadas
+		if (!parsed_webhook_transaction.confirmed) return undefined;
+
+		// Ahora lo mapeo a una transaction que entienda mi dominio
+		const mapped_transactions: Transaction[] =
+			parsed_webhook_transaction.txs.map((transaction) => {
+				const transfers: Transfer[] = [];
+
+				// Si el valor es distinto a 0 es porque hay native transfer
+				if (transaction.value !== "0") {
+					transfers.push({
+						type: "native",
+						from_address: transaction.fromAddress,
+						to_address: transaction.toAddress,
+						value: BigInt(transaction.value),
+						coin_address: null,
+						token_id: null,
+					});
+				}
+
+				for (const erc20Transfer of parsed_webhook_transaction.erc20Transfers) {
+					// Si pertence a esta transacción
+					if (erc20Transfer.transactionHash === transaction.hash) {
+						transfers.push({
+							type: "token",
+							coin_address: erc20Transfer.contract,
+							from_address: erc20Transfer.from,
+							to_address: erc20Transfer.to,
+							value: BigInt(erc20Transfer.value),
+							token_id: null,
+						});
+					}
+				}
+
+				for (const nftTransfer of parsed_webhook_transaction.nftTransfers) {
+					if (nftTransfer.transactionHash === transaction.hash) {
+						transfers.push({
+							type: "nft",
+							coin_address: null,
+							from_address: nftTransfer.from,
+							to_address: nftTransfer.to,
+							value: 0n,
+							token_id: Number(nftTransfer.tokenId),
+						});
+					}
+				}
+
+				return {
+					block_timestamp: new Date(
+						Number(parsed_webhook_transaction.block.timestamp) * 1000,
+					),
+					// Asumo que nunca dara undefined porque no me voy a crear un webhook con una chain que no este dentro de las soportadas
+					blockchain,
+					fee: BigInt(BigInt(transaction.gas) * BigInt(transaction.gasPrice)),
+					from_address: transaction.fromAddress,
+					to_address: transaction.toAddress,
+					hash: transaction.hash,
+					transfers,
+					// No nos da la summary, despues ver como conseguirla
+					// Pasa que serian mucho overhead hacer una api call extra por tx entrante
+					summary: "",
+				};
+			});
+
+		return mapped_transactions;
 	}
 
 	async deleteStream(stream_id: string): Promise<void> {
@@ -320,6 +480,15 @@ class EthereumProvider implements WalletsProvider {
 	}
 
 	// Helpers
+
+	getBlockchainName(chain: EvmChain): BlockchainsName | undefined {
+		for (const [name, evmChain] of Object.entries(this.blockchain_mapper)) {
+			if (evmChain === chain) {
+				return name as BlockchainsName;
+			}
+		}
+		return undefined;
+	}
 
 	transactionsFromWalletHistory(
 		transaction_history_data: EvmWalletHistoryTransaction[],

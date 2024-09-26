@@ -142,7 +142,10 @@ export class WalletsService<
 
 	/** Hace el backfill de una [Wallet], osea conseguir todo su historial de transacciones
   Puede ser corrido en otro servidor para no congestionar la API, usando una queue */
-	public async backfillWallet(saved_wallet: SavedWallet): Promise<void> {
+	public async backfillWallet(
+		saved_wallet: SavedWallet,
+		stream_webhook_url: string,
+	): Promise<void> {
 		let loop_cursor: string | undefined = undefined;
 		do {
 			const { transactions, cursor } =
@@ -167,6 +170,66 @@ export class WalletsService<
 			saved_wallet,
 			"complete",
 		);
+
+		// Me fijo si ya existe un stream de esta blockchain
+		const streams = await this.walletsProvider.getAllStreams();
+		const this_blockchain_stream = streams.find(
+			(s) => s.blockchain === saved_wallet.blockchain,
+		);
+
+		if (this_blockchain_stream) {
+			// Añado la [Wallet] address al stream
+			await this.walletsProvider.addAddressToStream(
+				this_blockchain_stream.id,
+				saved_wallet.address,
+			);
+		} else {
+			// Lo creo
+			const stream = await this.walletsProvider.createStream(
+				stream_webhook_url,
+				`${saved_wallet.blockchain} + -transactions`,
+				saved_wallet.blockchain,
+				saved_wallet.blockchain,
+			);
+
+			// Añado la [Wallet] address al stream
+			await this.walletsProvider.addAddressToStream(
+				stream.id,
+				saved_wallet.address,
+			);
+		}
+	}
+
+	/** Verifica, parsea y guarda las [Transaction]s que vienen de un webhook
+  Devuelve undefined si no es un webhook que nos interese, por ej txs no confirmadas */
+	public async handleWebhookTransaction(
+		body: any,
+		secret_key: string,
+		headers: Record<string, string>,
+		blockchain: BlockchainsName,
+	): Promise<void> {
+		const transaction_data = this.walletsProvider.parseWebhookTransaction(
+			body,
+			secret_key,
+			headers,
+			blockchain,
+		);
+
+		if (!transaction_data) {
+			return;
+		}
+
+		const valued_transactions = await this.getValuedTransactions(
+			transaction_data,
+			blockchain,
+		);
+
+		for (const valued_transaction of valued_transactions) {
+			await this.walletsRepository.saveTransactionAndUpdateWallet(
+				valued_transaction,
+				blockchain,
+			);
+		}
 	}
 
 	/** Recibe una [Transaction] y la guarda, cambiando el estado de la [Wallet] relacionada */

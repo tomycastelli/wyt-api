@@ -108,7 +108,7 @@ export class WalletsPostgres implements WalletsRepository {
 		if (!saved_wallet) return undefined;
 
 		const wallet_coins: WalletCoin[] = saved_wallet.walletCoins.map((wc) => ({
-			coin_address: wc.coin.contracts.find((c) => c.blockchain === blockchain)
+			coin_address: wc.coin.contracts.find((c) => c.blockchain === blockchain)!
 				.contract_address,
 			value: BigInt(wc.value),
 		}));

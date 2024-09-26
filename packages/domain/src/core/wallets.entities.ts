@@ -97,6 +97,7 @@ export const streamsType = type({
 	webhook_url: "string",
 	description: "string",
 	tag: "string",
+	blockchain: blockchain,
 });
 
 export const streamsWithAddressType = streamsType.merge({

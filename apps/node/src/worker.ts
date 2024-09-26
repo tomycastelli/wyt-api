@@ -6,7 +6,12 @@ import {
 	WalletsPostgres,
 	WalletsProviderAdapters,
 } from "@repo/adapters";
-import { CoinsService, type SavedWallet, WalletsService } from "@repo/domain";
+import {
+	type BlockchainsName,
+	CoinsService,
+	type SavedWallet,
+	WalletsService,
+} from "@repo/domain";
 
 // Los adapters
 const coingecko = new CoinGecko(process.env.COINGECKO_API_KEY ?? "");
@@ -31,10 +36,16 @@ const wallets_service = new WalletsService(
 	coins_service,
 );
 
-const worker = new Worker<SavedWallet>(
+const backfillWorker = new Worker<{
+	wallet: SavedWallet;
+	stream_webhook_url: string;
+}>(
 	"backfillQueue",
 	async (job) => {
-		await wallets_service.backfillWallet(job.data);
+		await wallets_service.backfillWallet(
+			job.data.wallet,
+			job.data.stream_webhook_url,
+		);
 	},
 	{
 		connection: {
@@ -44,14 +55,53 @@ const worker = new Worker<SavedWallet>(
 	},
 );
 
-worker.on("ready", () => {
-	console.log("Worker is ready!");
+backfillWorker.on("ready", () => {
+	console.log("backfillWorker is ready!");
 });
 
-worker.on("completed", (job) => {
-	console.log(`Job: ${job.id}, for wallet ${job.data.id} has completed!`);
+backfillWorker.on("completed", (job) => {
+	console.log(
+		`Job: ${job.id}, for wallet ${job.data.wallet.address} has completed!`,
+	);
 });
 
-worker.on("failed", (job, err) => {
+backfillWorker.on("failed", (job, err) => {
+	console.error(`Job ${job?.id} has failed with err: `, err);
+});
+
+const transactionsStreamWorker = new Worker<{
+	body: any;
+	secret_key: string;
+	headers: Record<string, string>;
+	blockchain: BlockchainsName;
+}>(
+	"transactionsStreamQueue",
+	async (job) => {
+		await wallets_service.handleWebhookTransaction(
+			job.data.body,
+			job.data.secret_key,
+			job.data.headers,
+			job.data.blockchain,
+		);
+	},
+	{
+		connection: {
+			host: "127.0.0.1",
+			port: 6379,
+		},
+	},
+);
+
+transactionsStreamWorker.on("ready", () => {
+	console.log("transactionsStreamWorker is ready!");
+});
+
+transactionsStreamWorker.on("completed", (job) => {
+	console.log(
+		`Job: ${job.id}, for stream of blockchain ${job.data.blockchain} has completed!`,
+	);
+});
+
+transactionsStreamWorker.on("failed", (job, err) => {
 	console.error(`Job ${job?.id} has failed with err: `, err);
 });

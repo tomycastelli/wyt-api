@@ -36,6 +36,15 @@ BigInt.prototype.toJSON = function () {
 	return Number(this);
 };
 
+// Enviroment variables
+
+const BASE_URL = process.env.BASE_URL;
+if (!BASE_URL) throw Error("BASE_URL missing");
+
+const MORALIS_STREAMS_SECRET_KEY = process.env.MORALIS_STREAMS_SECRET_KEY;
+if (!MORALIS_STREAMS_SECRET_KEY)
+	throw Error("MORALIS_STREAMS_SECRET_KEY missing");
+
 // El servidor Node
 const app = new Hono();
 
@@ -241,7 +250,22 @@ const wallets_service = new WalletsService(
 );
 
 // BullMQ para procesos de larga duración
-const backfillQueue = new Queue<SavedWallet>("backfillQueue", {
+const backfillQueue = new Queue<{
+	wallet: SavedWallet;
+	stream_webhook_url: string;
+}>("backfillQueue", {
+	connection: {
+		host: "127.0.0.1",
+		port: 6379,
+	},
+});
+
+const transactionsStreamQueue = new Queue<{
+	body: any;
+	secret_key: string;
+	headers: Record<string, string>;
+	blockchain: BlockchainsName;
+}>("transactionsStreamQueue", {
 	connection: {
 		host: "127.0.0.1",
 		port: 6379,
@@ -262,10 +286,39 @@ wallets_routes.post(
 
 		const wallet_with_tx = await wallets_service.addWallet(address, blockchain);
 
-		// Send the backfill to a queue
-		await backfillQueue.add("backfillWallet", wallet_with_tx);
+		// Enviar a una queue
+		await backfillQueue.add("backfillWallet", {
+			wallet: wallet_with_tx,
+			stream_webhook_url: `${BASE_URL}/streams/${blockchain}`,
+		});
 
 		return c.json(wallet_with_tx);
+	},
+);
+
+wallets_routes.post(
+	"/streams/:blockchain",
+	arktypeValidator(
+		"param",
+		type({
+			blockchain: ["===", ...EveryBlockainsName],
+		}),
+	),
+	async (c) => {
+		const { blockchain } = c.req.valid("param");
+
+		const body = await c.req.json();
+		const headers = c.req.header();
+
+		// Verifico y proceso la transacción enviada
+		await transactionsStreamQueue.add("transactionsStream", {
+			body,
+			secret_key: MORALIS_STREAMS_SECRET_KEY,
+			headers,
+			blockchain,
+		});
+
+		return c.text("Webhook recibido");
 	},
 );
 

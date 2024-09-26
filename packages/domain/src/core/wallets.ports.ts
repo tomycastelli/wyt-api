@@ -3,6 +3,7 @@ import type {
 	CoinedTransaction,
 	CoinedWallet,
 	SavedWallet,
+	Stream,
 	Transaction,
 	Wallet,
 } from "./wallets.entities";
@@ -17,6 +18,29 @@ export interface WalletsProvider {
 		wallet_data: Wallet,
 		loop_cursor: string | undefined,
 	): Promise<{ transactions: Transaction[]; cursor: string | undefined }>;
+	/** Crea un nuevo Stream de transacciones */
+	createStream(
+		webhook_url: string,
+		description: string,
+		tag: string,
+		blockchain: BlockchainsName,
+	): Promise<Stream>;
+	/** Añade una address a un [Stream] */
+	addAddressToStream(stream_id: string, address: string): Promise<void>;
+	/** Busca todos los [Stream] existentes */
+	getAllStreams(): Promise<Stream[]>;
+	/** Busca las addresses relacionadas a un [Stream] */
+	getAddresesByStream(stream_id: string): Promise<string[]>;
+	/** Verifica y parsea un webhook y devuelve las [Transaction]s
+  Devuelve undefined si no es un webhook que nos interese, por ej txs no confirmadas */
+	parseWebhookTransaction(
+		body: any,
+		secret_key: string,
+		headers: Record<string, string>,
+		blockchain: BlockchainsName,
+	): Transaction[] | undefined;
+	/** Elimina un [Stream] */
+	deleteStream(stream_id: string): Promise<void>;
 }
 
 export interface WalletsRepository {
