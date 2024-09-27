@@ -5,7 +5,8 @@
 	"private": true,
 	"scripts": {
 		"build": "tsc",
-		"dev": "tsc --watch"
+		"dev": "tsc --watch",
+		"test": "vitest"
 	},
 	"exports": {
 		".": "./src/index.ts"

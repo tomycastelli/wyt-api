@@ -84,19 +84,16 @@ const tokenDataByAddressSchema = type({
 });
 
 export class CoinGecko implements CoinsProvider {
-	readonly base_url: string = "https://pro-api.coingecko.com/api/v3";
+	private base_url = "https://pro-api.coingecko.com/api/v3";
 
-	private readonly blockchains_categories = [
+	private blockchains_categories = [
 		"ethereum-ecosystem",
 		"solana-ecosystem",
 		"avalanche-ecosystem",
 		"polygon-ecosystem",
 	];
 
-	private readonly blockchains_to_networks_mapper: Record<
-		BlockchainsName,
-		string
-	> = {
+	private blockchains_to_networks_mapper: Record<BlockchainsName, string> = {
 		"binance-smart-chain": "bsc",
 		"polygon-pos": "polygon_pos",
 		ethereum: "eth",
@@ -105,9 +102,9 @@ export class CoinGecko implements CoinsProvider {
 		solana: "solana",
 	};
 
-	readonly rate_limit: LimitFunction = pLimit(6);
+	private rate_limit: LimitFunction = pLimit(6);
 
-	readonly request_data: RequestInit;
+	private request_data: RequestInit;
 
 	constructor(api_key: string) {
 		this.request_data = {

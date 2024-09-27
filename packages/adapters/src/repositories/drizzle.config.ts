@@ -3,8 +3,8 @@ import { defineConfig } from "drizzle-kit";
 
 export default defineConfig({
 	dialect: "postgresql",
-	schema: path.resolve(__dirname, "./schema.ts"), // Use __dirname to ensure correct path
-	out: path.resolve(__dirname, "./migrations"), // Similarly for migrations folder
+	schema: path.resolve(__dirname, "./schema.ts"),
+	out: path.resolve(__dirname, "./migrations"),
 	dbCredentials: {
 		url: process.env.POSTGRES_URL ?? "",
 	},
