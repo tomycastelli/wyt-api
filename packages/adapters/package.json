@@ -16,6 +16,7 @@
 	"dependencies": {
 		"@moralisweb3/common-evm-utils": "^2.27.2",
 		"@repo/domain": "workspace:*",
+		"@solana/spl-token": "^0.4.8",
 		"@solana/web3.js": "^1.95.3",
 		"arktype": "2.0.0-rc.6",
 		"drizzle-orm": "^0.33.0",
