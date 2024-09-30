@@ -28,7 +28,10 @@ export const coinType = coinMarketDataType.merge({
 	image_url: "string.url|null",
 });
 
-export const savedCoinType = coinType.merge({ id: "number.integer" });
+export const savedCoinType = coinType.merge({
+	id: "number.integer",
+	last_update: "Date",
+});
 
 const candleType = type({
 	coin_id: "number.integer",

@@ -99,7 +99,7 @@ export class BitcoinProvider implements WalletsProvider {
 			for (const input of tx.inputs) {
 				transfers.push({
 					from_address: input.prev_out.addr,
-					to_address: "",
+					to_address: null,
 					value: BigInt(input.prev_out.value),
 					type: "native",
 					coin_address: null,
@@ -109,7 +109,7 @@ export class BitcoinProvider implements WalletsProvider {
 			for (const output of tx.out) {
 				transfers.push({
 					to_address: output.addr,
-					from_address: "",
+					from_address: null,
 					value: BigInt(output.value),
 					type: "native",
 					coin_address: null,
@@ -123,8 +123,8 @@ export class BitcoinProvider implements WalletsProvider {
 				// Las fees son mas implicitas en la red bitcoin y ya con poner los inputs en transfers estamos
 				fee: 0n,
 				// No existe un solo from_address o to_address
-				from_address: "",
-				to_address: "",
+				from_address: null,
+				to_address: null,
 				hash: tx.hash,
 				summary: null,
 				transfers,

@@ -27,7 +27,7 @@ export class CoinsPostgres implements CoinsRepository {
 			// Actualizo los datos asociados a la coin si ya existe su nombre
 			const savedCoins = await tx
 				.insert(schema.coins)
-				.values(coins)
+				.values(coins.map((c) => ({ ...c, last_update: new Date() })))
 				.onConflictDoUpdate({
 					target: [schema.coins.name],
 					set: {
@@ -279,6 +279,7 @@ export class CoinsPostgres implements CoinsRepository {
 				tx.update(schema.coins)
 					.set({
 						...market_data,
+						last_update: new Date(),
 					})
 					.where(eq(schema.coins.name, market_data.name));
 			}

@@ -2,6 +2,7 @@ import { reverseLookup } from "@bonfida/spl-name-service";
 import type {
 	BlockchainsName,
 	Transaction,
+	Transfer,
 	Wallet,
 	WalletCoin,
 	WalletsProvider,
@@ -105,7 +106,7 @@ export class SolanaProvider implements WalletsProvider {
 		});
 
 		return {
-			transactions: this.mapTransactionData(
+			transactions: await this.mapTransactionData(
 				transactions,
 				wallet_data.blockchain,
 			),
@@ -113,14 +114,103 @@ export class SolanaProvider implements WalletsProvider {
 		};
 	}
 
-	mapTransactionData(
+	async mapTransactionData(
 		confirmed_signature_info: ConfirmedSignatureInfo[],
 		blockchain: BlockchainsName,
-	): Transaction[] {
+	): Promise<Transaction[]> {
 		const mapped_transactions: Transaction[] = [];
 
 		for (const tx of confirmed_signature_info) {
 			if (tx.confirmationStatus !== "finalized") continue;
+
+			const transfers: Transfer[] = [];
+
+			const details = await this.solana.getTransaction(tx.signature, {
+				maxSupportedTransactionVersion: 0,
+			});
+
+			if (details) {
+				// Voy a ver diferencias entre pre y post balances y asignar transferencias de acuerdo a eso
+				const account_ids = details.transaction.message.staticAccountKeys;
+
+				const changed_balances: {
+					public_key: PublicKey;
+					difference: number;
+				}[] = [];
+
+				for (let i = 0; i < details.meta!.preBalances.length; i++) {
+					const difference =
+						details.meta!.postBalances[i]! - details.meta!.preBalances[i]!;
+					if (difference !== 0) {
+						changed_balances.push({ public_key: account_ids[i]!, difference });
+					}
+				}
+
+				for (const changed_balance of changed_balances) {
+					// Si es positiva la diferencia, la transferencia va hacia la address, asi que sería to_address
+					// Si es negativa, lo contrario
+					transfers.push({
+						from_address:
+							changed_balance.difference < 0
+								? changed_balance.public_key.toString()
+								: null,
+						to_address:
+							changed_balance.difference > 0
+								? changed_balance.public_key.toString()
+								: null,
+						value: BigInt(Math.abs(changed_balance.difference)),
+						type: "native",
+						coin_address: null,
+						token_id: null,
+					});
+				}
+
+				// Hago lo mismo con tokens
+				if (
+					details.meta!.preTokenBalances &&
+					details.meta!.preTokenBalances.length > 0
+				) {
+					const changed_token_balances: {
+						public_key: PublicKey;
+						difference: number;
+						coin_address: string;
+					}[] = [];
+
+					for (let i = 0; i < details.meta!.preTokenBalances.length; i++) {
+						const difference =
+							Number(
+								details.meta!.postTokenBalances![i]!.uiTokenAmount.amount,
+							) -
+							Number(details.meta!.preTokenBalances![i]!.uiTokenAmount.amount);
+						if (difference !== 0) {
+							changed_token_balances.push({
+								public_key: account_ids[i]!,
+								difference,
+								coin_address: details.meta!.preTokenBalances[i]!.mint,
+							});
+						}
+					}
+
+					for (const changed_token_balance of changed_token_balances) {
+						// Si es positiva la diferencia, la transferencia va hacia la address, asi que sería to_address
+						// Si es negativa, lo contrario
+						transfers.push({
+							from_address:
+								changed_token_balance.difference < 0
+									? changed_token_balance.public_key.toString()
+									: null,
+							to_address:
+								changed_token_balance.difference > 0
+									? changed_token_balance.public_key.toString()
+									: null,
+							value: BigInt(Math.abs(changed_token_balance.difference)),
+							type: "token",
+							coin_address: changed_token_balance.coin_address,
+							token_id: null,
+						});
+					}
+				}
+			}
 
 			// Por ahora las transacciones de Solana van a tener que ser vistas en solscan.io usando el id
 			mapped_transactions.push({
@@ -128,10 +218,10 @@ export class SolanaProvider implements WalletsProvider {
 				blockchain: blockchain,
 				fee: 0n,
 				hash: tx.signature,
-				transfers: [],
+				transfers,
 				summary: null,
-				from_address: "",
-				to_address: "",
+				from_address: null,
+				to_address: null,
 			});
 		}
 

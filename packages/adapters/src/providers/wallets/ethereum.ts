@@ -147,21 +147,6 @@ export class EthereumProvider implements WalletsStreamsProvider {
 			wallet_data.alias = ens_domain.result.name;
 		}
 
-		// Busco la primera transacción hecha
-		const first_transaction = await Moralis.EvmApi.wallets.getWalletHistory({
-			chain: this.blockchain_mapper[blockchain],
-			address,
-			order: "ASC",
-			limit: 1,
-			includeInternalTransactions: false,
-		});
-
-		if (first_transaction.result[0]) {
-			wallet_data.first_transfer_date = new Date(
-				first_transaction.result[0].blockTimestamp,
-			);
-		}
-
 		return wallet_data;
 	}
 

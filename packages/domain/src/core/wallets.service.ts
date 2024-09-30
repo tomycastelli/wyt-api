@@ -79,7 +79,8 @@ export class WalletsService<
 		const valued_wallet = await this.getValuedWallet(wallet_data);
 
 		// La guardo
-		const { id } = await this.walletsRepository.saveWallet(valued_wallet);
+		const { id, last_update } =
+			await this.walletsRepository.saveWallet(valued_wallet);
 
 		// Devuelvo las ultimas X transacciones de la [Wallet]
 		// Y despues por atrás ya habiendo devuelto la Wallet, con mas tiempo, guardo todas
@@ -91,7 +92,12 @@ export class WalletsService<
 			blockchain,
 		);
 
-		return { ...valued_wallet, transactions: valued_recent_transactions, id };
+		return {
+			...valued_wallet,
+			transactions: valued_recent_transactions,
+			id,
+			last_update,
+		};
 	}
 
 	/** Consigue una [CoinedWalletWithTransactions] ya guardada en la DB */
@@ -123,6 +129,7 @@ export class WalletsService<
 			...valued_wallet,
 			transactions: valued_transactions,
 			id: saved_wallet.id,
+			last_update: saved_wallet.last_update,
 		};
 	}
 
@@ -148,6 +155,7 @@ export class WalletsService<
 		saved_wallet: SavedWallet,
 		stream_webhook_url: string,
 	): Promise<void> {
+		let first_transfer_date: Date | null = null;
 		let loop_cursor: string | undefined = undefined;
 		do {
 			const { transactions, cursor } =
@@ -165,12 +173,18 @@ export class WalletsService<
 			);
 
 			await this.walletsRepository.saveTransactions(valued_transactions);
+
+			// Guardo la fecha de la primera tx, puede ser null si no hay una sola transaccion
+			if (transactions.length > 0) {
+				first_transfer_date = transactions[-1]!.block_timestamp;
+			}
 		} while (loop_cursor);
 
 		// Si llego hasta acá sin tirar error, actualizo su status
 		await this.walletsRepository.updateWalletBackfillStatus(
 			saved_wallet,
 			"complete",
+			first_transfer_date,
 		);
 
 		// Si estoy en prod y el ecosistema es Ethereum, añado la Wallet al stream
@@ -245,10 +259,8 @@ export class WalletsService<
 		);
 
 		for (const valued_transaction of valued_transactions) {
-			console.log("Valued_transaction: ", valued_transaction);
 			await this.walletsRepository.saveTransactionAndUpdateWallet(
 				valued_transaction,
-				blockchain,
 			);
 		}
 	}
@@ -264,13 +276,13 @@ export class WalletsService<
 		);
 		await this.walletsRepository.saveTransactionAndUpdateWallet(
 			valued_transaction!,
-			blockchain,
 		);
 	}
 
 	/// Helper functions:
 
-	/** Consigue las [Coins] relacionadas a las transacciones, insertandolas si no existían, incluyendo valuaciones  */
+	/** Consigue las [Coins] relacionadas a las transacciones, insertandolas si no existían,
+  ignorando las que no están en el proveedor e incluyendo valuaciones  */
 	private async getValuedTransactions(
 		transaction_data: Transaction[],
 		blockchain: BlockchainsName,
@@ -279,50 +291,54 @@ export class WalletsService<
 			blockchains[blockchain].coin,
 		);
 
-		const valued_transactions: ValuedTransaction[] = await Promise.all(
-			transaction_data.map(async (c) => {
-				const valued_transfers: ValuedTransfer[] = await Promise.all(
-					c.transfers.map(async (tr) => {
-						if (tr.type === "nft") {
-							const coin: SavedNFT = await this.coinsService.getNFTByAddress(
-								blockchain,
+		const valued_transactions: ValuedTransaction[] = [];
+		for (const tx of transaction_data) {
+			const valued_transfers: ValuedTransfer[] = [];
+			for (const tr of tx.transfers) {
+				if (tr.type === "nft") {
+					const coin: SavedNFT = await this.coinsService.getNFTByAddress(
+						blockchain,
+						tr.coin_address!,
+						tr.token_id!,
+					);
+
+					valued_transfers.push({ ...tr, coin, value_usd: 0 });
+				}
+				const coin =
+					tr.type === "native"
+						? native_coin!
+						: await this.coinsService.getCoinByAddress(
 								tr.coin_address!,
-								tr.token_id!,
+								blockchain,
 							);
 
-							return { ...tr, coin, value_usd: 0 };
-						}
-						const coin =
-							tr.type === "native"
-								? native_coin
-								: await this.coinsService.getCoinByAddress(
-										tr.coin_address!,
-										blockchain,
-									);
+				if (!coin) continue;
 
-						const decimal_places =
-							tr.type === "native"
-								? blockchains[c.blockchain].decimal_places
-								: coin!.contracts.find((co) => co.blockchain === c.blockchain)!
-										.decimal_place;
+				const decimal_places =
+					tr.type === "native"
+						? blockchains[tx.blockchain].decimal_places
+						: coin.contracts.find((co) => co.blockchain === tx.blockchain)!
+								.decimal_place;
 
-						const value_usd =
-							(Number(tr.value) * coin!.price) /
-							Number(BigInt(10 ** decimal_places));
-
-						return { ...tr, coin: coin!, value_usd };
-					}),
-				);
-
-				// Calculo el valor en USD del fee
-				const decimal_places = blockchains[c.blockchain].decimal_places;
-				const fee_usd =
-					(Number(c.fee) * native_coin!.price) /
+				const value_usd =
+					(Number(tr.value) * coin.price) /
 					Number(BigInt(10 ** decimal_places));
 
-				return { ...c, transfers: valued_transfers, fee_usd };
-			}),
-		);
+				valued_transfers.push({ ...tr, coin: coin, value_usd });
+			}
+
+			// Si en el filtrado por [Coin]s que existan me quede sin transfers, no incluyo la transaccion
+			if (valued_transfers.length === 0) continue;
+
+			// Calculo el valor en USD del fee
+			const decimal_places = blockchains[tx.blockchain].decimal_places;
+			const fee_usd =
+				(Number(tx.fee) * native_coin!.price) /
+				Number(BigInt(10 ** decimal_places));
+
+			valued_transactions.push({ ...tx, transfers: valued_transfers, fee_usd });
+		}
+
 		return valued_transactions;
 	}
 

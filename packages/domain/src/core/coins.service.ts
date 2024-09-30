@@ -34,14 +34,22 @@ export class CoinsService<
 
 	/** Devuelve una [Coin] por id */
 	public async getCoinById(id: number): Promise<SavedCoin | undefined> {
-		return await this.coinsRepository.getCoinById(id);
+		const coin = await this.coinsRepository.getCoinById(id);
+
+		if (!coin) return undefined;
+
+		return await this.updatedCoin(coin);
 	}
 
 	/** Devuelve una [Coin] por su nombre */
 	public async getCoinByName(
 		coin_name: string,
 	): Promise<SavedCoin | undefined> {
-		return await this.coinsRepository.getCoinByName(coin_name);
+		const coin = await this.coinsRepository.getCoinByName(coin_name);
+
+		if (!coin) return undefined;
+
+		return await this.updatedCoin(coin);
 	}
 
 	/** Devuelve una [Coin] por su contract address */
@@ -53,17 +61,17 @@ export class CoinsService<
 			coin_address,
 			blockchain,
 		);
+
 		// Si la [Coin] ya esta guardada la devuelvo, actualizando la market data antes
 		if (coin) {
-			const market_data = await this.coinsProvider.getCoinMarketData(coin.name);
-			await this.coinsRepository.saveMarketData([market_data]);
-			return coin;
+			return await this.updatedCoin(coin);
 		}
 
 		const newCoin = await this.coinsProvider.getCoinByAddress(
 			coin_address,
 			blockchain,
 		);
+		// Si no está en el proveedor
 		if (!newCoin) return null;
 
 		const [savedCoin] = await this.coinsRepository.saveCoins([newCoin]);
@@ -170,5 +178,14 @@ export class CoinsService<
 		const coinsFuse = new Fuse(coinsData, { keys: ["name"], threshold: 0.25 });
 
 		return coinsFuse.search(name_search).map((f) => f.item);
+	}
+
+	// Helper
+	async updatedCoin(saved_coin: SavedCoin): Promise<SavedCoin> {
+		const market_data = await this.coinsProvider.getCoinMarketData(
+			saved_coin.name,
+		);
+		await this.coinsRepository.saveMarketData([market_data]);
+		return { ...saved_coin, ...market_data };
 	}
 }

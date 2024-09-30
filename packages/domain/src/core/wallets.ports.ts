@@ -79,10 +79,10 @@ export interface WalletsRepository {
 	updateWalletBackfillStatus(
 		wallet_data: SavedWallet,
 		status: "complete" | "pending",
+		first_transfer_date: Date | null,
 	): Promise<void>;
 	/** Guarda una [Transaction] y actualiza el estado de la o las [Wallet]s involucradas  */
 	saveTransactionAndUpdateWallet(
 		transaction_data: CoinedTransaction,
-		blockchain: BlockchainsName,
 	): Promise<void>;
 }

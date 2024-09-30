@@ -89,6 +89,10 @@ export const coins = pgTable(
 			"price_change_percentage_24h",
 		).notNull(),
 		price_change_24h: decimalNumber("price_change_24h").notNull(),
+		last_update: timestamp("last_update", {
+			mode: "date",
+			withTimezone: false,
+		}).notNull(),
 	},
 	(table) => ({
 		nameSearchIndex: index("name_search_index").using(
@@ -163,11 +167,15 @@ export const wallets = pgTable(
 			.notNull(),
 		alias: varchar("alias", { length: 50 }),
 		native_value: blockchainValue("native_value").notNull(),
-		first_transfer_date: timestamp("timestamp", {
+		first_transfer_date: timestamp("first_transfer_date", {
 			mode: "date",
 			withTimezone: false,
 		}),
 		backfill_status: backfillStatusEnum("backfill_status").notNull(),
+		last_update: timestamp("last_update", {
+			mode: "date",
+			withTimezone: false,
+		}).notNull(),
 	},
 	(table) => {
 		return {
@@ -237,8 +245,8 @@ export const transactions = pgTable(
 			mode: "date",
 			withTimezone: false,
 		}).notNull(),
-		from_address: varchar("from_address", { length: 50 }).notNull(),
-		to_address: varchar("to_address", { length: 50 }).notNull(),
+		from_address: varchar("from_address", { length: 50 }),
+		to_address: varchar("to_address", { length: 50 }),
 		fee: blockchainValue("fee").notNull(),
 		summary: text("summary"),
 	},
@@ -269,8 +277,8 @@ export const transfers = pgTable("transfers", {
 		onDelete: "cascade",
 		onUpdate: "cascade",
 	}),
-	from_address: varchar("from_address", { length: 50 }).notNull(),
-	to_address: varchar("to_address", { length: 50 }).notNull(),
+	from_address: varchar("from_address", { length: 50 }),
+	to_address: varchar("to_address", { length: 50 }),
 	value: blockchainValue("value").notNull(),
 });
 

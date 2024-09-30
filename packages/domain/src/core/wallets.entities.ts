@@ -36,6 +36,7 @@ export const walletType = type({
 
 export const savedWalletType = walletType.merge({
 	id: "number.integer",
+	last_update: "Date",
 });
 
 export const coinedWalletType = walletType.merge({
@@ -52,8 +53,8 @@ export const valuedWalletType = coinedWalletType.merge({
 export const transferType = type({
 	type: "'native'|'token'|'nft'",
 	value: "bigint",
-	from_address: "string",
-	to_address: "string",
+	from_address: "string|null",
+	to_address: "string|null",
 	// Esto es si es un NFT
 	token_id: "number|null",
 	// Si es de tipo 'native', la coin es la nativa de la blockchain
@@ -72,8 +73,8 @@ export const transactionType = type({
 	blockchain: blockchain,
 	hash: "string",
 	block_timestamp: "Date",
-	from_address: "string",
-	to_address: "string",
+	from_address: "string|null",
+	to_address: "string|null",
 	transfers: transferType.array(),
 	fee: "bigint",
 	summary: "string|null",
@@ -91,6 +92,7 @@ export const valuedTransactionType = transactionType.merge({
 export const coinedWalletWithTransactions = valuedWalletType.merge({
 	transactions: valuedTransactionType.array(),
 	id: "number.integer",
+	last_update: "Date",
 });
 
 export const streamsType = type({

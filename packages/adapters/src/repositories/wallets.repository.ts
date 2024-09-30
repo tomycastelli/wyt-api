@@ -1,7 +1,7 @@
 import {
 	type BlockchainsName,
 	Coin,
-	CoinedTransaction,
+	type CoinedTransaction,
 	type CoinedWallet,
 	type SavedWallet,
 	type Transaction,
@@ -44,6 +44,7 @@ export class WalletsPostgres implements WalletsRepository {
 				.values({
 					...coined_wallet,
 					native_value: Number(coined_wallet.native_value),
+					last_update: new Date(),
 				})
 				.returning();
 
@@ -124,6 +125,7 @@ export class WalletsPostgres implements WalletsRepository {
 			address: saved_wallet.address,
 			alias: saved_wallet.alias,
 			backfill_status: saved_wallet.backfill_status,
+			last_update: saved_wallet.last_update,
 			blockchain: saved_wallet.blockchain,
 			first_transfer_date: saved_wallet.first_transfer_date,
 			native_value: BigInt(saved_wallet.native_value),
@@ -182,23 +184,19 @@ export class WalletsPostgres implements WalletsRepository {
 		return mapped_wallets;
 	}
 
-	async saveTransactions(transactions: Transaction[]): Promise<void> {
+	async saveTransactions(transactions: CoinedTransaction[]): Promise<void> {
 		await this.db.transaction(async (tx) => {
 			for (const transaction of transactions) {
 				const [id] = await tx
 					.insert(schema.transactions)
 					.values({ ...transaction, fee: Number(transaction.fee) })
 					.returning({ id: schema.transactions.id });
+
 				for (const transfer of transaction.transfers) {
-					const coin_id = await this.getCoinIdOfTransfer(
-						transfer,
-						transaction.blockchain,
-						tx,
-					);
 					await tx.insert(schema.transfers).values({
 						...transfer,
-						coin_id: transfer.type !== "nft" ? coin_id : null,
-						nft_id: transfer.type === "nft" ? coin_id : null,
+						coin_id: transfer.type !== "nft" ? transfer.coin.id : null,
+						nft_id: transfer.type === "nft" ? transfer.coin.id : null,
 						transaction_id: id!.id,
 						value: Number(transfer.value),
 					});
@@ -208,9 +206,10 @@ export class WalletsPostgres implements WalletsRepository {
 	}
 
 	async saveTransactionAndUpdateWallet(
-		transaction_data: Transaction,
+		transaction_data: CoinedTransaction,
 	): Promise<void> {
 		await this.db.transaction(async (tx) => {
+			const updated_wallet_ids: number[] = [];
 			// Aparte de guardar la [Transaction],
 			// tengo que cambiar el estado de la o las [Wallet]s relacionadas en cada [Transfer] hecha
 			const [transaction_id] = await tx
@@ -219,34 +218,37 @@ export class WalletsPostgres implements WalletsRepository {
 				.returning({ id: schema.transactions.id });
 
 			// Si es from_wallet, le tengo que restar el fee
-			await tx
-				.update(schema.wallets)
-				.set({
-					native_value: sql`${schema.wallets.native_value} - ${Number(transaction_data.fee)}`,
-				})
-				.where(
-					and(
-						eq(schema.wallets.address, transaction_data.from_address),
-						eq(schema.wallets.blockchain, transaction_data.blockchain),
-					),
-				);
+			if (transaction_data.from_address) {
+				const [wallet] = await tx
+					.update(schema.wallets)
+					.set({
+						native_value: sql`${schema.wallets.native_value} - ${Number(transaction_data.fee)}`,
+					})
+					.where(
+						and(
+							eq(schema.wallets.address, transaction_data.from_address),
+							eq(schema.wallets.blockchain, transaction_data.blockchain),
+						),
+					)
+					.returning({ id: schema.wallets.id });
 
-			await Promise.all(
-				transaction_data.transfers.map(async (transfer) => {
-					const coin_id = await this.getCoinIdOfTransfer(
-						transfer,
-						transaction_data.blockchain,
-						tx,
-					);
+				if (wallet) {
+					updated_wallet_ids.push(wallet.id);
+				}
+			}
 
-					// Inserto la [Transfer]
-					await tx.insert(schema.transfers).values({
-						...transfer,
-						transaction_id: transaction_id!.id,
-						coin_id,
-						value: Number(transfer.value),
-					});
+			for (const transfer of transaction_data.transfers) {
+				// Inserto la [Transfer]
+				await tx.insert(schema.transfers).values({
+					...transfer,
+					transaction_id: transaction_id!.id,
+					coin_id: transfer.coin.id,
+					value: Number(transfer.value),
+				});
 
+				// En este caso tengo que restarle el value de la transaction
+				// Asumo que la las nfts y las coins ya existen en esa [Wallet], sino no podrían salir de ella
+				if (transfer.from_address) {
 					// Busco [Wallet] del from y el to
 					const [from_wallet] = await tx
 						.select({ id: schema.wallets.id })
@@ -257,18 +259,7 @@ export class WalletsPostgres implements WalletsRepository {
 								eq(schema.wallets.blockchain, transaction_data.blockchain),
 							),
 						);
-					const [to_wallet] = await tx
-						.select({ id: schema.wallets.id })
-						.from(schema.wallets)
-						.where(
-							and(
-								eq(schema.wallets.address, transfer.to_address),
-								eq(schema.wallets.blockchain, transaction_data.blockchain),
-							),
-						);
 
-					// En este caso tengo que restarle el value de la transaction
-					// Asumo que la las nfts y las coins ya existen en esa [Wallet], sino no podrían salir de ella
 					if (from_wallet) {
 						// Si es nativa, cambio directamente el valor de la tabla wallets
 						if (transfer.type === "native") {
@@ -287,7 +278,7 @@ export class WalletsPostgres implements WalletsRepository {
 								})
 								.where(
 									and(
-										eq(schema.walletCoins.coin_id, coin_id),
+										eq(schema.walletCoins.coin_id, transfer.coin.id),
 										eq(schema.walletCoins.wallet_id, from_wallet.id),
 									),
 								);
@@ -297,14 +288,28 @@ export class WalletsPostgres implements WalletsRepository {
 								.delete(schema.walletNFTs)
 								.where(
 									and(
-										eq(schema.walletNFTs.nft_id, coin_id),
+										eq(schema.walletNFTs.nft_id, transfer.coin.id),
 										eq(schema.walletNFTs.wallet_id, from_wallet.id),
 									),
 								);
 						}
-					}
 
-					// En este caso tengo que sumarle
+						updated_wallet_ids.push(from_wallet.id);
+					}
+				}
+
+				// En este caso tengo que sumarle
+				if (transfer.to_address) {
+					const [to_wallet] = await tx
+						.select({ id: schema.wallets.id })
+						.from(schema.wallets)
+						.where(
+							and(
+								eq(schema.wallets.address, transfer.to_address),
+								eq(schema.wallets.blockchain, transaction_data.blockchain),
+							),
+						);
+
 					if (to_wallet) {
 						// Si es nativa, cambio directamente el valor de la tabla wallets
 						if (transfer.type === "native") {
@@ -320,7 +325,7 @@ export class WalletsPostgres implements WalletsRepository {
 							await tx
 								.insert(schema.walletCoins)
 								.values({
-									coin_id: coin_id,
+									coin_id: transfer.coin.id,
 									wallet_id: to_wallet.id,
 									value: Number(transfer.value),
 								})
@@ -337,11 +342,23 @@ export class WalletsPostgres implements WalletsRepository {
 							// Cambio en la tabla walletNFTs, solo puede haber o no haber NFT, en el 'to' la inserto
 							await tx
 								.insert(schema.walletNFTs)
-								.values({ nft_id: coin_id, wallet_id: to_wallet.id });
+								.values({ nft_id: transfer.coin.id, wallet_id: to_wallet.id });
 						}
+
+						updated_wallet_ids.push(to_wallet.id);
 					}
-				}),
-			);
+				}
+			}
+
+			// Actualizo la fecha de cambio de todas las wallets actualizadas
+			if (updated_wallet_ids.length > 0) {
+				await tx
+					.update(schema.wallets)
+					.set({
+						last_update: new Date(),
+					})
+					.where(inArray(schema.wallets.id, updated_wallet_ids));
+			}
 		});
 	}
 
@@ -421,12 +438,13 @@ export class WalletsPostgres implements WalletsRepository {
 	}
 
 	async updateWalletBackfillStatus(
-		wallet_data: Wallet,
+		wallet_data: SavedWallet,
 		status: "complete" | "pending",
+		first_transfer_date: Date | null,
 	): Promise<void> {
 		await this.db
 			.update(schema.wallets)
-			.set({ backfill_status: status })
+			.set({ backfill_status: status, first_transfer_date })
 			.where(
 				and(
 					eq(schema.wallets.address, wallet_data.address),
@@ -454,6 +472,7 @@ export class WalletsPostgres implements WalletsRepository {
 			return coin!.id;
 		}
 		if (transfer_data.type === "token") {
+			/** Asumo que si es token, ya esta guardada en la DB */
 			const [coin] = await tx
 				.select({ id: schema.contracts.coin_id })
 				.from(schema.contracts)
