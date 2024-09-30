@@ -48,7 +48,7 @@ export class CoinsService<
 	public async getCoinByAddress(
 		coin_address: string,
 		blockchain: BlockchainsName,
-	): Promise<SavedCoin> {
+	): Promise<SavedCoin | null> {
 		const coin = await this.coinsRepository.getCoinByAddress(
 			coin_address,
 			blockchain,
@@ -64,6 +64,8 @@ export class CoinsService<
 			coin_address,
 			blockchain,
 		);
+		if (!newCoin) return null;
+
 		const [savedCoin] = await this.coinsRepository.saveCoins([newCoin]);
 		// Se que no es undefined porque le pase solo un elemento y estoy agarrando el primero
 		return savedCoin!;

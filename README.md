@@ -3,6 +3,7 @@
 ## Estructura
 
 La API es un monorepo manejado con [Turborepo](https://turbo.build/).
+El linting se hace mediante [Biome](https://biomejs.dev/).
 Los _workspaces_ estan separados en:
 
 - Packages: _Librerias internas_ para las aplicaciones
@@ -19,4 +20,4 @@ Los comandos que pueden ser útiles con Turborepo son:
 - pnpm i (instala todas las dependencias de todos los packages)
 - pnpm i {package_name} --recursive --filter={package_name}
 
-El package*name se escribe con @repo/{package}, por ejemplo*@repo/domain\_
+El package name se escribe como @repo/{package}. Ejemplo @repo/domain

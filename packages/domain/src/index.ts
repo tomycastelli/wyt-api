@@ -1,7 +1,11 @@
 export { CoinsService } from "./core/coins.service";
 export { WalletsService } from "./core/wallets.service";
 export type { CoinsProvider, CoinsRepository } from "./core/coins.ports";
-export type { WalletsProvider, WalletsRepository } from "./core/wallets.ports";
+export type {
+	WalletsProvider,
+	WalletsRepository,
+	WalletsStreamsProvider,
+} from "./core/wallets.ports";
 export type {
 	Candle,
 	Coin,

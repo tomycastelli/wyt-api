@@ -126,8 +126,7 @@ const coins_service = new CoinsService(coins_postgres, coingecko);
 const wallets_repository = new WalletsPostgres(process.env.POSTGRES_URL ?? "");
 const wallets_provider = new WalletsProviderAdapters(
 	process.env.MORALIS_API_KEY ?? "",
-	"",
-	"",
+	process.env.SOLANA_RPC_ENDPOINT ?? "",
 );
 
 await wallets_provider.initialize();

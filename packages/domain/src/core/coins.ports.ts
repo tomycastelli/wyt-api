@@ -68,7 +68,7 @@ export interface CoinsProvider {
 	getCoinByAddress(
 		coin_address: string,
 		blockchain: BlockchainsName,
-	): Promise<Coin>;
+	): Promise<Coin | null>;
 
 	/** Consigue las candelas del tipo elegido */
 	getCandleData(

@@ -1,16 +1,16 @@
 import { Worker } from "bullmq";
 import "dotenv/config";
 import {
-  CoinGecko,
-  CoinsPostgres,
-  WalletsPostgres,
-  WalletsProviderAdapters,
+	CoinGecko,
+	CoinsPostgres,
+	WalletsPostgres,
+	WalletsProviderAdapters,
 } from "@repo/adapters";
 import {
-  type BlockchainsName,
-  CoinsService,
-  type SavedWallet,
-  WalletsService,
+	type BlockchainsName,
+	CoinsService,
+	type SavedWallet,
+	WalletsService,
 } from "@repo/domain";
 
 // Los adapters
@@ -22,82 +22,81 @@ const coins_service = new CoinsService(coins_postgres, coingecko);
 
 const wallets_repository = new WalletsPostgres(process.env.POSTGRES_URL ?? "");
 const wallets_provider = new WalletsProviderAdapters(
-  process.env.MORALIS_API_KEY ?? "",
-  "",
-  "",
+	process.env.MORALIS_API_KEY ?? "",
+	process.env.SOLANA_RPC_ENDPOINT ?? "",
 );
 
 await wallets_provider.initialize();
 
 // El servicio de Wallets
 const wallets_service = new WalletsService(
-  wallets_repository,
-  wallets_provider,
-  coins_service,
+	wallets_repository,
+	wallets_provider,
+	coins_service,
 );
 
 const backfillWorker = new Worker<{
-  wallet: SavedWallet;
-  stream_webhook_url: string;
+	wallet: SavedWallet;
+	stream_webhook_url: string;
 }>(
-  "backfillQueue",
-  async (job) => {
-    await wallets_service.backfillWallet(
-      job.data.wallet,
-      job.data.stream_webhook_url,
-    );
-  },
-  {
-    connection: {
-      host: "127.0.0.1",
-      port: 6379,
-    },
-  },
+	"backfillQueue",
+	async (job) => {
+		await wallets_service.backfillWallet(
+			job.data.wallet,
+			job.data.stream_webhook_url,
+		);
+	},
+	{
+		connection: {
+			host: "127.0.0.1",
+			port: 6379,
+		},
+	},
 );
 
 backfillWorker.on("ready", () => {
-  console.log("backfillWorker is ready!");
+	console.log("backfillWorker is ready!");
 });
 
 backfillWorker.on("completed", (job) => {
-  console.log(
-    `Job: ${job.id}, for wallet ${job.data.wallet.address} has completed!`,
-  );
+	console.log(
+		`Job: ${job.id}, for wallet ${job.data.wallet.address} has completed!`,
+	);
 });
 
 backfillWorker.on("failed", (job, err) => {
-  console.error(`Job ${job?.id} has failed with err: `, err);
+	console.error(`Job ${job?.id} has failed with err: `, err);
 });
 
 const transactionsStreamWorker = new Worker<{
-  body: any;
-  blockchain: BlockchainsName;
+	body: any;
+	blockchain: BlockchainsName;
 }>(
-  "transactionsStreamQueue",
-  async (job) => {
-    await wallets_service.handleWebhookTransaction(
-      job.data.body,
-      job.data.blockchain,
-    );
-  },
-  {
-    connection: {
-      host: "127.0.0.1",
-      port: 6379,
-    },
-  },
+	"transactionsStreamQueue",
+	async (job) => {
+		await wallets_service.handleWebhookTransaction(
+			job.data.body,
+			job.data.blockchain,
+		);
+	},
+	{
+		connection: {
+			host: "127.0.0.1",
+			port: 6379,
+		},
+	},
 );
 
 transactionsStreamWorker.on("ready", () => {
-  console.log("transactionsStreamWorker is ready!");
+	console.log("transactionsStreamWorker is ready!");
 });
 
 transactionsStreamWorker.on("completed", (job) => {
-  console.log(
-    `Job: ${job.id}, for stream of blockchain ${job.data.blockchain} has completed!`,
-  );
+	console.log(
+		`Job: ${job.id}, for stream of blockchain ${job.data.blockchain} has completed!`,
+	);
 });
 
 transactionsStreamWorker.on("failed", (job, err) => {
-  console.error(`Job ${job?.id} has failed with err: `, err);
+	console.error(`Job ${job?.id} has failed with err: `, err);
 });

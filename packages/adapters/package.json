@@ -14,6 +14,7 @@
 		".": "./src/index.ts"
 	},
 	"dependencies": {
+		"@bonfida/spl-name-service": "^3.0.3",
 		"@moralisweb3/common-evm-utils": "^2.27.2",
 		"@repo/domain": "workspace:*",
 		"@solana/spl-token": "^0.4.8",
