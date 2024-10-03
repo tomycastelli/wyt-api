@@ -94,8 +94,12 @@ export class CoinsPostgres implements CoinsRepository {
 		return response;
 	}
 
-	async getAllCoins(): Promise<SavedCoin[]> {
+	async getAllCoins(minimum_market_cap?: number): Promise<SavedCoin[]> {
 		const coinsData = await this.db.query.coins.findMany({
+			where: (coins, { gte }) =>
+				minimum_market_cap
+					? gte(coins.market_cap, minimum_market_cap)
+					: undefined,
 			with: {
 				contracts: true,
 			},
@@ -131,27 +135,42 @@ export class CoinsPostgres implements CoinsRepository {
 		coin_address: string,
 		blockchain: BlockchainsName,
 	): Promise<SavedCoin | undefined> {
-		const [contract] = await this.db
-			.select()
-			.from(schema.contracts)
+		const sq = this.db
+			.select({ id: schema.coins.id })
+			.from(schema.coins)
+			.leftJoin(schema.contracts, eq(schema.contracts.coin_id, schema.coins.id))
 			.where(
 				and(
 					eqLower(schema.contracts.contract_address, coin_address),
 					eq(schema.contracts.blockchain, blockchain),
 				),
 			)
-			.limit(1);
+			.limit(1)
+			.as("sq");
 
-		if (!contract) return undefined;
+		const coin_with_contracts = await this.db
+			.select()
+			.from(schema.coins)
+			.leftJoin(sq, eq(schema.coins.id, sq.id))
+			.leftJoin(schema.contracts, eq(schema.contracts.coin_id, schema.coins.id))
+			.where(eq(schema.coins.id, sq.id));
 
-		const coin = await this.db.query.coins.findFirst({
-			where: (coins, { eq }) => eq(coins.id, contract.coin_id),
-			with: {
-				contracts: true,
+		if (coin_with_contracts.length === 0) return undefined;
+
+		const coin = coin_with_contracts.reduce(
+			(saved_coin, item) => {
+				const { contracts } = item;
+
+				if (contracts) {
+					saved_coin.contracts.push(contracts);
+				}
+
+				return saved_coin;
 			},
-		});
+			{ ...coin_with_contracts[0]!.coins, contracts: [] } as SavedCoin,
+		);
 
-		return coin!;
+		return coin;
 	}
 
 	async getNFTByAddress(
@@ -159,6 +178,7 @@ export class CoinsPostgres implements CoinsRepository {
 		token_id: number,
 		blockchain: BlockchainsName,
 	): Promise<SavedNFT> {
+		console.log("nft to fetch: ", contract_address);
 		return await this.db.transaction(async (tx) => {
 			const [saved_nft] = await tx
 				.select()

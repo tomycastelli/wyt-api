@@ -564,11 +564,15 @@ export class WalletsPostgres implements WalletsRepository {
 				(tx) => tx.hash === transaction.transactions.hash,
 			);
 
+			const is_nft = typeof transaction.nfts?.token_id === "number";
+
 			const transfer_to_add: Transfer = {
 				...transaction.transfers!,
-				token_id: transaction.nfts?.token_id ?? null,
+				token_id: is_nft ? transaction.nfts?.token_id! : null,
 				value: BigInt(transaction.transfers!.value),
-				coin_address: transaction.contracts?.contract_address ?? null,
+				coin_address: is_nft
+					? transaction.nfts?.contract_address!
+					: (transaction.contracts?.contract_address ?? null),
 			};
 
 			if (!existing_transaction) {

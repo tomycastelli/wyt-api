@@ -15,6 +15,7 @@ import { type } from "arktype";
 import { Queue } from "bullmq";
 import { Hono } from "hono";
 import type { BlankEnv, BlankSchema } from "hono/types";
+import type { JobsQueue } from "..";
 
 export const setup_wallets_routes = (
 	wallets_service: WalletsService<
@@ -25,6 +26,7 @@ export const setup_wallets_routes = (
 	>,
 	base_url: string,
 	moralis_streams_secret_key: string,
+	coin_jobs_queue: Queue<JobsQueue>,
 ): Hono<BlankEnv, BlankSchema, "/"> => {
 	// BullMQ para procesos de larga duración
 	const backfillQueue = new Queue<{
@@ -61,20 +63,67 @@ export const setup_wallets_routes = (
 		async (c) => {
 			const { address, blockchain } = c.req.valid("json");
 
-			const wallet_with_tx = await wallets_service.addWallet(
-				address,
-				blockchain,
-			);
+			const wallet_data = await wallets_service.addWallet(address, blockchain);
 
-			if (!wallet_with_tx) return c.text("Invalid wallet address", 400);
+			if (!wallet_data) return c.text("Invalid wallet address", 400);
 
 			// Enviar a una queue
 			await backfillQueue.add("backfillWallet", {
-				wallet: wallet_with_tx,
+				wallet: wallet_data.valued_wallet_with_transactions,
 				stream_webhook_url: `${base_url}/streams/${blockchain}`,
 			});
 
-			return c.json(wallet_with_tx);
+			// Enviar nuevas [Coin]s a conseguir la data nueva
+			for (const new_coin of wallet_data.new_coins) {
+				// Historial diario
+				await coin_jobs_queue.add("new_wallet_coins", {
+					jobName: "historicalCandles",
+					data: {
+						coin: new_coin,
+						frequency: "daily",
+					},
+				});
+
+				// Historial horario
+				await coin_jobs_queue.add("new_wallet_coins", {
+					jobName: "historicalCandles",
+					data: {
+						coin: new_coin,
+						frequency: "hourly",
+					},
+				});
+			}
+
+			return c.json(wallet_data.valued_wallet_with_transactions);
+		},
+	);
+
+	wallets_routes.post(
+		"/backfill",
+		arktypeValidator(
+			"json",
+			type({
+				address: "string",
+				blockchain: ["===", ...EveryBlockainsName],
+			}),
+		),
+		async (c) => {
+			const { address, blockchain } = c.req.valid("json");
+
+			const saved_wallet = await wallets_service.getWallet(address, blockchain);
+
+			if (!saved_wallet) return c.text("Wallet does not exists");
+
+			if (saved_wallet?.backfill_status === "complete")
+				return c.text("Wallet is already backfilled");
+
+			// Enviar a una queue
+			await backfillQueue.add("backfillWallet", {
+				wallet: saved_wallet,
+				stream_webhook_url: `${base_url}/streams/${blockchain}`,
+			});
+
+			return c.text("Backfill started");
 		},
 	);
 
@@ -125,7 +174,6 @@ export const setup_wallets_routes = (
 			const wallet_with_tx = await wallets_service.getWallet(
 				address,
 				blockchain,
-				1,
 			);
 
 			if (!wallet_with_tx) return c.notFound();
@@ -185,7 +233,7 @@ export const setup_wallets_routes = (
 			const { blockchain, address } = c.req.valid("param");
 			const { page, graph } = c.req.valid("query");
 
-			const wallet_with_tx = await wallets_service.getWallet(
+			const wallet_with_tx = await wallets_service.getWalletWithTransactions(
 				address,
 				blockchain,
 				page ?? 1,

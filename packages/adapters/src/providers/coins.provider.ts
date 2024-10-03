@@ -376,19 +376,54 @@ export class CoinGecko implements CoinsProvider {
 		return mappedCoinDetails;
 	}
 
-	async getAllCoinMarketData(): Promise<CoinMarketData[]> {
+	async getAllCoinMarketData(coin_names?: string[]): Promise<CoinMarketData[]> {
 		const market_data_array: CoinMarketData[] = [];
-		// Vamos a ir haciendo requests por categoria
-		for (const category of this.blockchains_categories) {
+		if (!coin_names) {
+			// Vamos a ir haciendo requests por categoria
+			for (const category of this.blockchains_categories) {
+				let is_last_page = false;
+				let page = 1;
+				while (!is_last_page) {
+					const response = await fetch(
+						`${this.base_url}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&price_change_percentage=24h&locale=en&precision=18&category=${category}&page=${page}`,
+						this.request_data,
+					).then((res) => res.json());
+
+					page++;
+
+					const parsedMarketData = marketDataListSchema.array()(response);
+
+					if (parsedMarketData instanceof type.errors) throw parsedMarketData;
+
+					if (parsedMarketData.length < 250) {
+						// Termino el loop con esta iteracion
+						is_last_page = true;
+					}
+
+					const mappedMarketData: CoinMarketData[] = parsedMarketData.map(
+						(md) => ({
+							name: md.id,
+							price: md.current_price,
+							...md,
+						}),
+					);
+
+					market_data_array.push(...mappedMarketData);
+				}
+			}
+		} else {
+			// Reparto en chunks de 250 coin names y hago la query
+			let index_cursor = 0;
 			let is_last_page = false;
-			let page = 1;
 			while (!is_last_page) {
+				const coins_to_fetch = coin_names.slice(
+					index_cursor,
+					index_cursor + 250,
+				);
 				const response = await fetch(
-					`${this.base_url}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&price_change_percentage=24h&locale=en&precision=18&category=${category}&page=${page}`,
+					`${this.base_url}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&price_change_percentage=24h&locale=en&precision=18&ids=${coins_to_fetch.join(",")}`,
 					this.request_data,
 				).then((res) => res.json());
-
-				page++;
 
 				const parsedMarketData = marketDataListSchema.array()(response);
 
@@ -398,6 +433,8 @@ export class CoinGecko implements CoinsProvider {
 					// Termino el loop con esta iteracion
 					is_last_page = true;
 				}
+
+				index_cursor += 250;
 
 				const mappedMarketData: CoinMarketData[] = parsedMarketData.map(
 					(md) => ({

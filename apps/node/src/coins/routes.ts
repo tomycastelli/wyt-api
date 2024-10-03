@@ -6,12 +6,14 @@ import {
 	blockchains,
 } from "@repo/domain";
 import { type } from "arktype";
-import { Queue } from "bullmq";
+import type { Queue } from "bullmq";
 import { type Context, Hono } from "hono";
 import type { BlankEnv, BlankSchema } from "hono/types";
+import type { JobsQueue } from "..";
 
 export const setup_coins_routes = (
 	coins_service: CoinsService<CoinGecko, CoinsPostgres>,
+	coin_jobs_queue: Queue<JobsQueue>,
 ): Hono<BlankEnv, BlankSchema, "/"> => {
 	// Funcion para sugerir coins
 	const suggestCoins = async (
@@ -26,28 +28,10 @@ export const setup_coins_routes = (
 		return c.json({ related_coins: close_by_name_coins });
 	};
 
-	const coinJobsQueue = new Queue<{
-		jobName:
-			| "saveAllCoins"
-			| "saveLatestCoins"
-			| "candles"
-			| "historicalCandles";
-		data?: {
-			coin_name: string;
-			frequency: "daily" | "hourly";
-			refresh_rate?: number;
-		};
-	}>("coinJobsQueue", {
-		connection: {
-			host: "127.0.0.1",
-			port: 6379,
-		},
-	});
-
 	const coins_routes = new Hono();
 
 	coins_routes.post("/coins-job", async (c) => {
-		await coinJobsQueue.add("coins-job", {
+		await coin_jobs_queue.add("coins-job", {
 			jobName: "saveAllCoins",
 		});
 
@@ -55,7 +39,7 @@ export const setup_coins_routes = (
 	});
 
 	coins_routes.post("/latest-coins-job", async (c) => {
-		await coinJobsQueue.add("latest-coins-job", {
+		await coin_jobs_queue.add("latest-coins-job", {
 			jobName: "saveLatestCoins",
 		});
 		return c.text("Latest coins job started");
@@ -74,10 +58,14 @@ export const setup_coins_routes = (
 		async (c) => {
 			const { coin_name, frequency, refresh_rate } = c.req.valid("json");
 
-			await coinJobsQueue.add("candles-job", {
+			const coin = await coins_service.getCoinByName(coin_name);
+
+			if (!coin) return c.text("Coin does not exists");
+
+			await coin_jobs_queue.add("candles-job", {
 				jobName: "candles",
 				data: {
-					coin_name,
+					coin,
 					frequency,
 					refresh_rate,
 				},
@@ -99,10 +87,14 @@ export const setup_coins_routes = (
 		async (c) => {
 			const { coin_name, frequency } = c.req.valid("json");
 
-			await coinJobsQueue.add("historical-candles-job", {
+			const coin = await coins_service.getCoinByName(coin_name);
+
+			if (!coin) return c.text("Coin does not exists");
+
+			await coin_jobs_queue.add("historical-candles-job", {
 				jobName: "historicalCandles",
 				data: {
-					coin_name,
+					coin,
 					frequency,
 				},
 			});

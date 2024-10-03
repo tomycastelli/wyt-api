@@ -19,7 +19,7 @@ export interface CoinsRepository {
 	saveMarketData(coin_market_data: CoinMarketData[]): Promise<void>;
 	saveCandles(candles: Candle[]): Promise<void>;
 
-	getAllCoins(): Promise<SavedCoin[]>;
+	getAllCoins(minimum_market_cap?: number): Promise<SavedCoin[]>;
 	getCoinsByBlockchain(
 		blockchain: string,
 		page_number: number,
@@ -56,7 +56,7 @@ export interface CoinsRepository {
 // El contrato al que se tienen que adherir las fuentes de informacion
 export interface CoinsProvider {
 	/** Devuelve todos los [CoinMarketData] disponibles */
-	getAllCoinMarketData(): Promise<CoinMarketData[]>;
+	getAllCoinMarketData(coin_names?: string[]): Promise<CoinMarketData[]>;
 
 	/** Devuelve el [CoinMarketData] de una Coin en especifico */
 	getCoinMarketData(coin_name: string): Promise<CoinMarketData>;

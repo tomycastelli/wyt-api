@@ -21,13 +21,15 @@ function lower(email: AnyPgColumn): SQL {
 
 const largeDecimalNumber = customType<{ data: number }>({
 	dataType() {
-		return "numeric(22, 6)";
+		return "numeric(24, 6)";
 	},
 	fromDriver(value) {
 		return Number(value);
 	},
 	toDriver(value) {
-		const roundedValue = Number(value.toFixed(6));
+		const roundedValue = Number(
+			Number(value.toString().slice(0, 22)).toFixed(6),
+		);
 
 		return roundedValue;
 	},
@@ -35,13 +37,15 @@ const largeDecimalNumber = customType<{ data: number }>({
 
 const decimalNumber = customType<{ data: number }>({
 	dataType() {
-		return "numeric(24, 18)";
+		return "numeric(28, 18)";
 	},
 	fromDriver(value) {
 		return Number(value);
 	},
 	toDriver(value) {
-		const roundedValue = Number(value.toFixed(18));
+		const roundedValue = Number(
+			Number(value.toString().slice(0, 24)).toFixed(18),
+		);
 
 		return roundedValue;
 	},
@@ -55,7 +59,9 @@ const smallDecimalNumber = customType<{ data: number }>({
 		return Number(value);
 	},
 	toDriver(value) {
-		const roundedValue = Number(value.toFixed(8));
+		const roundedValue = Number(
+			Number(value.toString().slice(0, 14)).toFixed(8),
+		);
 
 		return roundedValue;
 	},
@@ -63,20 +69,17 @@ const smallDecimalNumber = customType<{ data: number }>({
 
 const blockchainValue = customType<{ data: bigint }>({
 	dataType() {
-		return "numeric(24, 0)";
+		return "numeric(26, 0)";
 	},
 	fromDriver(value) {
 		return BigInt(Number(value));
 	},
 	toDriver(value) {
-		// Convert the bigint to a string
-		let valueStr = value.toString();
+		const roundedValue = Number(
+			Number(value.toString().slice(0, 24)).toFixed(0),
+		);
 
-		if (valueStr.length > 24) {
-			valueStr = valueStr.slice(0, 24);
-		}
-
-		return Number(valueStr);
+		return roundedValue;
 	},
 });
 

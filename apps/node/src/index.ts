@@ -5,13 +5,14 @@ import {
 	WalletsPostgres,
 	WalletsProviderAdapters,
 } from "@repo/adapters";
-import { CoinsService, WalletsService } from "@repo/domain";
+import { CoinsService, type SavedCoin, WalletsService } from "@repo/domain";
 import { Hono } from "hono";
 import { prettyJSON } from "hono/pretty-json";
 import { requestId } from "hono/request-id";
 import { trimTrailingSlash } from "hono/trailing-slash";
 import { getPath } from "hono/utils/url";
 import "dotenv/config";
+import { Queue } from "bullmq";
 import { compress } from "hono/compress";
 import type { BlankEnv, BlankSchema } from "hono/types";
 import { setup_coins_routes } from "./coins/routes";
@@ -27,6 +28,15 @@ declare global {
 
 BigInt.prototype.toJSON = function () {
 	return Number(this);
+};
+
+export type JobsQueue = {
+	jobName: "saveAllCoins" | "saveLatestCoins" | "candles" | "historicalCandles";
+	data?: {
+		coin: SavedCoin;
+		frequency: "daily" | "hourly";
+		refresh_rate?: number;
+	};
 };
 
 export const create_app = (
@@ -103,11 +113,19 @@ export const create_app = (
 		return c.text("Hello Hono!");
 	});
 
-	const coins_routes = setup_coins_routes(coins_service);
+	const coin_jobs_queue = new Queue<JobsQueue>("coinJobsQueue", {
+		connection: {
+			host: "127.0.0.1",
+			port: 6379,
+		},
+	});
+
+	const coins_routes = setup_coins_routes(coins_service, coin_jobs_queue);
 	const wallets_routes = setup_wallets_routes(
 		wallets_service,
 		base_url,
 		moralis_streams_secret_key,
+		coin_jobs_queue,
 	);
 
 	app.route("/coins", coins_routes);

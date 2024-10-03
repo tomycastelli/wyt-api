@@ -131,7 +131,9 @@ export class EthereumProvider implements WalletsStreamsProvider {
 		do {
 			const coins: WalletCoin[] = nfts_data.result
 				// NFTs con tokenId mayor a 1e9 no los considero serios
-				.filter((c) => !!c.metadata && Number(c.tokenId) < 1e9)
+				.filter(
+					(c) => !!c.metadata && Number(c.tokenId) < 1e9 && c.tokenAddress,
+				)
 				.map((c) => ({
 					coin_address: c.tokenAddress.checksum,
 					value: 0n,
@@ -209,6 +211,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
 			order: "DESC",
 			includeInternalTransactions: false,
 			cursor: loop_cursor,
+			limit: 300,
 		});
 
 		return {
@@ -425,7 +428,16 @@ export class EthereumProvider implements WalletsStreamsProvider {
 		wallet_data: Wallet,
 	): Transaction[] {
 		const transactions_data: Transaction[] = transaction_history_data
-			.filter((th) => th.possibleSpam === false)
+			.filter(
+				(th) =>
+					th.possibleSpam === false &&
+					// Es relevante en este caso porque es la que paga la fee
+					(th.fromAddress.lowercase === wallet_data.address.toLowerCase() ||
+						// Es relevantre en este caso porque sumo o resto alguna coin o nft
+						th.erc20Transfers.length > 0 ||
+						th.nativeTransfers.length > 0 ||
+						th.nftTransfers.length > 0),
+			)
 			.map((th) => {
 				const transfers: Transfer[] = [];
 

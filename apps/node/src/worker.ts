@@ -12,6 +12,7 @@ import {
 	type SavedWallet,
 	WalletsService,
 } from "@repo/domain";
+import type { JobsQueue } from ".";
 
 // Los adapters
 const coingecko = new CoinGecko(process.env.COINGECKO_API_KEY ?? "");
@@ -45,16 +46,23 @@ const backfillWorker = new Worker<{
 	"backfillQueue",
 	async (job) => {
 		console.log(`backfillWorker started for wallet: ${job.data.wallet.id}`);
-		await wallets_service.backfillWallet(
+		const response = await wallets_service.backfillWallet(
 			job.data.wallet,
 			job.data.stream_webhook_url,
 		);
+		if (response) {
+			for (const new_coin of response.new_coins) {
+				await coins_service.getCoinHistorialCandles("daily", new_coin);
+				await coins_service.getCoinHistorialCandles("hourly", new_coin);
+			}
+		}
 	},
 	{
 		connection: {
 			host: "127.0.0.1",
 			port: 6379,
 		},
+		concurrency: 10,
 	},
 );
 
@@ -78,16 +86,23 @@ const transactionsStreamWorker = new Worker<{
 }>(
 	"transactionsStreamQueue",
 	async (job) => {
-		await wallets_service.handleWebhookTransaction(
+		const response = await wallets_service.handleWebhookTransaction(
 			job.data.body,
 			job.data.blockchain,
 		);
+		if (response) {
+			for (const new_coin of response.new_coins) {
+				await coins_service.getCoinHistorialCandles("daily", new_coin);
+				await coins_service.getCoinHistorialCandles("hourly", new_coin);
+			}
+		}
 	},
 	{
 		connection: {
 			host: "127.0.0.1",
 			port: 6379,
 		},
+		concurrency: 10,
 	},
 );
 
@@ -105,43 +120,36 @@ transactionsStreamWorker.on("failed", (job, err) => {
 	console.error(`Job ${job?.id} has failed with err: `, err);
 });
 
-const coinJobsWorker = new Worker<{
-	jobName: "saveAllCoins" | "saveLatestCoins" | "candles" | "historicalCandles";
-	data?: {
-		coin_name: string;
-		frequency: "daily" | "hourly";
-		refresh_rate?: number;
-	};
-}>(
+const coinJobsWorker = new Worker<JobsQueue>(
 	"coinJobsQueue",
 	async (job) => {
 		const payload = job.data;
 		switch (payload.jobName) {
 			case "saveAllCoins":
-				return await coins_service.saveAllCoins();
-			case "saveLatestCoins":
-				return await coins_service.saveLatestCoins();
+				await coins_service.saveAllCoins();
+				break;
+			case "saveLatestCoins": {
+				const new_coins = await coins_service.saveLatestCoins();
+				for (const new_coin of new_coins) {
+					await coins_service.getCoinHistorialCandles("daily", new_coin);
+					await coins_service.getCoinHistorialCandles("hourly", new_coin);
+				}
+				break;
+			}
 			case "candles": {
-				const coin = await coins_service.getCoinByName(payload.data!.coin_name);
-				if (!coin) break;
-
 				await coins_service.saveCandles(
-					coin.id,
+					payload.data!.coin.id,
 					payload.data!.frequency,
 					payload.data!.refresh_rate!,
 				);
-				const candles = await coins_service.getCandlesByDate(
-					payload.data!.frequency,
-					coin.id,
-				);
-
-				return candles;
+				break;
 			}
 			case "historicalCandles":
 				await coins_service.getCoinHistorialCandles(
 					payload.data!.frequency,
-					payload.data!.coin_name,
+					payload.data!.coin,
 				);
+				break;
 		}
 	},
 	{
@@ -149,6 +157,7 @@ const coinJobsWorker = new Worker<{
 			host: "127.0.0.1",
 			port: 6379,
 		},
+		concurrency: 10,
 	},
 );
 

@@ -38,7 +38,7 @@ export class CoinsService<
 
 		if (!coin) return undefined;
 
-		return await this.updatedCoin(coin);
+		return coin;
 	}
 
 	/** Devuelve una [Coin] por su nombre */
@@ -49,22 +49,22 @@ export class CoinsService<
 
 		if (!coin) return undefined;
 
-		return await this.updatedCoin(coin);
+		return coin;
 	}
 
 	/** Devuelve una [Coin] por su contract address */
 	public async getCoinByAddress(
 		coin_address: string,
 		blockchain: BlockchainsName,
-	): Promise<SavedCoin | null> {
-		const coin = await this.coinsRepository.getCoinByAddress(
+	): Promise<{ saved_coin: SavedCoin; is_new: boolean } | null> {
+		const saved_coin = await this.coinsRepository.getCoinByAddress(
 			coin_address,
 			blockchain,
 		);
 
-		// Si la [Coin] ya esta guardada la devuelvo, actualizando la market data antes
-		if (coin) {
-			return await this.updatedCoin(coin);
+		// Si la [Coin] ya esta guardada la devuelvo
+		if (saved_coin) {
+			return { saved_coin, is_new: false };
 		}
 
 		const newCoin = await this.coinsProvider.getCoinByAddress(
@@ -74,9 +74,9 @@ export class CoinsService<
 		// Si no está en el proveedor
 		if (!newCoin) return null;
 
-		const [savedCoin] = await this.coinsRepository.saveCoins([newCoin]);
+		const [new_coin] = await this.coinsRepository.saveCoins([newCoin]);
 		// Se que no es undefined porque le pase solo un elemento y estoy agarrando el primero
-		return savedCoin!;
+		return { saved_coin: new_coin!, is_new: true };
 	}
 
 	/** Devuelve una [NFT] por su contract_address y token_id */
@@ -165,12 +165,9 @@ export class CoinsService<
 
 	public async getCoinHistorialCandles(
 		frequency: "hourly" | "daily",
-		coin_name: string,
+		coin: SavedCoin,
 	): Promise<void> {
 		try {
-			const coin = await this.getCoinByName(coin_name);
-			if (!coin) return;
-
 			let date_cursor = Math.floor(Date.now() / 1000);
 			let is_oldest_page = false;
 
@@ -182,7 +179,7 @@ export class CoinsService<
 				const { candles, date_cursor: new_date_cursor } =
 					await this.coinsProvider.getCoinHistorialCandles(
 						frequency,
-						coin_name,
+						coin.name,
 						date_cursor,
 					);
 
@@ -226,9 +223,13 @@ export class CoinsService<
 		);
 	}
 
-	/** Actualiza los datos de mercado relacionados a las coins, para todas las coins disponibles */
-	public async updateMarketData(): Promise<void> {
-		const market_data = await this.coinsProvider.getAllCoinMarketData();
+	/** Actualiza los datos de mercado relacionados a las [Coin]s, para todas las coins disponibles por encima de ese minimo de marketcap */
+	public async updateMarketData(minimum_market_cap: number): Promise<void> {
+		const coin_names = await this.coinsRepository
+			.getAllCoins(minimum_market_cap)
+			.then((coins) => coins.map((c) => c.name));
+		const market_data =
+			await this.coinsProvider.getAllCoinMarketData(coin_names);
 		await this.coinsRepository.saveMarketData(market_data);
 	}
 
