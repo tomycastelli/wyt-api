@@ -125,10 +125,8 @@ export const coins = pgTable(
 		}).notNull(),
 	},
 	(table) => ({
-		nameSearchIndex: index("name_search_index").using(
-			"gin",
-			sql`to_tsvector('english', ${table.name})`,
-		),
+		nameIdx: index("name_idx").on(table.name),
+		marketCapIdx: index("market_cap_idx").on(table.market_cap),
 	}),
 );
 
@@ -286,31 +284,41 @@ export const transactions = pgTable(
 				lower(table.hash),
 				table.blockchain,
 			),
+			blockTimestampIdx: index("block_timestamp_idx").on(table.block_timestamp),
 		};
 	},
 );
 
-export const transfers = pgTable("transfers", {
-	id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-	transaction_id: integer("transaction_id")
-		.references(() => transactions.id, {
+export const transfers = pgTable(
+	"transfers",
+	{
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		transaction_id: integer("transaction_id")
+			.references(() => transactions.id, {
+				onDelete: "cascade",
+				onUpdate: "cascade",
+			})
+			.notNull(),
+		type: transactionTypeEnum("type").notNull(),
+		coin_id: integer("coin_id").references(() => coins.id, {
 			onDelete: "cascade",
 			onUpdate: "cascade",
-		})
-		.notNull(),
-	type: transactionTypeEnum("type").notNull(),
-	coin_id: integer("coin_id").references(() => coins.id, {
-		onDelete: "cascade",
-		onUpdate: "cascade",
-	}),
-	nft_id: integer("nft_id").references(() => nfts.id, {
-		onDelete: "cascade",
-		onUpdate: "cascade",
-	}),
-	from_address: varchar("from_address", { length: 65 }),
-	to_address: varchar("to_address", { length: 65 }),
-	value: blockchainValue("value").notNull(),
-});
+		}),
+		nft_id: integer("nft_id").references(() => nfts.id, {
+			onDelete: "cascade",
+			onUpdate: "cascade",
+		}),
+		from_address: varchar("from_address", { length: 65 }),
+		to_address: varchar("to_address", { length: 65 }),
+		value: blockchainValue("value").notNull(),
+	},
+	(table) => {
+		return {
+			fromAddressIdx: index("from_address_idx").on(table.from_address),
+			toAddressIdx: index("to_address_idx").on(table.to_address),
+		};
+	},
+);
 
 export const candles = pgTable(
 	"candles",

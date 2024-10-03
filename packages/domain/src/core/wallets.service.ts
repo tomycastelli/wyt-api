@@ -615,13 +615,6 @@ export class WalletsService<
 							? transfer.value
 							: -transfer.value;
 
-					console.log("This transfer change is gonna be: ", transfer_value);
-					console.log(
-						"This is the timekey for this tx: ",
-						transaction_time_key,
-					);
-					console.log("This is the map before changes: ", values_map);
-
 					if (coin_map) {
 						const current_value = coin_map.get(transaction_time_key) ?? 0n;
 						coin_map.set(transaction_time_key, current_value + transfer_value);

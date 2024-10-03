@@ -333,15 +333,14 @@ export class WalletsPostgres implements WalletsRepository {
 				// Si hubo conflicto porque ya existe, no hacer nada
 				if (!id) return;
 
-				for (const transfer of transaction.transfers) {
-					await tx.insert(schema.transfers).values({
-						...transfer,
-						coin_id: transfer.type !== "nft" ? transfer.coin.id : null,
-						nft_id: transfer.type === "nft" ? transfer.coin.id : null,
+				await tx.insert(schema.transfers).values(
+					transaction.transfers.map((tr) => ({
 						transaction_id: id.id,
-						value: transfer.value,
-					});
-				}
+						...tr,
+						coin_id: tr.type !== "nft" ? tr.coin.id : null,
+						nft_id: tr.type === "nft" ? tr.coin.id : null,
+					})),
+				);
 			}
 		});
 	}
