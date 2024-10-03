@@ -9,10 +9,19 @@ import {
 import {
 	type BlockchainsName,
 	CoinsService,
+	type SavedCoin,
 	type SavedWallet,
 	WalletsService,
 } from "@repo/domain";
-import type { JobsQueue } from ".";
+
+export type JobsQueue = {
+	jobName: "saveAllCoins" | "saveLatestCoins" | "candles" | "historicalCandles";
+	data?: {
+		coin: SavedCoin;
+		frequency: "daily" | "hourly";
+		refresh_rate?: number;
+	};
+};
 
 // Los adapters
 const coingecko = new CoinGecko(process.env.COINGECKO_API_KEY ?? "");

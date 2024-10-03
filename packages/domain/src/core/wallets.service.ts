@@ -60,7 +60,7 @@ export class WalletsService<
 		this.coinsService = coins_service;
 	}
 
-	/** Añade una [Wallet] */
+	/** Añade una [Wallet] con sus posesiones, y sus transacciones mas recientes */
 	public async addWallet(
 		address: string,
 		blockchain: BlockchainsName,

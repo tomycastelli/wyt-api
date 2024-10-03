@@ -1,10 +1,10 @@
 {
-	"name": "@repo/node",
+	"name": "@repo/web-api",
 	"type": "module",
 	"version": "0.0.0",
 	"private": true,
 	"scripts": {
-		"dev": "concurrently \"tsx watch src/index.ts\" \"tsx watch src/worker.ts\"",
+		"dev": "tsx watch src/index.ts",
 		"build": "tsc"
 	},
 	"dependencies": {
