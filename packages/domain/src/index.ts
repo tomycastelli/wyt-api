@@ -18,7 +18,7 @@ export type {
 	CoinedTransaction,
 	CoinedWallet,
 	CoinedWalletCoin,
-	CoinedWalletWithTransactions,
+	ValuedWalletWithTransactions as CoinedWalletWithTransactions,
 	Transaction,
 	Transfer,
 	ValuedWallet,

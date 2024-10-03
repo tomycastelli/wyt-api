@@ -89,11 +89,17 @@ export const valuedTransactionType = transactionType.merge({
 	fee_usd: "number",
 });
 
-export const coinedWalletWithTransactions = valuedWalletType.merge({
+export const valuedWalletWithTransactions = valuedWalletType.merge({
 	transactions: valuedTransactionType.array(),
 	id: "number.integer",
 	last_update: "Date",
 });
+
+export const valueChangeGraph = type({
+	timestamp: "Date",
+	value: "bigint",
+	value_usd: "number",
+}).array();
 
 export const streamsType = type({
 	id: "string",
@@ -153,5 +159,8 @@ export type CoinedTransaction = typeof coinedTransactionType.infer;
 export type ValuedTransaction = typeof valuedTransactionType.infer;
 
 /** # Una [Wallet] con sus transacciones valuadas */
-export type CoinedWalletWithTransactions =
-	typeof coinedWalletWithTransactions.infer;
+export type ValuedWalletWithTransactions =
+	typeof valuedWalletWithTransactions.infer;
+
+/** # Un grafico basado en tiempo del cambio en balance y valor en USD de una [Wallet] o [Coin] */
+export type ValueChangeGraph = typeof valueChangeGraph.infer;

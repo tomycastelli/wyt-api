@@ -1,278 +1,315 @@
 import type {
-  BlockchainsName,
-  Transaction,
-  Transfer,
-  Wallet,
-  WalletCoin,
-  WalletsProvider,
+	BlockchainsName,
+	Transaction,
+	Transfer,
+	Wallet,
+	WalletCoin,
+	WalletsProvider,
 } from "@repo/domain";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import {
-  type ConfirmedSignatureInfo,
-  Connection,
-  PublicKey,
-  SystemProgram,
+	type ConfirmedSignatureInfo,
+	Connection,
+	PublicKey,
+	SystemProgram,
 } from "@solana/web3.js";
 import { type } from "arktype";
 
 const tokenAccountType = type({
-  info: {
-    mint: "string",
-    tokenAmount: {
-      amount: "string",
-      "+": "delete",
-    },
-    "+": "delete",
-  },
-  "+": "delete",
+	info: {
+		mint: "string",
+		tokenAmount: {
+			amount: "string",
+			"+": "delete",
+		},
+		"+": "delete",
+	},
+	"+": "delete",
 });
 
+export interface RpcEndpoint {
+	url: string;
+	weight: number;
+}
+
+interface WeightedConnection {
+	connection: Connection;
+	weight: number;
+}
+
 export class SolanaProvider implements WalletsProvider {
-  private readonly solana: Connection;
+	private readonly connections: WeightedConnection[];
 
-  constructor(rpc_endpoint: string) {
-    this.solana = new Connection(rpc_endpoint);
-  }
+	constructor(rpc_endpoints: RpcEndpoint[]) {
+		const totalWeight = rpc_endpoints.reduce(
+			(sum, endpoint) => sum + endpoint.weight,
+			0,
+		);
+		if (totalWeight !== 100) throw new Error("Weight sum must be 100");
 
-  async getWallet(
-    address: string,
-    blockchain: BlockchainsName,
-  ): Promise<Wallet | null> {
-    const public_key = new PublicKey(address);
+		this.connections = rpc_endpoints.map((endpoint) => ({
+			connection: new Connection(endpoint.url),
+			weight: endpoint.weight,
+		}));
+	}
 
-    const account_info = await this.solana.getAccountInfo(public_key);
+	private getConnection(): Connection {
+		const randomWeight = Math.random() * 100;
 
-    // Si no es del tipo cuenta normal, no la añado
-    if (!account_info || !account_info.owner.equals(SystemProgram.programId))
-      return null;
+		let cumulativeWeight = 0;
 
-    const token_accounts = await this.solana.getParsedTokenAccountsByOwner(
-      public_key,
-      {
-        programId: TOKEN_PROGRAM_ID,
-      },
-    );
+		for (const wc of this.connections) {
+			cumulativeWeight += wc.weight;
+			if (randomWeight < cumulativeWeight) {
+				return wc.connection;
+			}
+		}
 
-    // Añado las coins
-    const coins: WalletCoin[] = [];
-    for (const ta of token_accounts.value) {
-      const parsed_data = tokenAccountType(ta.account.data.parsed);
-      if (parsed_data instanceof type.errors) continue;
-      if (parsed_data.info.tokenAmount.amount === "0") continue;
-      coins.push({
-        coin_address: parsed_data.info.mint,
-        value: BigInt(parsed_data.info.tokenAmount.amount),
-      });
-    }
+		// Fallback in case of rounding errors
+		return this.connections[this.connections.length - 1]!.connection;
+	}
 
-    const wallet: Wallet = {
-      address,
-      blockchain,
-      // Por ahora no buscamos domains en Bonfida
-      alias: null,
-      backfill_status: "pending",
-      first_transfer_date: null,
-      native_value: BigInt(account_info.lamports),
-      coins,
-    };
+	async getWallet(
+		address: string,
+		blockchain: BlockchainsName,
+	): Promise<Wallet | null> {
+		const public_key = new PublicKey(address);
 
-    return wallet;
-  }
+		const account_info = await this.getConnection().getAccountInfo(public_key);
 
-  async getRecentTransactions(wallet_data: Wallet): Promise<Transaction[]> {
-    const public_key = new PublicKey(wallet_data.address);
+		// Si no es del tipo cuenta normal, no la añado
+		if (!account_info || !account_info.owner.equals(SystemProgram.programId))
+			return null;
 
-    // Agarro las primeras 20
-    const transactions = await this.solana.getSignaturesForAddress(public_key, {
-      limit: 20,
-    });
+		const token_accounts =
+			await this.getConnection().getParsedTokenAccountsByOwner(public_key, {
+				programId: TOKEN_PROGRAM_ID,
+			});
 
-    return this.mapTransactionData(
-      transactions,
-      wallet_data.address,
-      wallet_data.blockchain,
-    );
-  }
+		// Añado las coins
+		const coins: WalletCoin[] = [];
+		for (const ta of token_accounts.value) {
+			const parsed_data = tokenAccountType(ta.account.data.parsed);
+			if (parsed_data instanceof type.errors) continue;
+			if (parsed_data.info.tokenAmount.amount === "0") continue;
+			coins.push({
+				coin_address: parsed_data.info.mint,
+				value: BigInt(parsed_data.info.tokenAmount.amount),
+			});
+		}
 
-  async getTransactionHistory(
-    wallet_data: Wallet,
-    loop_cursor: string | undefined,
-  ): Promise<{ transactions: Transaction[]; cursor: string | undefined }> {
-    const public_key = new PublicKey(wallet_data.address);
+		const wallet: Wallet = {
+			address,
+			blockchain,
+			// Por ahora no buscamos domains en Bonfida
+			alias: null,
+			backfill_status: "pending",
+			first_transfer_date: null,
+			native_value: BigInt(account_info.lamports),
+			coins,
+		};
 
-    // Agarro las primeras 20
-    const transactions = await this.solana.getSignaturesForAddress(public_key, {
-      before: loop_cursor,
-      limit: 1000,
-    });
+		return wallet;
+	}
 
-    return {
-      transactions: await this.mapTransactionData(
-        transactions,
-        wallet_data.address,
-        wallet_data.blockchain,
-      ),
-      cursor: transactions[transactions.length - 1]?.signature,
-    };
-  }
+	async getRecentTransactions(wallet_data: Wallet): Promise<Transaction[]> {
+		const public_key = new PublicKey(wallet_data.address);
 
-  async getAllTransactionsFromDate(
-    wallet_data: Wallet,
-    from_date: Date,
-  ): Promise<Transaction[]> {
-    const public_key = new PublicKey(wallet_data.address);
+		// Agarro las primeras 5 por temas de velocidad
+		const transactions = await this.getConnection().getSignaturesForAddress(
+			public_key,
+			{
+				limit: 5,
+			},
+		);
 
-    const transactions: Transaction[] = [];
+		return this.mapTransactionData(transactions, wallet_data.blockchain);
+	}
 
-    let has_next_page = false;
-    do {
-      const transactions_data = await this.solana.getSignaturesForAddress(
-        public_key,
-        {
-          limit: 1000,
-        },
-      );
+	async getTransactionHistory(
+		wallet_data: Wallet,
+		loop_cursor: string | undefined,
+	): Promise<{ transactions: Transaction[]; cursor: string | undefined }> {
+		const public_key = new PublicKey(wallet_data.address);
 
-      // Quiero solo las que esten despues de cierta fecha
-      const mapped_transactions = await this.mapTransactionData(
-        transactions_data.filter(
-          (t) => new Date(t.blockTime! * 1000) > from_date,
-        ),
-        wallet_data.address,
-        wallet_data.blockchain,
-      );
-      // Si despues del filtrado siguen siendo 1000 transacciones, entonces tengo que buscar mas atrás
-      if (mapped_transactions.length === 1000) {
-        has_next_page = true;
-      } else {
-        has_next_page = false;
-      }
+		// Agarro las primeras 20
+		const transactions = await this.getConnection().getSignaturesForAddress(
+			public_key,
+			{
+				before: loop_cursor,
+				limit: 1000,
+			},
+		);
 
-      transactions.push(...mapped_transactions);
-    } while (has_next_page === true);
+		return {
+			transactions: await this.mapTransactionData(
+				transactions,
+				wallet_data.blockchain,
+			),
+			cursor: transactions[transactions.length - 1]?.signature,
+		};
+	}
 
-    return transactions;
-  }
+	async getAllTransactionsFromDate(
+		wallet_data: Wallet,
+		from_date: Date,
+	): Promise<Transaction[]> {
+		const public_key = new PublicKey(wallet_data.address);
 
-  async mapTransactionData(
-    confirmed_signature_info: ConfirmedSignatureInfo[],
-    address: string,
-    blockchain: BlockchainsName,
-  ): Promise<Transaction[]> {
-    const mapped_transactions: Transaction[] = [];
+		const transactions: Transaction[] = [];
 
-    for (const tx of confirmed_signature_info) {
-      if (tx.confirmationStatus !== "finalized") continue;
+		let has_next_page = false;
+		do {
+			const transactions_data =
+				await this.getConnection().getSignaturesForAddress(public_key, {
+					limit: 1000,
+				});
 
-      const transfers: Transfer[] = [];
+			// Quiero solo las que esten despues de cierta fecha
+			const mapped_transactions = await this.mapTransactionData(
+				transactions_data.filter(
+					(t) => new Date(t.blockTime! * 1000) > from_date,
+				),
+				wallet_data.blockchain,
+			);
+			// Si despues del filtrado siguen siendo 1000 transacciones, entonces tengo que buscar mas atrás
+			if (mapped_transactions.length === 1000) {
+				has_next_page = true;
+			} else {
+				has_next_page = false;
+			}
 
-      /// Por lo costoso de hacer esto en la red solana (pueden ser muchas transacciones)
-      /// Por ahora no se buscaran detalles
+			transactions.push(...mapped_transactions);
+		} while (has_next_page === true);
 
-      // const details = await this.solana.getTransaction(tx.signature, {
-      //   maxSupportedTransactionVersion: 0,
-      // });
+		return transactions;
+	}
 
-      // if (details) {
-      //   // Voy a ver diferencias entre pre y post balances y asignar transferencias de acuerdo a eso
-      //   const account_ids = details.transaction.message.staticAccountKeys;
-      //   if (details.meta?.loadedAddresses) {
-      //     account_ids.push(...details.meta.loadedAddresses.writable);
-      //     account_ids.push(...details.meta.loadedAddresses.writable);
-      //   }
+	async mapTransactionData(
+		confirmed_signature_info: ConfirmedSignatureInfo[],
+		blockchain: BlockchainsName,
+	): Promise<Transaction[]> {
+		const mapped_transactions: Transaction[] = [];
 
-      //   const changed_balances: {
-      //     public_key: PublicKey;
-      //     difference: number;
-      //   }[] = [];
+		for (const tx of confirmed_signature_info) {
+			if (tx.confirmationStatus !== "finalized") continue;
 
-      //   for (let i = 0; i < details.meta!.preBalances.length; i++) {
-      //     const difference =
-      //       details.meta!.postBalances[i]! - details.meta!.preBalances[i]!;
-      //     if (difference !== 0) {
-      //       changed_balances.push({ public_key: account_ids[i]!, difference });
-      //     }
-      //   }
+			const transfers: Transfer[] = [];
 
-      //   for (const changed_balance of changed_balances) {
-      //     // Si es positiva la diferencia, la transferencia va hacia la address, asi que sería to_address
-      //     // Si es negativa, lo contrario
-      //     transfers.push({
-      //       from_address:
-      //         changed_balance.difference < 0
-      //           ? changed_balance.public_key.toString()
-      //           : null,
-      //       to_address:
-      //         changed_balance.difference > 0
-      //           ? changed_balance.public_key.toString()
-      //           : null,
-      //       value: BigInt(Math.abs(changed_balance.difference)),
-      //       type: "native",
-      //       coin_address: null,
-      //       token_id: null,
-      //     });
-      //   }
+			const details = await this.getConnection().getTransaction(tx.signature, {
+				maxSupportedTransactionVersion: 0,
+			});
 
-      //   // Hago lo mismo con tokens
-      //   if (
-      //     details.meta!.preTokenBalances &&
-      //     details.meta!.preTokenBalances.length > 0
-      //   ) {
-      //     const changed_token_balances: {
-      //       public_key: PublicKey;
-      //       difference: number;
-      //       coin_address: string;
-      //     }[] = [];
+			if (details?.meta) {
+				// Combine pre and post balances into maps for quick lookup
+				const preBalancesMap = new Map<string, number>();
+				const postBalancesMap = new Map<string, number>();
 
-      //     for (let i = 0; i < details.meta!.preTokenBalances.length; i++) {
-      //       const difference =
-      //         Number(
-      //           details.meta!.postTokenBalances![i]!.uiTokenAmount.amount,
-      //         ) -
-      //         Number(details.meta!.preTokenBalances![i]!.uiTokenAmount.amount);
-      //       if (difference !== 0) {
-      //         changed_token_balances.push({
-      //           public_key: account_ids[i]!,
-      //           difference,
-      //           coin_address: details.meta!.preTokenBalances[i]!.mint,
-      //         });
-      //       }
-      //     }
+				const account_ids = [...details.transaction.message.staticAccountKeys];
+				if (details.meta.loadedAddresses) {
+					account_ids.push(
+						...details.meta.loadedAddresses.writable,
+						...details.meta.loadedAddresses.readonly,
+					);
+				}
 
-      //     for (const changed_token_balance of changed_token_balances) {
-      //       // Si es positiva la diferencia, la transferencia va hacia la address, asi que sería to_address
-      //       // Si es negativa, lo contrario
-      //       transfers.push({
-      //         from_address:
-      //           changed_token_balance.difference < 0
-      //             ? changed_token_balance.public_key.toString()
-      //             : null,
-      //         to_address:
-      //           changed_token_balance.difference > 0
-      //             ? changed_token_balance.public_key.toString()
-      //             : null,
-      //         value: BigInt(Math.abs(changed_token_balance.difference)),
-      //         type: "token",
-      //         coin_address: changed_token_balance.coin_address,
-      //         token_id: null,
-      //       });
-      //     }
-      //   }
-      // }
+				for (let i = 0; i < account_ids.length; i++) {
+					preBalancesMap.set(
+						account_ids[i]!.toString(),
+						details.meta.preBalances[i] ?? 0,
+					);
+					postBalancesMap.set(
+						account_ids[i]!.toString(),
+						details.meta.postBalances[i] ?? 0,
+					);
+				}
 
-      // Por ahora las transacciones de Solana van a tener que ser vistas en solscan.io usando el hash, o signature
-      mapped_transactions.push({
-        block_timestamp: new Date(tx.blockTime! * 1000),
-        blockchain: blockchain,
-        fee: 0n,
-        hash: tx.signature,
-        transfers,
-        summary: null,
-        from_address: null,
-        to_address: null,
-      });
-    }
+				// Calculate native balance changes
+				for (const [account, preBalance] of preBalancesMap.entries()) {
+					const postBalance = postBalancesMap.get(account) ?? 0;
+					const difference = postBalance - preBalance;
+					if (difference !== 0) {
+						transfers.push({
+							from_address: difference < 0 ? account : null,
+							to_address: difference > 0 ? account : null,
+							value: BigInt(Math.abs(difference)),
+							type: "native",
+							coin_address: null,
+							token_id: null,
+						});
+					}
+				}
 
-    return mapped_transactions;
-  }
+				// Combine pre and post token balances into maps for quick lookup
+				const preTokenBalancesMap = new Map<
+					string,
+					{ owner: string; amount: number }
+				>();
+				const postTokenBalancesMap = new Map<
+					string,
+					{ owner: string; amount: number }
+				>();
+
+				for (const tokenBalance of details.meta.preTokenBalances ?? []) {
+					preTokenBalancesMap.set(
+						`${tokenBalance.mint}-${tokenBalance.accountIndex}`,
+						{
+							owner: tokenBalance.owner!,
+							amount: Number(tokenBalance.uiTokenAmount.amount),
+						},
+					);
+				}
+
+				for (const tokenBalance of details.meta.postTokenBalances ?? []) {
+					postTokenBalancesMap.set(
+						`${tokenBalance.mint}-${tokenBalance.accountIndex}`,
+						{
+							owner: tokenBalance.owner!,
+							amount: Number(tokenBalance.uiTokenAmount.amount),
+						},
+					);
+				}
+
+				// Calculate token balance changes
+				const uniqueTokenKeys = new Set([
+					...preTokenBalancesMap.keys(),
+					...postTokenBalancesMap.keys(),
+				]);
+
+				for (const key of uniqueTokenKeys) {
+					const preToken = preTokenBalancesMap.get(key);
+					const postToken = postTokenBalancesMap.get(key);
+					const preBalance = preToken?.amount ?? 0;
+					const postBalance = postToken?.amount ?? 0;
+					const difference = postBalance - preBalance;
+
+					if (difference !== 0) {
+						const owner = preToken?.owner ?? postToken?.owner ?? "";
+						const mint = key.split("-")[0]!;
+						transfers.push({
+							from_address: difference < 0 ? owner : null,
+							to_address: difference > 0 ? owner : null,
+							value: BigInt(Math.abs(difference)),
+							type: "token",
+							coin_address: mint,
+							token_id: null,
+						});
+					}
+				}
+			}
+
+			mapped_transactions.push({
+				block_timestamp: new Date(tx.blockTime! * 1000),
+				blockchain: blockchain,
+				fee: 0n,
+				hash: tx.signature,
+				transfers,
+				summary: null,
+				from_address: null,
+				to_address: null,
+			});
+		}
+
+		return mapped_transactions;
+	}
 }

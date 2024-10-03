@@ -1,4 +1,4 @@
-import { type Column, sql } from "drizzle-orm";
+import { type Column, type SQLWrapper, sql } from "drizzle-orm";
 
-export const eqLower = (column: Column, string: string) =>
-  sql`LOWER(${column}) = LOWER(${string})`;
+export const eqLower = (column: Column, string: string | SQLWrapper) =>
+	sql`LOWER(${column}) = LOWER(${string})`;
