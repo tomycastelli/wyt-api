@@ -10,7 +10,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN turbo prune @repo/web-api --docker
+RUN turbo prune @repo/workers --docker
 
 FROM base AS installer
 RUN apk update
@@ -42,4 +42,4 @@ COPY --from=installer --chown=hono:nodejs /app /app
 USER hono
 EXPOSE 3000
 
-CMD ["node", "apps/web-api/dist/index.js"]
+CMD ["node", "apps/workers/dist/index.js"]
