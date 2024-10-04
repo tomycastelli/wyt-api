@@ -22,14 +22,11 @@ export class CoinsService<
   private coinsRepository: TRepository;
   private coinsProvider: TProvider;
 
+  private global_minimum_market_cap = 10_000;
+
   constructor(repository: TRepository, provider: TProvider) {
     this.coinsRepository = repository;
     this.coinsProvider = provider;
-  }
-
-  /** Devuelve todas las [Coin]s disponibles */
-  public async listAllCoins(): Promise<SavedCoin[]> {
-    return await this.coinsRepository.getAllCoins();
   }
 
   /** Devuelve una [Coin] por id */
@@ -125,7 +122,9 @@ export class CoinsService<
   /** Guardo todas las [Coin]s disponibles */
   public async saveAllCoins(): Promise<SavedCoin[]> {
     // Pido coins con capitalizacion mayor a 100_000 USD
-    const allCoins = await this.coinsProvider.getAllCoins(100_000);
+    const allCoins = await this.coinsProvider.getAllCoins(
+      this.global_minimum_market_cap,
+    );
     const savedCoins = await this.coinsRepository.saveCoins(allCoins);
     return savedCoins;
   }
@@ -205,8 +204,67 @@ export class CoinsService<
     }
   }
 
+  /** Actualiza todos los datos relacionados a las [Coin]s */
+  public async updateCoinsByMarketcap(
+    frequency: "hourly" | "daily",
+    refresh_rate: number,
+  ): Promise<SavedCoin[]> {
+    let minimum_market_cap = 0;
+    let maximum_market_cap: undefined | number = undefined;
+
+    if (frequency === "daily") {
+      if (refresh_rate === 1) {
+        // Coins importantes
+        minimum_market_cap = 150_000;
+        maximum_market_cap = undefined;
+      } else if (refresh_rate === 2) {
+        // Coins no tan importantes
+        minimum_market_cap = 50_000;
+        maximum_market_cap = 150_000;
+      } else {
+        // No son importantes
+        minimum_market_cap = 0;
+        maximum_market_cap = 50_000;
+      }
+    } else {
+      // Es horario
+      if (refresh_rate === 1) {
+        // Coins super importantes
+        minimum_market_cap = 200_000;
+        maximum_market_cap = undefined;
+      } else if (refresh_rate === 4) {
+        minimum_market_cap = 50_000;
+        maximum_market_cap = 200_000;
+      } else {
+        // No son importantes
+        minimum_market_cap = 0;
+        maximum_market_cap = 50_000;
+      }
+    }
+
+    // Vamos a actualizar su market data y luego sus candelas
+    const coins = await this.coinsRepository.getAllCoins(
+      minimum_market_cap,
+      maximum_market_cap,
+    );
+
+    // Market data
+    const market_data = await this.coinsProvider.getAllCoinMarketData(
+      coins.map((c) => c.name),
+    );
+
+    await this.coinsRepository.saveMarketData(market_data);
+
+    // Candelas
+    for (const coin of coins) {
+      await this.saveCandles(coin.id, frequency, refresh_rate);
+    }
+
+    return coins;
+  }
+
   /** Guarda las ultimas [Candle] mas recientes segun la frecuencia y la tasa de refresco (cada cuanto se guarda) */
-  public async saveCandles(
+  private async saveCandles(
     coin_id: number,
     frequency: "hourly" | "daily",
     refresh_rate: number,
@@ -225,29 +283,10 @@ export class CoinsService<
     );
   }
 
-  /** Actualiza los datos de mercado relacionados a las [Coin]s, para todas las coins disponibles por encima de ese minimo de marketcap */
-  public async updateMarketData(minimum_market_cap: number): Promise<void> {
-    const coin_names = await this.coinsRepository
-      .getAllCoins(minimum_market_cap)
-      .then((coins) => coins.map((c) => c.name));
-    const market_data =
-      await this.coinsProvider.getAllCoinMarketData(coin_names);
-    await this.coinsRepository.saveMarketData(market_data);
-  }
-
   public async searchCoinsByName(name_search: string): Promise<SavedCoin[]> {
-    const coinsData = await this.coinsRepository.getAllCoins();
+    const coinsData = await this.coinsRepository.getAllCoins(0);
     const coinsFuse = new Fuse(coinsData, { keys: ["name"], threshold: 0.25 });
 
     return coinsFuse.search(name_search).map((f) => f.item);
-  }
-
-  // Helper
-  async updatedCoin(saved_coin: SavedCoin): Promise<SavedCoin> {
-    const market_data = await this.coinsProvider.getCoinMarketData(
-      saved_coin.name,
-    );
-    await this.coinsRepository.saveMarketData([market_data]);
-    return { ...saved_coin, ...market_data };
   }
 }
