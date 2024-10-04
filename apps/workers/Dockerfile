@@ -40,6 +40,5 @@ RUN adduser --system --uid 1001 hono
 COPY --from=installer --chown=hono:nodejs /app /app
 
 USER hono
-EXPOSE 3000
 
 CMD ["node", "apps/workers/dist/index.js"]

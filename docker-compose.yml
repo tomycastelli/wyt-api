@@ -1,0 +1,31 @@
+services:
+  workers:
+    build:
+      context: .
+      dockerfile: apps/workers/Dockerfile
+    env_file:
+      - apps/workers/.env
+    deploy:
+      replicas: 3
+      mode: replicated
+    networks:
+      - app-network
+
+  wyt-api:
+    build:
+      context: .
+      dockerfile: apps/web-api/Dockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - apps/web-api/.env
+    networks:
+      - app-network
+
+  redis:
+    image: redis:latest
+    networks:
+      - app-network
+
+networks:
+  app-network:
