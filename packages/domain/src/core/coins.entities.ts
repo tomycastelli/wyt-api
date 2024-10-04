@@ -4,49 +4,49 @@ import { EveryBlockainsName, blockchains, providers } from "./vars.js";
 /// Las entidades que conforman a la aplicacion
 
 const coinMarketDataType = type({
-	market_cap: "number",
-	price: "number",
-	price_change_percentage_24h: "number",
-	price_change_24h: "number",
-	ath: "number",
-	name: "string",
+  market_cap: "number",
+  price: "number",
+  price_change_percentage_24h: "number",
+  price_change_24h: "number",
+  ath: "number",
+  name: "string",
 });
 
 export const coinType = coinMarketDataType.merge({
-	name: "string",
-	symbol: "string",
-	provider: type.enumerated(...providers),
-	contracts: [
-		{
-			blockchain: ["===", ...EveryBlockainsName],
-			contract_address: "string.alphanumeric",
-			decimal_place: "number",
-		},
-		"[]",
-	],
-	description: "string|null",
-	image_url: "string.url|null",
+  name: "string",
+  symbol: "string",
+  provider: type.enumerated(...providers),
+  contracts: [
+    {
+      blockchain: ["===", ...EveryBlockainsName],
+      contract_address: "string.alphanumeric",
+      decimal_place: "number",
+    },
+    "[]",
+  ],
+  description: "string|null",
+  image_url: "string.url|null",
 });
 
 export const savedCoinType = coinType.merge({
-	id: "number.integer",
-	last_update: "Date",
+  id: "number.integer",
+  last_update: "Date",
 });
 
 const candleType = type({
-	coin_id: "number.integer",
-	frequency: "'daily'|'hourly'",
-	timestamp: "Date",
-	open: "number.integer",
-	high: "number.integer",
-	low: "number.integer",
-	close: "number.integer",
+  coin_id: "number.integer",
+  frequency: "'daily'|'hourly'",
+  timestamp: "Date",
+  open: "number.integer",
+  high: "number.integer",
+  low: "number.integer",
+  close: "number.integer",
 });
 
 export const nftType = type({
-	contract_address: "string",
-	blockchain: ["===", ...EveryBlockainsName],
-	token_id: "number",
+  contract_address: "string",
+  blockchain: ["===", ...EveryBlockainsName],
+  token_id: "number",
 });
 
 export const savedNftType = nftType.merge({ id: "number.integer" });

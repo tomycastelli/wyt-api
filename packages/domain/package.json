@@ -1,25 +1,25 @@
 {
-	"name": "@repo/domain",
-	"type": "module",
-	"version": "0.0.0",
-	"private": true,
-	"scripts": {
-		"build": "tsc",
-		"dev": "tsc --watch",
-		"test": "vitest"
-	},
-	"exports": {
-		"types": "./src/index.ts",
-		"default": "./dist/index.js"
-	},
-	"dependencies": {
-		"arktype": "2.0.0-rc.6",
-		"fuse.js": "^7.0.0",
-		"moment": "^2.30.1"
-	},
-	"devDependencies": {
-		"@repo/typescript-config": "workspace:*",
-		"@types/node": "^20.11.17",
-		"typescript": "^5.6.2"
-	}
+  "name": "@repo/domain",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest"
+  },
+  "exports": {
+    "types": "./src/index.ts",
+    "default": "./dist/index.js"
+  },
+  "dependencies": {
+    "arktype": "2.0.0-rc.6",
+    "fuse.js": "^7.0.0",
+    "moment": "^2.30.1"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^20.11.17",
+    "typescript": "^5.6.2"
+  }
 }

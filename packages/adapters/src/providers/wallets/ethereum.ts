@@ -4,7 +4,7 @@ import {
 } from "@moralisweb3/common-evm-utils";
 import {
   type BlockchainsName,
-  SavedWallet,
+  type SavedWallet,
   type Stream,
   type Transaction,
   type Transfer,

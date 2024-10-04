@@ -10,7 +10,7 @@ import {
   type BlockchainsName,
   CoinsService,
   type SavedCoin,
-  Transaction,
+  type Transaction,
   WalletsService,
 } from "@repo/domain";
 import { setup_backfill_worker } from "./backfill.worker.js";
