@@ -13,6 +13,7 @@ node_modules/
 
 # builds
 **/dist/
+out/
 
 # migrations
 **/migrations/

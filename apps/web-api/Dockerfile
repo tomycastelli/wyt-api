@@ -1,16 +1,12 @@
 FROM node:20-alpine AS base
 
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
-
 RUN apk add --no-cache gcompat
-RUN yarn global add pnpm
+RUN npm install pnpm turbo --global
+RUN pnpm config set store-dir ~/.pnpm-store
 
-FROM base AS builder
+FROM base AS pruner
 
 WORKDIR /app
-
-RUN pnpm -g add turbo@2.1.3
 
 COPY . .
 
@@ -21,12 +17,18 @@ RUN apk update
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-COPY --from=builder /app/out/json/ .
-RUN pnpm install
+COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --from=pruner /app/out/pnpm-workspace.yaml ./pnpm-workspace.yaml
+COPY --from=pruner /app/out/json/ .
+
+RUN --mount=type=cache,id=pnpm,target=~/.pnpm-store pnpm install --frozen-lockfile
 
 # Build the project
-COPY --from=builder /app/out/full/ .
+COPY --from=pruner /app/out/full/ .
+
 RUN pnpm turbo run build --filter=@repo/web-api
+RUN echo "Y" | pnpm prune --prod --no-optional
+RUN echo "Y" | pnpm install --prod
 
 FROM base AS runner
 WORKDIR /app

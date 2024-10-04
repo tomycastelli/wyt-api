@@ -30,7 +30,7 @@ const coinDetailsSchema = type({
 	"image?": { large: "string", "+": "delete" },
 	detail_platforms: type.Record("string", {
 		decimal_place: "number|null",
-		contract_address: "string",
+		contract_address: "string|null",
 	}),
 	"market_data?": {
 		"current_price?": {
@@ -189,7 +189,7 @@ export class CoinGecko implements CoinsProvider {
 					)
 					.map(([blockchain, detail]) => ({
 						blockchain: blockchain as BlockchainsName,
-						contract_address: detail.contract_address,
+						contract_address: detail.contract_address!,
 						decimal_place: detail.decimal_place!,
 					})),
 			}));
@@ -309,7 +309,7 @@ export class CoinGecko implements CoinsProvider {
 					)
 					.map(([blockchain, detail]) => ({
 						blockchain: blockchain as BlockchainsName,
-						contract_address: detail.contract_address,
+						contract_address: detail.contract_address!,
 						decimal_place: detail.decimal_place!,
 					})),
 			}));
@@ -368,7 +368,7 @@ export class CoinGecko implements CoinsProvider {
 				.filter(([key]) => EveryBlockainsName.includes(key as BlockchainsName))
 				.map(([blockchain, detail]) => ({
 					blockchain: blockchain as BlockchainsName,
-					contract_address: detail.contract_address,
+					contract_address: detail.contract_address!,
 					decimal_place: detail.decimal_place!,
 				})),
 		};
