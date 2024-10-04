@@ -1,4 +1,4 @@
-import { type BlockchainsName, blockchains } from "./vars";
+import { type BlockchainsName, blockchains } from "./vars.js";
 import type {
 	CoinedTransaction,
 	CoinedWallet,
@@ -6,7 +6,7 @@ import type {
 	Stream,
 	Transaction,
 	Wallet,
-} from "./wallets.entities";
+} from "./wallets.entities.js";
 
 export interface WalletsProvider {
 	/** Busca una [Wallet] de acuerdo al address y el blockchain

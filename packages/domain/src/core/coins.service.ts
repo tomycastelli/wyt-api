@@ -1,8 +1,8 @@
 import Fuse from "fuse.js";
 import moment from "moment";
-import type { Candle, SavedCoin, SavedNFT } from "./coins.entities";
-import type { CoinsProvider, CoinsRepository } from "./coins.ports";
-import { type BlockchainsName, base_coins, blockchains } from "./vars";
+import type { Candle, SavedCoin, SavedNFT } from "./coins.entities.js";
+import type { CoinsProvider, CoinsRepository } from "./coins.ports.js";
+import { type BlockchainsName, base_coins, blockchains } from "./vars.js";
 
 /// Logica de negocio para el servicio de Tokens
 // Quiero que haga las siguientes acciones:

@@ -16,10 +16,10 @@
 //  - Guardar transacciones nuevas que van llegando
 //  - Y cambiar el estado de la wallet de acuerdo a eso
 
-import type { SavedCoin, SavedNFT } from "./coins.entities";
-import type { CoinsProvider, CoinsRepository } from "./coins.ports";
-import type { CoinsService } from "./coins.service";
-import { type BlockchainsName, blockchains } from "./vars";
+import type { SavedCoin, SavedNFT } from "./coins.entities.js";
+import type { CoinsProvider, CoinsRepository } from "./coins.ports.js";
+import type { CoinsService } from "./coins.service.js";
+import { type BlockchainsName, blockchains } from "./vars.js";
 import type {
 	CoinedTransaction,
 	CoinedTransfer,
@@ -33,12 +33,12 @@ import type {
 	ValuedWalletCoin,
 	ValuedWalletWithTransactions,
 	Wallet,
-} from "./wallets.entities";
+} from "./wallets.entities.js";
 
 import type {
 	WalletsRepository,
 	WalletsStreamsProvider,
-} from "./wallets.ports";
+} from "./wallets.ports.js";
 
 export class WalletsService<
 	WProvider extends WalletsStreamsProvider,

@@ -1,5 +1,5 @@
 import { type } from "arktype";
-import { EveryBlockainsName, blockchains, providers } from "./vars";
+import { EveryBlockainsName, blockchains, providers } from "./vars.js";
 
 /// Las entidades que conforman a la aplicacion
 

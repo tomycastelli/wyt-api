@@ -9,7 +9,8 @@
 		"test": "vitest"
 	},
 	"exports": {
-		".": "./src/index.ts"
+		"types": "./src/index.ts",
+		"default": "./dist/index.js"
 	},
 	"dependencies": {
 		"arktype": "2.0.0-rc.6",

@@ -9,7 +9,7 @@ import { type } from "arktype";
 import type { Queue } from "bullmq";
 import { type Context, Hono } from "hono";
 import type { BlankEnv, BlankSchema } from "hono/types";
-import type { JobsQueue } from "..";
+import type { JobsQueue } from "../index.js";
 
 export const setup_coins_routes = (
 	coins_service: CoinsService<CoinGecko, CoinsPostgres>,

@@ -6,9 +6,9 @@ import {
 	type WalletsStreamsProvider,
 	blockchains,
 } from "@repo/domain";
-import { BitcoinProvider } from "./bitcoin";
-import { EthereumProvider } from "./ethereum";
-import { type RpcEndpoint, SolanaProvider } from "./solana";
+import { BitcoinProvider } from "./bitcoin.js";
+import { EthereumProvider } from "./ethereum.js";
+import { type RpcEndpoint, SolanaProvider } from "./solana.js";
 
 /** Esta clase agrupa varios providers de distintas blockchains */
 export class WalletsProviderAdapters implements WalletsStreamsProvider {

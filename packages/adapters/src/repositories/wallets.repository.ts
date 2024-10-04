@@ -29,8 +29,8 @@ import {
 	drizzle,
 } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { eqLower } from "../utils";
-import * as schema from "./schema";
+import { eqLower } from "../utils.js";
+import * as schema from "./schema.js";
 
 export class WalletsPostgres implements WalletsRepository {
 	private db: PostgresJsDatabase<typeof schema>;

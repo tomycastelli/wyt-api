@@ -1,6 +1,6 @@
 import { type } from "arktype";
-import { nftType, savedCoinType, savedNftType } from "./coins.entities";
-import { EveryBlockainsName } from "./vars";
+import { nftType, savedCoinType, savedNftType } from "./coins.entities.js";
+import { EveryBlockainsName } from "./vars.js";
 
 // Things to think:
 // A wallet or transaction might involve coins which aren't in the system what then? Add them somehow?

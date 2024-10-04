@@ -12,8 +12,8 @@ import {
 import { and, desc, eq, gte, inArray, lte, or, sql } from "drizzle-orm";
 import { type PostgresJsDatabase, drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { eqLower } from "../utils";
-import * as schema from "./schema";
+import { eqLower } from "../utils.js";
+import * as schema from "./schema.js";
 
 export class CoinsPostgres implements CoinsRepository {
 	private db: PostgresJsDatabase<typeof schema>;

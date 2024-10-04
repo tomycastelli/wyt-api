@@ -11,7 +11,8 @@
 		"db-push": "drizzle-kit push --config=src/repositories/drizzle.config.ts"
 	},
 	"exports": {
-		".": "./src/index.ts"
+		"types": "./src/index.ts",
+		"default": "./dist/index.js"
 	},
 	"dependencies": {
 		"@bonfida/spl-name-service": "^3.0.3",

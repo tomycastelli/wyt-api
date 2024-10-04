@@ -5,8 +5,8 @@ import {
 	NFT,
 	type SavedCoin,
 	type SavedNFT,
-} from "./coins.entities";
-import type { BlockchainsName } from "./vars";
+} from "./coins.entities.js";
+import type { BlockchainsName } from "./vars.js";
 
 export type SavedCandles = {
 	amount: number;
