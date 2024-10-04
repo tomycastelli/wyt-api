@@ -1,13 +1,13 @@
 import {
   CoinsProvider,
   CoinsRepository,
-  CoinsService,
   SavedWallet,
   WalletsRepository,
   WalletsService,
   WalletsStreamsProvider,
 } from "@repo/domain";
-import { Worker } from "bullmq";
+import { Queue, Worker } from "bullmq";
+import { CoinJobsQueue } from "./index.js";
 
 export const setup_backfill_worker = (
   wallets_service: WalletsService<
@@ -16,7 +16,7 @@ export const setup_backfill_worker = (
     CoinsProvider,
     CoinsRepository
   >,
-  coins_service: CoinsService<CoinsProvider, CoinsRepository>,
+  coin_jobs_queue: Queue<CoinJobsQueue>,
   redis_url: string,
 ): Worker<{
   wallet: SavedWallet;
@@ -37,10 +37,10 @@ export const setup_backfill_worker = (
       );
       await job.updateProgress({ new_coins: response.new_coins });
       if (response) {
-        for (const new_coin of response.new_coins) {
-          await coins_service.getCoinHistorialCandles("daily", new_coin);
-          await coins_service.getCoinHistorialCandles("hourly", new_coin);
-        }
+        coin_jobs_queue.add("backfill_wallet_coins", {
+          jobName: "newCoins",
+          newCoinsData: response.new_coins,
+        });
       }
     },
     {

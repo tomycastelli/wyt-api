@@ -2,12 +2,12 @@ import {
   BlockchainsName,
   CoinsProvider,
   CoinsRepository,
-  CoinsService,
   WalletsRepository,
   WalletsService,
   WalletsStreamsProvider,
 } from "@repo/domain";
-import { Worker } from "bullmq";
+import { Queue, Worker } from "bullmq";
+import { CoinJobsQueue } from "./index.js";
 
 export const setup_transactions_worker = (
   wallets_service: WalletsService<
@@ -16,7 +16,7 @@ export const setup_transactions_worker = (
     CoinsProvider,
     CoinsRepository
   >,
-  coins_service: CoinsService<CoinsProvider, CoinsRepository>,
+  coin_jobs_queue: Queue<CoinJobsQueue>,
   redis_url: string,
 ) => {
   const transactionsStreamWorker = new Worker<{
@@ -33,10 +33,10 @@ export const setup_transactions_worker = (
         job.data.blockchain,
       );
       if (response) {
-        for (const new_coin of response.new_coins) {
-          await coins_service.getCoinHistorialCandles("daily", new_coin);
-          await coins_service.getCoinHistorialCandles("hourly", new_coin);
-        }
+        await coin_jobs_queue.add("new_transaction_coins", {
+          jobName: "newCoins",
+          newCoinsData: response.new_coins,
+        });
       }
     },
     {

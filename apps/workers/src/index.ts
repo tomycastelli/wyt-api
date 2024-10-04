@@ -62,14 +62,6 @@ const wallets_service = new WalletsService(
   coins_service,
 );
 
-setup_backfill_worker(wallets_service, coins_service, REDIS_URL);
-
-setup_wallets_worker(wallets_service, REDIS_URL);
-
-setup_coins_worker(coins_service, REDIS_URL);
-
-setup_transactions_worker(wallets_service, coins_service, REDIS_URL);
-
 const coin_jobs_queue = new Queue<CoinJobsQueue>("coinJobsQueue", {
   connection: {
     host: REDIS_URL,
@@ -83,6 +75,14 @@ const wallet_jobs_queue = new Queue<WalletJobsQueue>("walletJobsQueue", {
     port: 6379,
   },
 });
+
+setup_backfill_worker(wallets_service, coin_jobs_queue, REDIS_URL);
+
+setup_wallets_worker(wallets_service, coin_jobs_queue, REDIS_URL);
+
+setup_coins_worker(coins_service, REDIS_URL);
+
+setup_transactions_worker(wallets_service, coin_jobs_queue, REDIS_URL);
 
 // Set up de crons
 wallet_crons(wallet_jobs_queue);

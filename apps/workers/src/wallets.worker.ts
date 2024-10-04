@@ -1,5 +1,5 @@
-import { WalletJobsQueue } from "./index.js";
-import { Worker } from "bullmq";
+import { CoinJobsQueue, WalletJobsQueue } from "./index.js";
+import { Queue, Worker } from "bullmq";
 import {
   CoinsProvider,
   CoinsRepository,
@@ -15,6 +15,7 @@ export const setup_wallets_worker = (
     CoinsProvider,
     CoinsRepository
   >,
+  coin_jobs_queue: Queue<CoinJobsQueue>,
   redis_url: string,
 ): Worker<WalletJobsQueue> => {
   const walletJobsWorker = new Worker<WalletJobsQueue>(
@@ -39,7 +40,13 @@ export const setup_wallets_worker = (
 
             // Las actualizo
             for (const wallet of wallets) {
-              await wallets_service.updateWallet(wallet);
+              const response = await wallets_service.updateWallet(wallet);
+              if (response) {
+                coin_jobs_queue.add("update_wallet_coins", {
+                  jobName: "newCoins",
+                  newCoinsData: response.new_coins,
+                });
+              }
             }
 
             if (wallets.length < 20) is_last_page = true;

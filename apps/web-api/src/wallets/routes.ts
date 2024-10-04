@@ -164,7 +164,15 @@ export const setup_wallets_routes = (
 
       if (!wallet_with_tx) return c.notFound();
 
-      await wallets_service.updateWallet(wallet_with_tx);
+      const data = await wallets_service.updateWallet(wallet_with_tx);
+
+      if (data) {
+        // Enviar nuevas [Coin]s a conseguir la data nueva
+        await coin_jobs_queue.add("update_wallet_coins", {
+          jobName: "newCoins",
+          newCoinsData: data.new_coins,
+        });
+      }
 
       return c.text("Wallet updated", 200);
     },
