@@ -38,10 +38,11 @@ export const setup_backfill_worker = (
       let transaction_count = 0;
 
       do {
-        const { transactions, cursor } = await wallets_service.backfillWallet(
-          job.data.wallet,
-          job.data.stream_webhook_url,
-        );
+        const { transactions, cursor } =
+          await wallets_service.getTransactionHistory(
+            job.data.wallet,
+            job.data.stream_webhook_url,
+          );
 
         // Guardo las [Transaction]s
         await wallets_jobs_queue.add("backfill_transactions", {

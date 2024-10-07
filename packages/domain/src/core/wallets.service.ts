@@ -185,9 +185,8 @@ export class WalletsService<
     return saved_wallets;
   }
 
-  /** Hace el backfill de una [Wallet], osea conseguir todo su historial de transacciones
-  Puede ser corrido en otro servidor para no congestionar la API, usando una queue */
-  public async backfillWallet(
+  /** Consigue el historial de transacciones de una [Wallet] */
+  public async getTransactionHistory(
     saved_wallet: SavedWallet,
     loop_cursor: string | undefined,
   ): Promise<{
