@@ -15,6 +15,18 @@ export const wallet_crons = (
       },
     });
   });
+
+  schedule("0 * * * *", () => {
+    // Cada 1 hora
+    wallet_jobs_queue.add("updating bitcoin wallets", {
+      jobName: "updateBlockchainWallets",
+      data: {
+        blockchain: "bitcoin",
+      },
+    });
+  });
+
+  // El ecosistema ethereum se debería actualizar con los streams
 };
 
 export const coin_crons = (coin_jobs_queue: Queue<CoinJobsQueue>): void => {

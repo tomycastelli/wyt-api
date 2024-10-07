@@ -36,12 +36,12 @@ export const setup_wallets_worker = (
               page,
             );
 
-            await job.updateProgress({ page });
-
             // Las actualizo
             for (const wallet of wallets) {
               const response = await wallets_service.updateWallet(wallet);
               if (response) {
+                await job.updateProgress({ page, wallet: wallet.address });
+
                 coin_jobs_queue.add("update_wallet_coins", {
                   jobName: "newCoins",
                   newCoinsData: response.new_coins,

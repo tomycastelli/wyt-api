@@ -332,23 +332,10 @@ export class WalletsService<
     await this.walletsRepository.updateWallet(saved_wallet.id, valued_wallet);
 
     // Consigo las nuevas transacciones
-    const transactions = await this.walletsRepository.getTransactions(
-      saved_wallet.address,
-      1,
-    );
-    const latest_date =
-      transactions.length > 0
-        ? transactions.reduce((latest, current) => {
-            return current.block_timestamp > latest!.block_timestamp
-              ? current
-              : latest;
-          }, transactions[0])!.block_timestamp
-        : new Date(0);
-
     const new_transactions =
       await this.walletsProvider.getAllTransactionsFromDate(
         saved_wallet,
-        latest_date,
+        saved_wallet.last_update,
       );
 
     const { coined_transactions, new_coins: new_tx_coins } =

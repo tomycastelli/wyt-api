@@ -39,6 +39,7 @@ const ethWebhookTransactionType = type({
     from: "string",
     to: "string",
     value: "string",
+    possibleSpam: "boolean",
     "+": "delete",
   }).array(),
   nftTransfers: type({
@@ -47,6 +48,7 @@ const ethWebhookTransactionType = type({
     from: "string",
     to: "string",
     tokenId: "string",
+    possibleSpam: "boolean",
     "+": "delete",
   }).array(),
   "+": "delete",
@@ -366,7 +368,9 @@ export class EthereumProvider implements WalletsStreamsProvider {
           });
         }
 
-        for (const erc20Transfer of parsed_webhook_transaction.erc20Transfers) {
+        for (const erc20Transfer of parsed_webhook_transaction.erc20Transfers.filter(
+          (e) => e.possibleSpam === false,
+        )) {
           // Si pertence a esta transacción
           if (erc20Transfer.transactionHash === transaction.hash) {
             transfers.push({
@@ -380,7 +384,9 @@ export class EthereumProvider implements WalletsStreamsProvider {
           }
         }
 
-        for (const nftTransfer of parsed_webhook_transaction.nftTransfers) {
+        for (const nftTransfer of parsed_webhook_transaction.nftTransfers.filter(
+          (e) => e.possibleSpam === false,
+        )) {
           if (
             nftTransfer.transactionHash === transaction.hash &&
             Number(nftTransfer.tokenId) < 1e9
@@ -413,7 +419,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
         };
       });
 
-    return mapped_transactions;
+    return mapped_transactions.filter((tx) => tx.transfers.length > 0);
   }
 
   async deleteStream(stream_id: string): Promise<void> {
