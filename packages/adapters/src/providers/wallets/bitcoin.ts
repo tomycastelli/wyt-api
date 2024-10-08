@@ -91,8 +91,7 @@ export class BitcoinProvider implements WalletsProvider {
     let last_transaction = new Date();
 
     while (true) {
-      // Esperamos 1 segundo
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 250));
 
       const response = await fetch(
         `${this.api_url}/address/${wallet_data.address}/txs/chain/${last_seen_txid}`,
@@ -128,8 +127,7 @@ export class BitcoinProvider implements WalletsProvider {
     to_date: Date,
     loop_cursor: string | undefined,
   ): Promise<{ transactions: Transaction[]; cursor: string | undefined }> {
-    // Esperamos medio segundo
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 250));
 
     const response = await fetch(
       `${this.api_url}/address/${wallet_data.address}/txs/chain/${loop_cursor ? loop_cursor : ""}`,
@@ -161,6 +159,7 @@ export class BitcoinProvider implements WalletsProvider {
     let has_next_page = false;
 
     do {
+      await new Promise((resolve) => setTimeout(resolve, 250));
       const response = await fetch(
         `https://blockchain.info/rawaddr/${wallet_data.address}`,
       ).then((res) => res.json());
