@@ -19,11 +19,16 @@ export class CoinsPostgres implements CoinsRepository {
   private db: PostgresJsDatabase<typeof schema>;
 
   constructor(connection_string: string) {
-    const queryClient = postgres(connection_string);
+    const queryClient = postgres(connection_string, {
+      max: 30,
+      idle_timeout: 30_000,
+      connect_timeout: 2_000,
+    });
     this.db = drizzle(queryClient, { schema });
   }
 
   async saveCoins(coins: Coin[]): Promise<SavedCoin[]> {
+    if (coins.length === 0) return [];
     const response = await this.db.transaction(async (tx) => {
       // Actualizo los datos asociados a la coin si ya existe su nombre
       const savedCoins = await tx
@@ -184,7 +189,6 @@ export class CoinsPostgres implements CoinsRepository {
     token_id: number,
     blockchain: BlockchainsName,
   ): Promise<SavedNFT> {
-    console.log("nft to fetch: ", contract_address);
     return await this.db.transaction(async (tx) => {
       const [saved_nft] = await tx
         .select()
@@ -210,6 +214,7 @@ export class CoinsPostgres implements CoinsRepository {
   }
 
   async saveCandles(candles: Candle[]): Promise<void> {
+    if (candles.length === 0) return;
     await this.db
       .insert(schema.candles)
       .values(candles)

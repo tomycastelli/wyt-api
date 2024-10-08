@@ -8,7 +8,7 @@ import type {
 import { type Queue, Worker } from "bullmq";
 import type { CoinJobsQueue, WalletJobsQueue } from "./index.js";
 
-export const setup_wallets_worker = (
+export const setupWalletsWorker = (
   wallets_service: WalletsService<
     WalletsStreamsProvider,
     WalletsRepository,
@@ -22,7 +22,7 @@ export const setup_wallets_worker = (
     "walletJobsQueue",
     async (job) => {
       console.log(
-        `Starting job ${job.name} with ID ${job.id} and data: ${JSON.stringify(job.data)}`,
+        `Starting job ${job.name} with ID ${job.id} and ${job.data.data.transactions?.length} transactions`,
       );
       const payload = job.data;
       switch (payload.jobName) {
@@ -42,10 +42,12 @@ export const setup_wallets_worker = (
               if (response) {
                 await job.updateProgress({ page, wallet: wallet.address });
 
-                coin_jobs_queue.add("update_wallet_coins", {
-                  jobName: "newCoins",
-                  newCoinsData: response.new_coins,
-                });
+                if (response.new_coins.length > 0) {
+                  coin_jobs_queue.add("update_wallet_coins", {
+                    jobName: "newCoins",
+                    newCoinsData: response.new_coins,
+                  });
+                }
               }
             }
 
@@ -56,13 +58,18 @@ export const setup_wallets_worker = (
         }
         case "saveTransactions": {
           const { new_coins } = await wallets_service.saveTransactions(
-            payload.data.transactions!,
+            payload.data.transactions!.map((t) => ({
+              ...t,
+              block_timestamp: new Date(t.block_timestamp),
+            })),
             payload.data.blockchain,
           );
-          coin_jobs_queue.add("save_transaction_coins", {
-            jobName: "newCoins",
-            newCoinsData: new_coins,
-          });
+          if (new_coins.length > 0) {
+            coin_jobs_queue.add("save_transaction_coins", {
+              jobName: "newCoins",
+              newCoinsData: new_coins,
+            });
+          }
         }
       }
     },

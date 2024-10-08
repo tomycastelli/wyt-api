@@ -114,19 +114,11 @@ export const create_app = (
     return c.text("Hello Hono!");
   });
 
-  const coin_jobs_queue = new Queue<CoinJobsQueue>("coinJobsQueue", {
-    connection: {
-      host: redis_url,
-      port: 6379,
-    },
-  });
-
   const coins_routes = setup_coins_routes(coins_service);
   const wallets_routes = setup_wallets_routes(
     wallets_service,
     base_url,
     moralis_streams_secret_key,
-    coin_jobs_queue,
     redis_url,
   );
 

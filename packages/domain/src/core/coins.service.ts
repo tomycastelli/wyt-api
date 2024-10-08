@@ -57,7 +57,9 @@ export class CoinsService<
     const saved_coins: { saved_coin: SavedCoin; is_new: boolean }[] = [];
     const not_found: string[] = [];
 
-    for (const address of coin_address) {
+    const address_set = new Set(coin_address);
+
+    for (const address of address_set) {
       const saved_coin = await this.coinsRepository.getCoinByAddress(
         address,
         blockchain,
@@ -119,10 +121,7 @@ export class CoinsService<
 
   /** Guarda las [Coin]s mas recientes */
   public async saveLatestCoins(): Promise<SavedCoin[]> {
-    const latestCoins = await this.coinsProvider.getLatestCoins(
-      Object.keys(blockchains),
-      100_000,
-    );
+    const latestCoins = await this.coinsProvider.getLatestCoins(100_000);
     const savedCoins = await this.coinsRepository.saveCoins(latestCoins);
     return savedCoins;
   }

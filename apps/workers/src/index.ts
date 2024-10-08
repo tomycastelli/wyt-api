@@ -10,14 +10,29 @@ import {
   type BlockchainsName,
   CoinsService,
   type SavedCoin,
+  SavedWallet,
   type Transaction,
   WalletsService,
 } from "@repo/domain";
-import { setup_backfill_worker } from "./backfill.worker.js";
-import { setup_coins_worker } from "./coins.worker.js";
+import {
+  setupBackfillChunkWorker,
+  setupBackfillWorker,
+} from "./backfill.worker.js";
+import { setupCoinsWorker } from "./coins.worker.js";
 import { coin_crons, wallet_crons } from "./crons.js";
-import { setup_transactions_worker } from "./transactions.worker.js";
-import { setup_wallets_worker } from "./wallets.worker.js";
+import { setupTransactionsWorker } from "./transactions.worker.js";
+import { setupWalletsWorker } from "./wallets.worker.js";
+
+// Deserialización de BigInts
+declare global {
+  interface BigInt {
+    toJSON(): number;
+  }
+}
+
+BigInt.prototype.toJSON = function () {
+  return Number(this);
+};
 
 export type CoinJobsQueue = {
   jobName: "saveAllCoins" | "saveLatestCoins" | "updateCoins" | "newCoins";
@@ -34,6 +49,13 @@ export type WalletJobsQueue = {
     blockchain: BlockchainsName;
     transactions?: Transaction[];
   };
+};
+
+export type BackfillChunkQueue = {
+  wallet: SavedWallet;
+  from_date: string;
+  to_date: string;
+  total_chunks: number;
 };
 
 export const REDIS_URL = process.env.REDIS_URL;
@@ -64,6 +86,17 @@ const wallets_service = new WalletsService(
   coins_service,
 );
 
+// Queues
+
+new Queue<{
+  wallet: SavedWallet;
+}>("backfillQueue", {
+  connection: {
+    host: REDIS_URL,
+    port: 6379,
+  },
+});
+
 const coin_jobs_queue = new Queue<CoinJobsQueue>("coinJobsQueue", {
   connection: {
     host: REDIS_URL,
@@ -78,18 +111,27 @@ const wallet_jobs_queue = new Queue<WalletJobsQueue>("walletJobsQueue", {
   },
 });
 
-setup_backfill_worker(
+const chunks_queue = new Queue<BackfillChunkQueue>("backfillChunkQueue", {
+  connection: {
+    host: REDIS_URL,
+    port: 6379,
+  },
+});
+
+setupBackfillWorker(wallets_service, chunks_queue, REDIS_URL);
+
+setupBackfillChunkWorker(
   wallets_service,
-  coin_jobs_queue,
   wallet_jobs_queue,
+  chunks_queue,
   REDIS_URL,
 );
 
-setup_wallets_worker(wallets_service, coin_jobs_queue, REDIS_URL);
+setupWalletsWorker(wallets_service, coin_jobs_queue, REDIS_URL);
 
-setup_coins_worker(coins_service, REDIS_URL);
+setupCoinsWorker(coins_service, REDIS_URL);
 
-setup_transactions_worker(wallets_service, coin_jobs_queue, REDIS_URL);
+setupTransactionsWorker(wallets_service, coin_jobs_queue, REDIS_URL);
 
 // Set up de crons
 wallet_crons(wallet_jobs_queue);

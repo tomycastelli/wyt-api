@@ -213,8 +213,42 @@ export class EthereumProvider implements WalletsStreamsProvider {
     return Number(data.result.transactions.total);
   }
 
+  async getWalletTimes(
+    wallet_data: Wallet,
+  ): Promise<{ first_transaction: Date; last_transaction: Date }> {
+    const first_transaction_made =
+      await Moralis.EvmApi.wallets.getWalletHistory({
+        chain: this.blockchain_mapper[wallet_data.blockchain],
+        address: wallet_data.address,
+        order: "ASC",
+        includeInternalTransactions: false,
+        limit: 1,
+      });
+
+    const last_transaction_made = await Moralis.EvmApi.wallets.getWalletHistory(
+      {
+        chain: this.blockchain_mapper[wallet_data.blockchain],
+        address: wallet_data.address,
+        order: "DESC",
+        includeInternalTransactions: false,
+        limit: 1,
+      },
+    );
+
+    return {
+      first_transaction: new Date(
+        first_transaction_made.result[0]!.blockTimestamp,
+      ),
+      last_transaction: new Date(
+        last_transaction_made.result[0]!.blockTimestamp,
+      ),
+    };
+  }
+
   async getTransactionHistory(
     wallet_data: Wallet,
+    from_date: Date,
+    to_date: Date,
     loop_cursor: string | undefined,
   ): Promise<{ transactions: Transaction[]; cursor: string | undefined }> {
     const transaction_history = await Moralis.EvmApi.wallets.getWalletHistory({
@@ -222,6 +256,8 @@ export class EthereumProvider implements WalletsStreamsProvider {
       address: wallet_data.address,
       order: "DESC",
       includeInternalTransactions: false,
+      fromDate: from_date,
+      toDate: to_date,
       cursor: loop_cursor,
       limit: 300,
     });
@@ -235,20 +271,57 @@ export class EthereumProvider implements WalletsStreamsProvider {
     };
   }
 
-  async createStream(
+  async createStreams(
     webhook_url: string,
     description: string,
     tag: string,
     blockchain: BlockchainsName,
-  ): Promise<Stream> {
-    const stream = await Moralis.Streams.add({
+  ): Promise<Stream[]> {
+    const NFT_transfer_ABI = [
+      {
+        anonymous: false,
+        inputs: [
+          { indexed: true, name: "from", type: "address" },
+          { indexed: true, name: "to", type: "address" },
+          { indexed: true, name: "tokenId", type: "uint256" },
+        ],
+        name: "transfer",
+        type: "event",
+      },
+    ];
+
+    const ERC20_Transfer_ABI = [
+      {
+        anonymous: false,
+        inputs: [
+          {
+            indexed: true,
+            name: "from",
+            type: "address",
+          },
+          {
+            indexed: true,
+            name: "to",
+            type: "address",
+          },
+          {
+            indexed: false,
+            name: "value",
+            type: "uint256",
+          },
+        ],
+        name: "Transfer",
+        type: "event",
+      },
+    ];
+
+    const nftStream = await Moralis.Streams.add({
       webhookUrl: webhook_url,
       description,
-      tag,
+      tag: `nft-${tag}`,
       chains: [this.blockchain_mapper[blockchain]],
       includeAllTxLogs: false,
       includeContractLogs: false,
-      includeNativeTxs: true,
       allAddresses: false,
       topic0: ["Transfer(address,address,uint256)"],
       advancedOptions: [
@@ -257,47 +330,57 @@ export class EthereumProvider implements WalletsStreamsProvider {
           filter: { eq: ["moralis_streams_possibleSpam", "false"] },
         },
       ],
-      abi: [
+      abi: NFT_transfer_ABI,
+    });
+
+    // Probaré con añadir native txs solo a este, como me dijo soporte
+    const erc20Stream = await Moralis.Streams.add({
+      webhookUrl: webhook_url,
+      description,
+      tag: `erc20-${tag}`,
+      chains: [this.blockchain_mapper[blockchain]],
+      includeAllTxLogs: false,
+      includeContractLogs: false,
+      includeNativeTxs: true,
+      allAddresses: false,
+      topic0: ["Transfer(address,address,uint256)"],
+      abi: ERC20_Transfer_ABI,
+      advancedOptions: [
         {
-          anonymous: false,
-          inputs: [
-            {
-              indexed: true,
-              name: "from",
-              type: "address",
-            },
-            {
-              indexed: true,
-              name: "to",
-              type: "address",
-            },
-            {
-              indexed: false,
-              name: "value",
-              type: "uint256",
-            },
-            { indexed: true, name: "tokenId", type: "uint256" },
-          ],
-          name: "Transfer",
-          type: "event",
+          topic0: "Transfer(address,address,uint256)",
+          filter: { eq: ["moralis_streams_possibleSpam", "false"] },
         },
       ],
     });
 
-    return {
-      description: stream.result.description,
-      id: stream.result.id,
-      tag: stream.result.tag,
-      webhook_url: stream.result.webhookUrl,
-      blockchain,
-    };
+    return [
+      {
+        description: nftStream.result.description,
+        id: nftStream.result.id,
+        tag: nftStream.result.tag,
+        webhook_url: nftStream.result.webhookUrl,
+        blockchain,
+      },
+      {
+        description: erc20Stream.result.description,
+        id: erc20Stream.result.id,
+        tag: erc20Stream.result.tag,
+        webhook_url: erc20Stream.result.webhookUrl,
+        blockchain,
+      },
+    ];
   }
 
-  async addAddressToStream(stream_id: string, address: string): Promise<void> {
-    await Moralis.Streams.addAddress({
-      id: stream_id,
-      address,
-    });
+  async addAddressToStreams(
+    stream_ids: string[],
+    address: string,
+  ): Promise<void> {
+    for (const stream_id of stream_ids) {
+      await Moralis.Streams.addAddress({
+        id: stream_id,
+        address,
+      });
+    }
   }
 
   async getAllStreams(): Promise<Stream[]> {
@@ -333,7 +416,6 @@ export class EthereumProvider implements WalletsStreamsProvider {
     if (!provided_signature) throw new Error("Signature not provided");
 
     const generated_signature = sha3(JSON.stringify(body) + secret_key);
-    console.log("Generated signature: ", generated_signature);
     if (generated_signature !== provided_signature) return false;
 
     return true;

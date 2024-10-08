@@ -9,7 +9,7 @@ import type {
 import { type Queue, Worker } from "bullmq";
 import type { CoinJobsQueue } from "./index.js";
 
-export const setup_transactions_worker = (
+export const setupTransactionsWorker = (
   wallets_service: WalletsService<
     WalletsStreamsProvider,
     WalletsRepository,
@@ -32,7 +32,7 @@ export const setup_transactions_worker = (
         job.data.body,
         job.data.blockchain,
       );
-      if (response) {
+      if (response && response.new_coins.length > 0) {
         await coin_jobs_queue.add("new_transaction_coins", {
           jobName: "newCoins",
           newCoinsData: response.new_coins,

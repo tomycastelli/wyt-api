@@ -7,6 +7,7 @@ import {
   type CoinsProvider,
   EveryBlockainsName,
   base_coins,
+  blockchains,
 } from "@repo/domain";
 import { type } from "arktype";
 import pLimit, { type LimitFunction } from "p-limit";
@@ -75,7 +76,6 @@ const tokenDataByAddressSchema = type({
     attributes: {
       symbol: "string",
       coingecko_coin_id: "string|null",
-      description: "string|null",
       "+": "delete",
     },
     "+": "delete",
@@ -236,10 +236,7 @@ export class CoinGecko implements CoinsProvider {
     return mappedCandles;
   }
 
-  async getLatestCoins(
-    blockchains: string[],
-    minimum_market_cap: number,
-  ): Promise<Coin[]> {
+  async getLatestCoins(minimum_market_cap: number): Promise<Coin[]> {
     const response = await fetch(
       `${this.base_url}/coins/list/new`,
       this.request_data,
@@ -286,7 +283,7 @@ export class CoinGecko implements CoinsProvider {
           coin.market_data.price_change_percentage_24h &&
           coin.market_data.price_change_24h &&
           Object.keys(coin.platforms).some((platform) =>
-            blockchains.includes(platform),
+            EveryBlockainsName.includes(platform as BlockchainsName),
           ) &&
           (coin.market_data.market_cap?.usd ?? 0) >= minimum_market_cap,
       )
@@ -354,31 +351,44 @@ export class CoinGecko implements CoinsProvider {
         throw parsedCoinDetails;
       }
 
-      const mappedCoinDetails: Coin = {
-        name: coin_data.coingecko_coin_id!,
-        symbol: coin_data.symbol,
-        provider: "coingecko",
-        description: coin_data.description,
-        ath: parsedCoinDetails.market_data!.ath.usd!,
-        image_url: parsedCoinDetails.image!.large,
-        market_cap: parsedCoinDetails.market_data!.market_cap.usd!,
-        price: parsedCoinDetails.market_data!.current_price!.usd!,
-        price_change_percentage_24h:
-          parsedCoinDetails.market_data!.price_change_percentage_24h!,
-        price_change_24h: parsedCoinDetails.market_data!.price_change_24h!,
-        // Me quedo con solo los contratos que me interesan
-        contracts: Object.entries(parsedCoinDetails.detail_platforms)
-          .filter(([key]) =>
-            EveryBlockainsName.includes(key as BlockchainsName),
-          )
-          .map(([blockchain, detail]) => ({
-            blockchain: blockchain as BlockchainsName,
-            contract_address: detail.contract_address!,
-            decimal_place: detail.decimal_place!,
-          })),
-      };
+      if (
+        parsedCoinDetails.description &&
+        parsedCoinDetails.image &&
+        parsedCoinDetails.market_data &&
+        parsedCoinDetails.market_data.current_price?.usd &&
+        parsedCoinDetails.market_data.ath?.usd &&
+        parsedCoinDetails.market_data.price_change_percentage_24h &&
+        parsedCoinDetails.market_data.price_change_24h &&
+        Object.keys(parsedCoinDetails.platforms).some((platform) =>
+          EveryBlockainsName.includes(platform as BlockchainsName),
+        )
+      ) {
+        const mappedCoinDetails: Coin = {
+          name: coin_data.coingecko_coin_id!,
+          symbol: coin_data.symbol,
+          provider: "coingecko",
+          description: parsedCoinDetails.description?.en ?? null,
+          ath: parsedCoinDetails.market_data!.ath.usd!,
+          image_url: parsedCoinDetails.image!.large,
+          market_cap: parsedCoinDetails.market_data!.market_cap.usd!,
+          price: parsedCoinDetails.market_data!.current_price!.usd!,
+          price_change_percentage_24h:
+            parsedCoinDetails.market_data!.price_change_percentage_24h!,
+          price_change_24h: parsedCoinDetails.market_data!.price_change_24h!,
+          // Me quedo con solo los contratos que me interesan
+          contracts: Object.entries(parsedCoinDetails.detail_platforms)
+            .filter(([key]) =>
+              EveryBlockainsName.includes(key as BlockchainsName),
+            )
+            .map(([blockchain, detail]) => ({
+              blockchain: blockchain as BlockchainsName,
+              contract_address: detail.contract_address!,
+              decimal_place: detail.decimal_place!,
+            })),
+        };
 
-      coins_to_return.push(mappedCoinDetails);
+        coins_to_return.push(mappedCoinDetails);
+      }
     }
 
     return coins_to_return;

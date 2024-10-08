@@ -13,6 +13,7 @@ import {
 import {
   type ExtractTablesWithRelations,
   and,
+  asc,
   desc,
   eq,
   gte,
@@ -20,6 +21,7 @@ import {
   lte,
   notInArray,
   or,
+  isNull,
   sql,
 } from "drizzle-orm";
 import type { PgTransaction } from "drizzle-orm/pg-core";
@@ -36,7 +38,11 @@ export class WalletsPostgres implements WalletsRepository {
   private db: PostgresJsDatabase<typeof schema>;
 
   constructor(connection_string: string) {
-    const queryClient = postgres(connection_string);
+    const queryClient = postgres(connection_string, {
+      max: 80,
+      idle_timeout: 30_000,
+      connect_timeout: 2_000,
+    });
     this.db = drizzle(queryClient, { schema });
   }
 
@@ -313,7 +319,7 @@ export class WalletsPostgres implements WalletsRepository {
       if (!transaction_id) throw Error("La transacción ya existe");
 
       // Si es from_wallet, le tengo que restar el fee
-      if (transaction_data.from_address) {
+      if (transaction_data.from_address && transaction_data.fee !== 0n) {
         const [wallet] = await tx
           .update(schema.wallets)
           .set({
@@ -548,8 +554,6 @@ export class WalletsPostgres implements WalletsRepository {
     from_date: Date,
     to_date: Date,
   ): Promise<Transaction[]> {
-    console.log("From date: ", from_date);
-    console.log("To date: ", to_date);
     const transactions_query = this.db
       .select()
       .from(schema.transactions)
@@ -582,6 +586,8 @@ export class WalletsPostgres implements WalletsRepository {
           // En el rango dado
           gte(schema.transactions.block_timestamp, from_date),
           lte(schema.transactions.block_timestamp, to_date),
+          // Que no sean NFT
+          isNull(schema.transfers.nft_id),
         ),
       )
       .orderBy(desc(schema.transactions.block_timestamp))
@@ -601,7 +607,10 @@ export class WalletsPostgres implements WalletsRepository {
         ...transaction.transfers!,
         token_id: transaction.nfts?.token_id ?? null,
         value: BigInt(transaction.transfers!.value),
-        coin_address: transaction.contracts?.contract_address ?? null,
+        // Si es nft
+        coin_address: transaction.nfts?.token_id
+          ? transaction.nfts?.contract_address
+          : (transaction.contracts?.contract_address ?? null),
       };
 
       if (!existing_transaction) {
@@ -621,14 +630,35 @@ export class WalletsPostgres implements WalletsRepository {
     return mapped_transactions;
   }
 
-  async updateWalletBackfillStatus(
-    wallet_data: SavedWallet,
-    status: "complete" | "pending",
-    first_transfer_date: Date | null,
-  ): Promise<void> {
+  async updateWalletBackfillStatus(wallet_data: SavedWallet): Promise<void> {
+    // Busco la transacción mas vieja
+    const [first_transaction] = await this.db
+      .select()
+      .from(schema.transactions)
+      .leftJoin(
+        schema.transfers,
+        eq(schema.transfers.transaction_id, schema.transactions.id),
+      )
+      .where(
+        and(
+          eq(schema.transactions.blockchain, wallet_data.blockchain),
+          or(
+            eqLower(schema.transfers.from_address, wallet_data.address),
+            eqLower(schema.transfers.to_address, wallet_data.address),
+            eqLower(schema.transactions.from_address, wallet_data.address),
+            eqLower(schema.transactions.to_address, wallet_data.address),
+          ),
+        ),
+      )
+      .orderBy(asc(schema.transactions.block_timestamp))
+      .limit(1);
+
     await this.db
       .update(schema.wallets)
-      .set({ backfill_status: status, first_transfer_date })
+      .set({
+        backfill_status: "complete",
+        first_transfer_date: first_transaction?.transactions.block_timestamp,
+      })
       .where(
         and(
           eqLower(schema.wallets.address, wallet_data.address),

@@ -53,8 +53,24 @@ export class WalletsProviderAdapters implements WalletsStreamsProvider {
     }
   }
 
+  async getWalletTimes(
+    wallet_data: Wallet,
+  ): Promise<{ first_transaction: Date; last_transaction: Date }> {
+    const ecosystem = blockchains[wallet_data.blockchain].ecosystem;
+    switch (ecosystem) {
+      case "ethereum":
+        return this.ethereumProvider.getWalletTimes(wallet_data);
+      case "bitcoin":
+        return this.bitcoinProvider.getWalletTimes(wallet_data);
+      case "solana":
+        return this.solanaProvider.getWalletTimes(wallet_data);
+    }
+  }
+
   async getTransactionHistory(
     wallet_data: Wallet,
+    from_date: Date,
+    to_date: Date,
     loop_cursor: string | undefined,
   ): Promise<{ transactions: Transaction[]; cursor: string | undefined }> {
     const ecosystem = blockchains[wallet_data.blockchain].ecosystem;
@@ -62,16 +78,22 @@ export class WalletsProviderAdapters implements WalletsStreamsProvider {
       case "ethereum":
         return this.ethereumProvider.getTransactionHistory(
           wallet_data,
+          from_date,
+          to_date,
           loop_cursor,
         );
       case "solana":
         return this.solanaProvider.getTransactionHistory(
           wallet_data,
+          from_date,
+          to_date,
           loop_cursor,
         );
       case "bitcoin":
         return this.bitcoinProvider.getTransactionHistory(
           wallet_data,
+          from_date,
+          to_date,
           loop_cursor,
         );
     }
@@ -103,17 +125,20 @@ export class WalletsProviderAdapters implements WalletsStreamsProvider {
 
   // Por ahora los streams son solo en Ethereum
 
-  async addAddressToStream(stream_id: string, address: string): Promise<void> {
-    return this.ethereumProvider.addAddressToStream(stream_id, address);
+  async addAddressToStreams(
+    stream_ids: string[],
+    address: string,
+  ): Promise<void> {
+    return this.ethereumProvider.addAddressToStreams(stream_ids, address);
   }
 
-  async createStream(
+  async createStreams(
     webhook_url: string,
     description: string,
     tag: string,
     blockchain: BlockchainsName,
-  ): Promise<Stream> {
-    return this.ethereumProvider.createStream(
+  ): Promise<Stream[]> {
+    return this.ethereumProvider.createStreams(
       webhook_url,
       description,
       tag,

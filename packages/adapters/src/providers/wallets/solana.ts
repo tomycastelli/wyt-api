@@ -124,16 +124,52 @@ export class SolanaProvider implements WalletsProvider {
       },
     );
 
-    return this.mapTransactionData(transactions, wallet_data.blockchain);
+    return this.mapTransactionData(transactions);
+  }
+
+  async getWalletTimes(
+    wallet_data: Wallet,
+  ): Promise<{ first_transaction: Date; last_transaction: Date }> {
+    const public_key = new PublicKey(wallet_data.address);
+    let loop_cursor: string | undefined = undefined;
+    let is_first_time = true;
+
+    let first_transaction = new Date();
+    let last_transaction = new Date();
+
+    do {
+      const transactions = await this.getConnection().getSignaturesForAddress(
+        public_key,
+        {
+          before: loop_cursor,
+          limit: 1000,
+        },
+      );
+      if (transactions.length === 0) break;
+      if (is_first_time) {
+        first_transaction = new Date(transactions[0].blockTime! * 1000);
+        is_first_time = false;
+      }
+
+      last_transaction = new Date(
+        transactions[transactions.length - 1].blockTime! * 1000,
+      );
+      if (transactions.length < 1000) break;
+
+      loop_cursor = transactions[transactions.length - 1].signature;
+    } while (loop_cursor);
+
+    return { first_transaction, last_transaction };
   }
 
   async getTransactionHistory(
     wallet_data: Wallet,
+    from_date: Date,
+    to_date: Date,
     loop_cursor: string | undefined,
   ): Promise<{ transactions: Transaction[]; cursor: string | undefined }> {
     const public_key = new PublicKey(wallet_data.address);
 
-    // Agarro las primeras 20
     const transactions = await this.getConnection().getSignaturesForAddress(
       public_key,
       {
@@ -142,12 +178,14 @@ export class SolanaProvider implements WalletsProvider {
       },
     );
 
+    if (transactions.length === 0)
+      return { transactions: [], cursor: undefined };
+
+    // Como es ineficiente dada la implementación actual del RPC de Solana
+    // Voy a ignorar las fechas
     return {
-      transactions: await this.mapTransactionData(
-        transactions,
-        wallet_data.blockchain,
-      ),
-      cursor: transactions[transactions.length - 1]?.signature,
+      transactions: await this.mapTransactionData(transactions),
+      cursor: transactions[transactions.length - 1].signature,
     };
   }
 
@@ -171,7 +209,6 @@ export class SolanaProvider implements WalletsProvider {
         transactions_data.filter(
           (t) => new Date(t.blockTime! * 1000) > from_date,
         ),
-        wallet_data.blockchain,
       );
       // Si despues del filtrado siguen siendo 1000 transacciones, entonces tengo que buscar mas atrás
       if (mapped_transactions.length === 1000) {
@@ -188,7 +225,6 @@ export class SolanaProvider implements WalletsProvider {
 
   async mapTransactionData(
     confirmed_signature_info: ConfirmedSignatureInfo[],
-    blockchain: BlockchainsName,
   ): Promise<Transaction[]> {
     const mapped_transactions: Transaction[] = [];
 
@@ -301,7 +337,7 @@ export class SolanaProvider implements WalletsProvider {
 
       mapped_transactions.push({
         block_timestamp: new Date(tx.blockTime! * 1000),
-        blockchain: blockchain,
+        blockchain: "solana",
         fee: 0n,
         hash: tx.signature,
         transfers,

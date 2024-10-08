@@ -19,9 +19,16 @@ export interface WalletsProvider {
   /** Busca las [Transaction]s mas recientes de una [Wallet] con una cantidad arbitrario */
   getRecentTransactions(wallet_data: Wallet): Promise<Transaction[]>;
 
+  /** Busca la primera y última transacción de una [Wallet] */
+  getWalletTimes(
+    wallet_data: Wallet,
+  ): Promise<{ first_transaction: Date; last_transaction: Date }>;
+
   /** Busca el historial de [Transaction]s de una [Wallet] con un cursor para ir paginando */
   getTransactionHistory(
     wallet_data: Wallet,
+    from_date: Date,
+    to_date: Date,
     loop_cursor: string | undefined,
   ): Promise<{ transactions: Transaction[]; cursor: string | undefined }>;
 
@@ -33,16 +40,16 @@ export interface WalletsProvider {
 }
 
 export interface WalletsStreamsProvider extends WalletsProvider {
-  /** Crea un nuevo Stream de transacciones */
-  createStream(
+  /** Crea un nuevo Stream de transacciones. Tanto ERC20 como NFTs */
+  createStreams(
     webhook_url: string,
     description: string,
     tag: string,
     blockchain: BlockchainsName,
-  ): Promise<Stream>;
+  ): Promise<Stream[]>;
 
   /** Añade una address a un [Stream] */
-  addAddressToStream(stream_id: string, address: string): Promise<void>;
+  addAddressToStreams(stream_ids: string[], address: string): Promise<void>;
 
   /** Busca todos los [Stream] existentes */
   getAllStreams(): Promise<Stream[]>;
@@ -106,12 +113,8 @@ export interface WalletsRepository {
   _Pensado para hacer backfill inicial del historial o actualizar redes sin transacciones detalladas_ */
   saveTransactions(transactions: CoinedTransaction[]): Promise<void>;
 
-  /** Actualiza el backfill status de una [Wallet] */
-  updateWalletBackfillStatus(
-    wallet_data: SavedWallet,
-    status: "complete" | "pending",
-    first_transfer_date: Date | null,
-  ): Promise<void>;
+  /** Actualiza el backfill status de una [Wallet] a completado */
+  updateWalletBackfillStatus(wallet_data: SavedWallet): Promise<void>;
 
   /** Guarda una [Transaction] y actualiza el estado de la o las [Wallet]s involucradas  */
   saveTransactionAndUpdateWallet(

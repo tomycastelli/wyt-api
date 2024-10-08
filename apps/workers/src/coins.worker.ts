@@ -6,7 +6,7 @@ import type {
 import { Worker } from "bullmq";
 import type { CoinJobsQueue } from "./index.js";
 
-export const setup_coins_worker = (
+export const setupCoinsWorker = (
   coins_service: CoinsService<CoinsProvider, CoinsRepository>,
   redis_url: string,
 ): Worker<CoinJobsQueue> => {

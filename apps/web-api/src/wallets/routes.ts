@@ -26,13 +26,18 @@ export const setup_wallets_routes = (
   >,
   base_url: string,
   moralis_streams_secret_key: string,
-  coin_jobs_queue: Queue<CoinJobsQueue>,
   redis_url: string,
 ): Hono<BlankEnv, BlankSchema, "/"> => {
+  const coin_jobs_queue = new Queue<CoinJobsQueue>("coinJobsQueue", {
+    connection: {
+      host: redis_url,
+      port: 6379,
+    },
+  });
+
   // BullMQ para procesos de larga duración
   const backfillQueue = new Queue<{
     wallet: SavedWallet;
-    stream_webhook_url: string;
   }>("backfillQueue", {
     connection: {
       host: redis_url,
@@ -64,52 +69,28 @@ export const setup_wallets_routes = (
     async (c) => {
       const { address, blockchain } = c.req.valid("json");
 
-      const wallet_data = await wallets_service.addWallet(address, blockchain);
+      const wallet_data = await wallets_service.addWallet(
+        address,
+        blockchain,
+        `${base_url}/streams/${blockchain}`,
+      );
 
       if (!wallet_data) return c.text("Invalid wallet address", 400);
 
       // Enviar a una queue
       await backfillQueue.add("backfillWallet", {
         wallet: wallet_data.valued_wallet_with_transactions,
-        stream_webhook_url: `${base_url}/streams/${blockchain}`,
       });
 
-      // Enviar nuevas [Coin]s a conseguir la data nueva
-      await coin_jobs_queue.add("new_wallet_coins", {
-        jobName: "newCoins",
-        newCoinsData: wallet_data.new_coins,
-      });
+      if (wallet_data.new_coins.length > 0) {
+        // Enviar nuevas [Coin]s a conseguir la data nueva
+        await coin_jobs_queue.add("new_wallet_coins", {
+          jobName: "newCoins",
+          newCoinsData: wallet_data.new_coins,
+        });
+      }
 
       return c.json(wallet_data.valued_wallet_with_transactions);
-    },
-  );
-
-  wallets_routes.post(
-    "/backfill",
-    arktypeValidator(
-      "json",
-      type({
-        address: "string",
-        blockchain: ["===", ...EveryBlockainsName],
-      }),
-    ),
-    async (c) => {
-      const { address, blockchain } = c.req.valid("json");
-
-      const saved_wallet = await wallets_service.getWallet(address, blockchain);
-
-      if (!saved_wallet) return c.text("Wallet does not exists");
-
-      if (saved_wallet?.backfill_status === "complete")
-        return c.text("Wallet is already backfilled");
-
-      // Enviar a una queue
-      await backfillQueue.add("backfillWallet", {
-        wallet: saved_wallet,
-        stream_webhook_url: `${base_url}/streams/${blockchain}`,
-      });
-
-      return c.text("Backfill started");
     },
   );
 
@@ -166,7 +147,7 @@ export const setup_wallets_routes = (
 
       const data = await wallets_service.updateWallet(wallet_with_tx);
 
-      if (data) {
+      if (data && data.new_coins.length > 0) {
         // Enviar nuevas [Coin]s a conseguir la data nueva
         await coin_jobs_queue.add("update_wallet_coins", {
           jobName: "newCoins",

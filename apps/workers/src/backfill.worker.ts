@@ -1,75 +1,68 @@
-import type {
-  CoinsProvider,
-  CoinsRepository,
-  SavedWallet,
-  WalletsRepository,
-  WalletsService,
-  WalletsStreamsProvider,
+import {
+  blockchains,
+  type CoinsProvider,
+  type CoinsRepository,
+  type SavedWallet,
+  type WalletsRepository,
+  type WalletsService,
+  type WalletsStreamsProvider,
 } from "@repo/domain";
-import { type Queue, Worker } from "bullmq";
-import type { CoinJobsQueue, WalletJobsQueue } from "./index.js";
+import { type Queue, QueueEvents, Worker } from "bullmq";
+import type { BackfillChunkQueue, WalletJobsQueue } from "./index.js";
 
-export const setup_backfill_worker = (
+export const setupBackfillWorker = (
   wallets_service: WalletsService<
     WalletsStreamsProvider,
     WalletsRepository,
     CoinsProvider,
     CoinsRepository
   >,
-  coin_jobs_queue: Queue<CoinJobsQueue>,
-  wallets_jobs_queue: Queue<WalletJobsQueue>,
+  chunks_queue: Queue<BackfillChunkQueue>,
   redis_url: string,
 ): Worker<{
   wallet: SavedWallet;
-  stream_webhook_url: string;
 }> => {
   const backfillWorker = new Worker<{
     wallet: SavedWallet;
-    stream_webhook_url: string;
   }>(
     "backfillQueue",
     async (job) => {
       console.log(
-        `Starting job ${job.name} with ID ${job.id} and wallet: ${job.data.wallet.address}`,
+        `Starting backfill ${job.name} with ID ${job.id} and wallet: ${job.data.wallet.address}`,
       );
 
-      let loop_cursor: string | undefined = undefined;
-      let first_transfer_date: Date | null = null;
-      let transaction_count = 0;
+      const ecosystem = blockchains[job.data.wallet.blockchain].ecosystem;
 
-      do {
-        const { transactions, cursor } =
-          await wallets_service.getTransactionHistory(
-            job.data.wallet,
-            job.data.stream_webhook_url,
-          );
+      if (ecosystem === "ethereum") {
+        // Consigo los chunks
+        const chunks = await wallets_service.getHistoryTimeChunks(
+          job.data.wallet,
+          10,
+        );
 
-        // Guardo las [Transaction]s
-        await wallets_jobs_queue.add("backfill_transactions", {
-          jobName: "saveTransactions",
-          data: {
-            blockchain: job.data.wallet.blockchain,
-            transactions,
-          },
+        console.log("Sending chunks: ", chunks);
+
+        const name = "backfill_chunk";
+        await chunks_queue.addBulk(
+          chunks.map((c) => ({
+            name,
+            data: {
+              from_date: c.from_date.toISOString(),
+              to_date: c.to_date.toISOString(),
+              wallet: job.data.wallet,
+              total_chunks: 10,
+            },
+          })),
+        );
+      } else {
+        console.log("Sending unique chunk");
+        await chunks_queue.add("backfill_unique_chunk", {
+          wallet: job.data.wallet,
+          from_date: new Date().toISOString(),
+          to_date: new Date().toISOString(),
+          total_chunks: 1,
         });
-
-        loop_cursor = cursor;
-
-        if (transactions.length > 0) {
-          transaction_count += transactions.length;
-          await job.updateProgress({ transaction_count: transaction_count });
-
-          first_transfer_date =
-            transactions[transactions.length - 1]!.block_timestamp;
-        }
-      } while (loop_cursor);
-
-      // Termino el proceso
-      await wallets_service.finishBackfill(
-        job.data.wallet,
-        first_transfer_date,
-        job.data.stream_webhook_url,
-      );
+      }
     },
     {
       connection: {
@@ -86,7 +79,7 @@ export const setup_backfill_worker = (
 
   backfillWorker.on("completed", (job) => {
     console.log(
-      `Job: ${job.id}, for wallet ${job.data.wallet.address} has completed!`,
+      `Chunks for job: ${job.id}, for wallet ${job.data.wallet.address} have been sent`,
     );
   });
 
@@ -95,4 +88,106 @@ export const setup_backfill_worker = (
   });
 
   return backfillWorker;
+};
+
+export const setupBackfillChunkWorker = (
+  wallets_service: WalletsService<
+    WalletsStreamsProvider,
+    WalletsRepository,
+    CoinsProvider,
+    CoinsRepository
+  >,
+  wallets_jobs_queue: Queue<WalletJobsQueue>,
+  chunks_queue: Queue<BackfillChunkQueue>,
+  redis_url: string,
+): Worker<BackfillChunkQueue> => {
+  const backfillChunkWorker = new Worker<BackfillChunkQueue>(
+    "backfillChunkQueue",
+    async (job) => {
+      console.log(
+        `Starting chunk job ${job.name} with ID ${job.id} for wallet: ${job.data.wallet.address}.`,
+        `From ${job.data.from_date} to ${job.data.to_date}`,
+      );
+      let loop_cursor: string | undefined = undefined;
+      let transaction_count = 0;
+
+      do {
+        const { transactions, cursor } =
+          await wallets_service.getTransactionHistory(
+            job.data.wallet,
+            new Date(job.data.from_date),
+            new Date(job.data.to_date),
+            loop_cursor,
+          );
+
+        loop_cursor = cursor;
+
+        if (transactions.length > 0) {
+          // Guardo las [Transaction]s
+          await wallets_jobs_queue.add(
+            `backfill_transactions-wallet:${job.data.wallet.address}`,
+            {
+              jobName: "saveTransactions",
+              data: {
+                blockchain: job.data.wallet.blockchain,
+                transactions,
+              },
+            },
+          );
+
+          transaction_count += transactions.length;
+
+          await job.updateProgress({ transaction_count: transaction_count });
+        }
+      } while (loop_cursor);
+    },
+    {
+      connection: {
+        host: redis_url,
+        port: 6379,
+      },
+      concurrency: 10,
+      lockDuration: 600_000,
+    },
+  );
+
+  backfillChunkWorker.on("ready", () => {
+    console.log("backfillChunkWorker is ready!");
+  });
+
+  backfillChunkWorker.on("completed", async (job) => {
+    const { wallet } = job.data;
+
+    const jobs = await chunks_queue.getJobs(["completed"]);
+    const chunk_jobs = jobs.filter((j) => j.data.wallet.id === wallet.id);
+
+    if (chunk_jobs.length === job.data.total_chunks) {
+      // Ya termino el último chunk
+      // Ahora quiero esperar a que los wallet_jobs que guardan las transacciones hayan terminado
+      const queueEvents = new QueueEvents("walletJobsQueue", {
+        connection: {
+          host: redis_url,
+          port: 6379,
+        },
+      });
+      await queueEvents.waitUntilReady();
+
+      const wallet_jobs = await wallets_jobs_queue.getJobs(["active"]);
+      const wallet_jobs_promises = wallet_jobs.map((job) =>
+        job.waitUntilFinished(queueEvents),
+      );
+
+      await Promise.all(wallet_jobs_promises);
+
+      // Termino el proceso
+      await wallets_service.finishBackfill(wallet);
+      console.log("Backfill process completed for wallet: ", wallet.id);
+    }
+  });
+
+  backfillChunkWorker.on("failed", (job, err) => {
+    console.error(`Job ${job?.id} has failed with err: `, err);
+  });
+
+  return backfillChunkWorker;
 };

@@ -64,6 +64,7 @@ export class WalletsService<
   public async addWallet(
     address: string,
     blockchain: BlockchainsName,
+    stream_webhook_url: string,
   ): Promise<{
     valued_wallet_with_transactions: ValuedWalletWithTransactions;
     new_coins: SavedCoin[];
@@ -97,6 +98,12 @@ export class WalletsService<
     const { valued_transactions, new_coins: new_tx_coins } =
       await this.getValuedTransactions(recent_transactions, blockchain);
 
+    // La añado al Stream
+    await this.addWalletToStream(
+      { ...wallet_data, id, last_update },
+      stream_webhook_url,
+    );
+
     return {
       valued_wallet_with_transactions: {
         id,
@@ -106,6 +113,44 @@ export class WalletsService<
       },
       new_coins: [...new_wallet_coins, ...new_tx_coins],
     };
+  }
+
+  public async addWalletToStream(
+    saved_wallet: SavedWallet,
+    stream_webhook_url: string,
+  ): Promise<void> {
+    // Si estoy en prod y el ecosistema es Ethereum, añado la Wallet al stream
+    const ecosystem = blockchains[saved_wallet.blockchain].ecosystem;
+
+    if (process.env.NODE_ENV === "production" && ecosystem === "ethereum") {
+      // Me fijo si ya existe un stream de esta blockchain
+      const streams = await this.walletsProvider.getAllStreams();
+      const this_blockchain_streams = streams.filter(
+        (s) => s.blockchain === saved_wallet.blockchain,
+      );
+
+      if (this_blockchain_streams.length > 0) {
+        // Añado la [Wallet] address al stream
+        await this.walletsProvider.addAddressToStreams(
+          this_blockchain_streams.map((s) => s.id),
+          saved_wallet.address,
+        );
+      } else {
+        // Lo creo
+        const streams = await this.walletsProvider.createStreams(
+          stream_webhook_url,
+          `${saved_wallet.blockchain} + -transactions`,
+          saved_wallet.blockchain,
+          saved_wallet.blockchain,
+        );
+
+        // Añado la [Wallet] address al stream
+        await this.walletsProvider.addAddressToStreams(
+          streams.map((s) => s.id),
+          saved_wallet.address,
+        );
+      }
+    }
   }
 
   /** Consigue una [ValuedWalletWithTransactions] ya guardada en la DB */
@@ -185,9 +230,38 @@ export class WalletsService<
     return saved_wallets;
   }
 
-  /** Consigue el historial de transacciones de una [Wallet] */
+  /** Consigue las dos puntas de tiempo del historial de una [Wallet] y devuelve los chunks de tiempo. \
+  A su vez, guarda la fecha de la primera transacción hecha por la [Wallet] */
+  public async getHistoryTimeChunks(
+    saved_wallet: SavedWallet,
+    chunk_amount: number,
+  ): Promise<{ from_date: Date; to_date: Date }[]> {
+    // Primero veo la primera y última transacción hecha por la Wallet
+    const { first_transaction, last_transaction } =
+      await this.walletsProvider.getWalletTimes(saved_wallet);
+
+    const chunks: { from_date: Date; to_date: Date }[] = [];
+
+    const chunk_duration =
+      (last_transaction.getTime() - first_transaction.getTime()) / chunk_amount;
+
+    for (let i = 0; i < chunk_amount; i++) {
+      const from_date = new Date(
+        first_transaction.getTime() + i * chunk_duration,
+      );
+      const to_date = new Date(from_date.getTime() + chunk_duration);
+
+      chunks.push({ from_date, to_date });
+    }
+
+    return chunks;
+  }
+
+  /** Consigue el historial de transacciones de una [Wallet] dada una ventana de tiempo */
   public async getTransactionHistory(
     saved_wallet: SavedWallet,
+    from_date: Date,
+    to_date: Date,
     loop_cursor: string | undefined,
   ): Promise<{
     transactions: Transaction[];
@@ -196,56 +270,17 @@ export class WalletsService<
     const { transactions, cursor } =
       await this.walletsProvider.getTransactionHistory(
         saved_wallet,
+        from_date,
+        to_date,
         loop_cursor,
       );
     return { transactions, cursor };
   }
 
   /** Terminar el backfill con los pasos correspondientes */
-  public async finishBackfill(
-    saved_wallet: SavedWallet,
-    first_transfer_date: Date | null,
-    stream_webhook_url: string,
-  ): Promise<void> {
+  public async finishBackfill(saved_wallet: SavedWallet): Promise<void> {
     // Si llego hasta acá sin tirar error, actualizo su status
-    await this.walletsRepository.updateWalletBackfillStatus(
-      saved_wallet,
-      "complete",
-      first_transfer_date,
-    );
-
-    // Si estoy en prod y el ecosistema es Ethereum, añado la Wallet al stream
-    const ecosystem = blockchains[saved_wallet.blockchain].ecosystem;
-
-    if (process.env.NODE_ENV === "production" && ecosystem === "ethereum") {
-      // Me fijo si ya existe un stream de esta blockchain
-      const streams = await this.walletsProvider.getAllStreams();
-      const this_blockchain_stream = streams.find(
-        (s) => s.blockchain === saved_wallet.blockchain,
-      );
-
-      if (this_blockchain_stream) {
-        // Añado la [Wallet] address al stream
-        await this.walletsProvider.addAddressToStream(
-          this_blockchain_stream.id,
-          saved_wallet.address,
-        );
-      } else {
-        // Lo creo
-        const stream = await this.walletsProvider.createStream(
-          stream_webhook_url,
-          `${saved_wallet.blockchain} + -transactions`,
-          saved_wallet.blockchain,
-          saved_wallet.blockchain,
-        );
-
-        // Añado la [Wallet] address al stream
-        await this.walletsProvider.addAddressToStream(
-          stream.id,
-          saved_wallet.address,
-        );
-      }
-    }
+    await this.walletsRepository.updateWalletBackfillStatus(saved_wallet);
   }
 
   /** Guarda [Transaction]s y devuelve las nuevas */
@@ -401,7 +436,9 @@ export class WalletsService<
           // Es token. Si la coin no esta en la lista de disponibles, descarto la transfer
           const coin = available_coins.find((a) =>
             a.saved_coin.contracts.some(
-              (c) => c.contract_address === tr.coin_address,
+              (c) =>
+                c.contract_address.toLowerCase() ===
+                tr.coin_address?.toLowerCase(),
             ),
           )?.saved_coin;
           if (!coin) continue;
@@ -482,7 +519,9 @@ export class WalletsService<
           // Es token. Si la coin no esta en la lista de disponibles, descarto la transfer
           const coin = available_coins.find((a) =>
             a.saved_coin.contracts.some(
-              (c) => c.contract_address === tr.coin_address,
+              (c) =>
+                c.contract_address.toLowerCase() ===
+                tr.coin_address?.toLowerCase(),
             ),
           )?.saved_coin;
           if (!coin) continue;
@@ -544,7 +583,9 @@ export class WalletsService<
         // Es token. Si la coin no esta en la lista de disponibles, descarto la transfer
         const coin = available_coins.find((a) =>
           a.saved_coin.contracts.some(
-            (ct) => ct.contract_address === c.coin_address,
+            (ct) =>
+              ct.contract_address.toLowerCase() ===
+              c.coin_address.toLowerCase(),
           ),
         )?.saved_coin;
         if (!coin) continue;
@@ -698,12 +739,15 @@ export class WalletsService<
 
     for (const transaction of coined_transactions) {
       const transaction_time_key = this.getTimeKey(
-        transaction.block_timestamp,
+        new Date(transaction.block_timestamp),
         granularity,
       );
 
       // Cargo la fee en la native coin
-      if (transaction.from_address === valued_wallet.address) {
+      if (
+        transaction.from_address?.toLowerCase() ===
+        valued_wallet.address.toLowerCase()
+      ) {
         const native_coin_map = values_map.get(valued_wallet.native_coin.id);
         if (native_coin_map) {
           const current_value = native_coin_map.get(transaction_time_key) ?? 0n;
@@ -723,8 +767,10 @@ export class WalletsService<
         (t) => t.type !== "nft",
       )) {
         if (
-          transfer.to_address === valued_wallet.address ||
-          transfer.from_address === valued_wallet.address
+          transfer.to_address?.toLowerCase() ===
+            valued_wallet.address.toLowerCase() ||
+          transfer.from_address?.toLowerCase() ===
+            valued_wallet.address.toLowerCase()
         ) {
           // como no es nft, asumo que es [SavedCoin]
           const saved_coin = transfer.coin as SavedCoin;
