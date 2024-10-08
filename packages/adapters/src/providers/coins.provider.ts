@@ -512,17 +512,14 @@ export class CoinGecko implements CoinsProvider {
     return coin_market_data;
   }
 
-  async getCoinHistorialCandles(
+  async getCandlesByDateRange(
     frequency: "hourly" | "daily",
     coin_name: string,
-    date_cursor: number,
-  ): Promise<{ candles: Omit<Candle, "coin_id">[]; date_cursor: number }> {
-    // Como muchas [Coin]s van a tener candles mucho mas recientes que 2018, vamos de adelante para atrás
-    const max_interval =
-      frequency === "hourly" ? 744 * 60 * 60 : 180 * 24 * 60 * 60;
-
+    from_date: Date,
+    to_date: Date,
+  ): Promise<Omit<Candle, "coin_id">[]> {
     const response = await fetch(
-      `${this.base_url}/coins/${coin_name}/ohlc/range?vs_currency=usd&interval=${frequency}&from=${date_cursor - max_interval}&to=${date_cursor}`,
+      `${this.base_url}/coins/${coin_name}/ohlc/range?vs_currency=usd&interval=${frequency}&from=${Math.floor(from_date.getTime() / 1000)}&to=${Math.floor(to_date.getTime() / 1000)}`,
       this.request_data,
     ).then((res) => res.json());
 
@@ -530,7 +527,7 @@ export class CoinGecko implements CoinsProvider {
 
     if (parsedCandles instanceof type.errors) throw parsedCandles;
 
-    const mappedCandles = parsedCandles.map((c) => ({
+    const mapped_candles = parsedCandles.map((c) => ({
       frequency,
       timestamp: new Date(c[0]),
       open: c[1],
@@ -539,9 +536,6 @@ export class CoinGecko implements CoinsProvider {
       close: c[4],
     }));
 
-    return {
-      candles: mappedCandles,
-      date_cursor: date_cursor - (max_interval + 1),
-    };
+    return mapped_candles;
   }
 }

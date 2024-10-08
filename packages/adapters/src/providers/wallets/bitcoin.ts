@@ -84,7 +84,7 @@ export class BitcoinProvider implements WalletsProvider {
     wallet_data: Wallet,
   ): Promise<{ first_transaction: Date; last_transaction: Date }> {
     let is_first_time = true;
-    let limit = 25;
+    const limit = 25;
     let last_seen_txid = "";
 
     let first_transaction = new Date();

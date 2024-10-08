@@ -15,7 +15,6 @@ export const setupWalletsWorker = (
     CoinsProvider,
     CoinsRepository
   >,
-  coin_jobs_queue: Queue<CoinJobsQueue>,
   redis_url: string,
 ): Worker<WalletJobsQueue> => {
   const walletJobsWorker = new Worker<WalletJobsQueue>(
@@ -38,17 +37,8 @@ export const setupWalletsWorker = (
 
             // Las actualizo
             for (const wallet of wallets) {
-              const response = await wallets_service.updateWallet(wallet);
-              if (response) {
-                await job.updateProgress({ page, wallet: wallet.address });
-
-                if (response.new_coins.length > 0) {
-                  coin_jobs_queue.add("update_wallet_coins", {
-                    jobName: "newCoins",
-                    newCoinsData: response.new_coins,
-                  });
-                }
-              }
+              await wallets_service.updateWallet(wallet);
+              await job.updateProgress({ page, wallet: wallet.address });
             }
 
             if (wallets.length < 20) is_last_page = true;
@@ -57,19 +47,13 @@ export const setupWalletsWorker = (
           break;
         }
         case "saveTransactions": {
-          const { new_coins } = await wallets_service.saveTransactions(
+          await wallets_service.saveTransactions(
             payload.data.transactions!.map((t) => ({
               ...t,
               block_timestamp: new Date(t.block_timestamp),
             })),
             payload.data.blockchain,
           );
-          if (new_coins.length > 0) {
-            coin_jobs_queue.add("save_transaction_coins", {
-              jobName: "newCoins",
-              newCoinsData: new_coins,
-            });
-          }
         }
       }
     },

@@ -28,7 +28,7 @@ export interface CoinsRepository {
     page_number: number,
     page_size: number,
   ): Promise<SavedCoin[]>;
-  getCandles(
+  getCandlesByDateRange(
     frequency: "hourly" | "daily",
     coin_id: number,
     from_date: Date,
@@ -86,10 +86,11 @@ export interface CoinsProvider {
     refresh_rate: number,
   ): Promise<Omit<Candle, "coin_id">[]>;
 
-  /** Consigue todas las candelas historicas, puede ser un array muy largo, habria que testear eso */
-  getCoinHistorialCandles(
+  /** Consigue las candelas dado un rango */
+  getCandlesByDateRange(
     frequency: "hourly" | "daily",
     coin_name: string,
-    date_cursor: number,
-  ): Promise<{ candles: Omit<Candle, "coin_id">[]; date_cursor: number }>;
+    from_date: Date,
+    to_date: Date,
+  ): Promise<Omit<Candle, "coin_id">[]>;
 }

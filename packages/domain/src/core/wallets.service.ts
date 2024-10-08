@@ -691,7 +691,10 @@ export class WalletsService<
   public async getWalletValueChangeGraph(
     valued_wallet: ValuedWallet,
     time_range: "day" | "week" | "month" | "year",
-  ): Promise<ValueChangeGraph> {
+  ): Promise<{
+    data: ValueChangeGraph;
+    missing_prices: { timestamp: Date; coin_id: number }[];
+  }> {
     // Necesito saber las posesiones de la [Wallet] en el rango dado
     // Para eso veo las posesiones actuales y las transacciones que sucedieron hasta el fin del rango
     const current_date = new Date();
@@ -716,7 +719,8 @@ export class WalletsService<
     ];
 
     // Si no hay transacciones devuelvo el valor de ahora y listo
-    if (transactions.length === 0) return value_change_graph;
+    if (transactions.length === 0)
+      return { data: value_change_graph, missing_prices: [] };
 
     // Veo como fue el saldo neto de los valores de cada [Coin] desde ahora hasta el 'from_date'
     // El map es:
@@ -805,6 +809,8 @@ export class WalletsService<
       }
     }
 
+    const missing_prices: { timestamp: Date; coin_id: number }[] = [];
+
     const balance_change_graph: ValueChangeGraph = [];
     // Listo los mapeos.
     // Ahora por cada coin, consigo su lista de timestamps (que son las keys del map), pido las candelas y calculo el value_usd
@@ -824,7 +830,7 @@ export class WalletsService<
       const decimal_places = decimal_places_map.get(coin_id)!;
 
       // Pongo todos los valores conseguidos en la lista, despues hago agregación de fechas
-      const values_to_insert: ValueChangeGraph = timestamps.map((timestamp) => {
+      for (const timestamp of timestamps) {
         const value = time_value_map.get(
           this.getTimeKey(timestamp, granularity),
         )!;
@@ -834,21 +840,19 @@ export class WalletsService<
         )?.close;
 
         // Puede pasar que no esten las candles para esa [Coin]
-        if (!price)
-          throw Error(
-            `Price not available for coin: ${coin_id} at time: ${timestamp}`,
-          );
+        if (!price) {
+          missing_prices.push({ timestamp, coin_id });
+          continue;
+        }
 
         const value_usd = price * (Number(value) / 10 ** decimal_places);
 
-        return {
+        balance_change_graph.push({
           timestamp,
           value_usd,
           value: is_native_coin ? value : 0n,
-        };
-      });
-
-      balance_change_graph.push(...values_to_insert);
+        });
+      }
     }
 
     // Agrupo el grafico por fechas y listo
@@ -881,7 +885,7 @@ export class WalletsService<
       });
     }
 
-    return value_change_graph;
+    return { data: value_change_graph, missing_prices };
   }
 
   // /** Genera un gráfico a través del tiempo del valor de una [Coin] en una [Wallet]  */

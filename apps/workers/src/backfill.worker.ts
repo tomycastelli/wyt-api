@@ -1,11 +1,11 @@
 import {
-  blockchains,
   type CoinsProvider,
   type CoinsRepository,
   type SavedWallet,
   type WalletsRepository,
   type WalletsService,
   type WalletsStreamsProvider,
+  blockchains,
 } from "@repo/domain";
 import { type Queue, QueueEvents, Worker } from "bullmq";
 import type { BackfillChunkQueue, WalletJobsQueue } from "./index.js";

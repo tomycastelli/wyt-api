@@ -136,79 +136,121 @@ export class CoinsService<
     return savedCoins;
   }
 
-  /** Devuelve todas las [Candle]s guardadas segun el rango. \
-  Si no se le pasa fechas:
-  - Frecuencia **diaria**: Devuelve el último més
-  - Frequencia **horaria**: Devuelve el último día
-  */
+  /** Devuelve todas las [Candle]s guardadas segun el rango. */
   public async getCandlesByDate(
     frequency: "daily" | "hourly",
     coin_id: number,
-    from_date?: Date,
-    to_date?: Date,
+    from_date: Date,
+    to_date: Date,
   ): Promise<Candle[]> {
-    const from = from_date
-      ? from_date
-      : frequency === "daily"
-        ? moment().subtract(1, "month").toDate()
-        : moment().subtract(1, "day").toDate();
-    const to = to_date ? to_date : moment().add(1, "minute").toDate();
+    if (to_date > new Date())
+      throw Error(`To date is bigger than now!. to_date: ${to_date}`);
 
-    return await this.coinsRepository.getCandles(frequency, coin_id, from, to);
+    const expected_timestamps: number[] = [];
+    const current_date = new Date(from_date);
+
+    if (frequency === "daily") {
+      while (current_date <= to_date) {
+        expected_timestamps.push(new Date(current_date).getTime());
+        current_date.setDate(current_date.getDate() + 1);
+      }
+    } else if (frequency === "hourly") {
+      while (current_date <= to_date) {
+        expected_timestamps.push(new Date(current_date).getTime());
+        current_date.setHours(current_date.getHours() + 1);
+      }
+    }
+
+    // Las busco en el repo
+    const candles = await this.coinsRepository.getCandlesByDateRange(
+      frequency,
+      coin_id,
+      from_date,
+      to_date,
+    );
+
+    const candle_timestamps = candles.map((c) => c.timestamp.getTime());
+
+    const missing_timestamps = expected_timestamps.filter(
+      (et) => !candle_timestamps.includes(et),
+    );
+
+    if (missing_timestamps.length > 0) {
+      const coin = await this.coinsRepository.getCoinById(coin_id);
+      if (!coin) return [];
+      // Se las paso al proveedor
+      const new_candles = await this.coinsProvider.getCandlesByDateRange(
+        frequency,
+        coin.name,
+        new Date(Math.min(...missing_timestamps)),
+        new Date(Math.max(...missing_timestamps)),
+      );
+
+      // Puede ser que haya traido de más, asi que me fijo de descartar esas
+      const filtered_new_candles = new_candles
+        .filter((c) => !candle_timestamps.includes(c.timestamp.getTime()))
+        .map((c) => ({ ...c, coin_id }));
+
+      // Las guardo
+      await this.coinsRepository.saveCandles(filtered_new_candles);
+
+      const total_candles = [...candles, ...filtered_new_candles].sort(
+        (a, b) => b.timestamp.getTime() - a.timestamp.getTime(),
+      );
+
+      return total_candles;
+    }
+
+    // Ya el repositorio tiene todas las candelas requeridas
+    return candles;
   }
 
+  /** Devuelve las candelas segun la lista de fechas dadas */
   public async getCandlesByDateList(
     frequency: "daily" | "hourly",
     coin_id: number,
     timestamps: Date[],
   ): Promise<Candle[]> {
-    return await this.coinsRepository.getCandlesByDateList(
+    const candles = await this.coinsRepository.getCandlesByDateList(
       frequency,
       coin_id,
       timestamps,
     );
-  }
 
-  public async getCoinHistorialCandles(
-    frequency: "hourly" | "daily",
-    coin: SavedCoin,
-  ): Promise<void> {
-    try {
-      let date_cursor = Math.floor(Date.now() / 1000);
-      let is_oldest_page = false;
+    const candle_timestamps = candles.map((c) => c.timestamp.getTime());
 
-      // Hourly: Up to 744 hourly interval candles per req
-      // Daily: Up to 180 daily interval candles per req
-      // Earliest date: 9 February 2018 (1518147224 epoch time)
+    const missing_timestamps = timestamps
+      .filter((t) => !candle_timestamps.includes(t.getTime()))
+      .map((t) => t.getTime());
 
-      while (!is_oldest_page) {
-        const { candles, date_cursor: new_date_cursor } =
-          await this.coinsProvider.getCoinHistorialCandles(
-            frequency,
-            coin.name,
-            date_cursor,
-          );
+    if (missing_timestamps.length > 0) {
+      const coin = await this.coinsRepository.getCoinById(coin_id);
+      if (!coin) return [];
+      // Se las paso al proveedor
+      const new_candles = await this.coinsProvider.getCandlesByDateRange(
+        frequency,
+        coin.name,
+        new Date(Math.min(...missing_timestamps)),
+        new Date(Math.max(...missing_timestamps)),
+      );
 
-        if (candles.length === 0) break;
+      // Puede ser que haya traido de más, asi que me fijo de descartar esas
+      const filtered_new_candles = new_candles
+        .filter((c) => !candle_timestamps.includes(c.timestamp.getTime()))
+        .map((c) => ({ ...c, coin_id }));
 
-        await this.coinsRepository.saveCandles(
-          candles.map((c) => ({ ...c, coin_id: coin.id })),
-        );
+      // Las guardo
+      await this.coinsRepository.saveCandles(filtered_new_candles);
 
-        date_cursor = new_date_cursor;
+      const total_candles = [...candles, ...filtered_new_candles].sort(
+        (a, b) => b.timestamp.getTime() - a.timestamp.getTime(),
+      );
 
-        if (
-          (frequency === "hourly"
-            ? candles.length < 744
-            : candles.length < 180) ||
-          date_cursor < 1518147224
-        ) {
-          is_oldest_page = true;
-        }
-      }
-    } catch (e) {
-      console.error(e);
+      return total_candles;
     }
+
+    // Ya el repositorio tiene todas las candelas requeridas
+    return candles;
   }
 
   /** Actualiza todos los datos relacionados a las [Coin]s */
@@ -275,10 +317,10 @@ export class CoinsService<
     coin_id: number,
     frequency: "hourly" | "daily",
     refresh_rate: number,
-  ) {
+  ): Promise<void> {
     const savedCoin = await this.coinsRepository.getCoinById(coin_id);
     if (!savedCoin) {
-      return undefined;
+      return;
     }
     const candles = await this.coinsProvider.getCandleData(
       frequency,

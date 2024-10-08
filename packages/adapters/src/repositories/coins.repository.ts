@@ -233,7 +233,7 @@ export class CoinsPostgres implements CoinsRepository {
       });
   }
 
-  async getCandles(
+  async getCandlesByDateRange(
     frequency: "hourly" | "daily",
     coin_id: number,
     from_date: Date,

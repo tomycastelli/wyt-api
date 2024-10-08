@@ -10,7 +10,7 @@ import {
   type BlockchainsName,
   CoinsService,
   type SavedCoin,
-  SavedWallet,
+  type SavedWallet,
   type Transaction,
   WalletsService,
 } from "@repo/domain";
@@ -35,12 +35,11 @@ BigInt.prototype.toJSON = function () {
 };
 
 export type CoinJobsQueue = {
-  jobName: "saveAllCoins" | "saveLatestCoins" | "updateCoins" | "newCoins";
+  jobName: "saveAllCoins" | "saveLatestCoins" | "updateCoins";
   updateCoinsData?: {
     frequency: "daily" | "hourly";
     refresh_rate: number;
   };
-  newCoinsData?: SavedCoin[];
 };
 
 export type WalletJobsQueue = {
@@ -127,11 +126,11 @@ setupBackfillChunkWorker(
   REDIS_URL,
 );
 
-setupWalletsWorker(wallets_service, coin_jobs_queue, REDIS_URL);
+setupWalletsWorker(wallets_service, REDIS_URL);
 
 setupCoinsWorker(coins_service, REDIS_URL);
 
-setupTransactionsWorker(wallets_service, coin_jobs_queue, REDIS_URL);
+setupTransactionsWorker(wallets_service, REDIS_URL);
 
 // Set up de crons
 wallet_crons(wallet_jobs_queue);

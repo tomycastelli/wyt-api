@@ -16,7 +16,6 @@ export const setupTransactionsWorker = (
     CoinsProvider,
     CoinsRepository
   >,
-  coin_jobs_queue: Queue<CoinJobsQueue>,
   redis_url: string,
 ) => {
   const transactionsStreamWorker = new Worker<{
@@ -28,16 +27,10 @@ export const setupTransactionsWorker = (
       console.log(
         `Starting job ${job.name} with ID ${job.id} and data: ${JSON.stringify(job.data)}`,
       );
-      const response = await wallets_service.handleWebhookTransaction(
+      await wallets_service.handleWebhookTransaction(
         job.data.body,
         job.data.blockchain,
       );
-      if (response && response.new_coins.length > 0) {
-        await coin_jobs_queue.add("new_transaction_coins", {
-          jobName: "newCoins",
-          newCoinsData: response.new_coins,
-        });
-      }
     },
     {
       connection: {

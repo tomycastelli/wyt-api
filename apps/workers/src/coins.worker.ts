@@ -22,11 +22,7 @@ export const setupCoinsWorker = (
           await coins_service.saveAllCoins();
           break;
         case "saveLatestCoins": {
-          const new_coins = await coins_service.saveLatestCoins();
-          for (const new_coin of new_coins) {
-            await coins_service.getCoinHistorialCandles("daily", new_coin);
-            await coins_service.getCoinHistorialCandles("hourly", new_coin);
-          }
+          await coins_service.saveLatestCoins();
           break;
         }
         case "updateCoins": {
@@ -35,12 +31,6 @@ export const setupCoinsWorker = (
             payload.updateCoinsData!.refresh_rate,
           );
           break;
-        }
-        case "newCoins": {
-          for (const new_coin of payload.newCoinsData!) {
-            await coins_service.getCoinHistorialCandles("daily", new_coin);
-            await coins_service.getCoinHistorialCandles("hourly", new_coin);
-          }
         }
       }
     },
