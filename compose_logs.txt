@@ -1,0 +1,3281 @@
+postgres-1  | The files belonging to this database system will be owned by user "postgres".
+postgres-1  | This user must also own the server process.
+postgres-1  | 
+postgres-1  | The database cluster will be initialized with locale "en_US.utf8".
+postgres-1  | The default database encoding has accordingly been set to "UTF8".
+postgres-1  | The default text search configuration will be set to "english".
+postgres-1  | 
+postgres-1  | Data page checksums are disabled.
+postgres-1  | 
+postgres-1  | fixing permissions on existing directory /var/lib/postgresql/data ... ok
+postgres-1  | creating subdirectories ... ok
+postgres-1  | selecting dynamic shared memory implementation ... posix
+postgres-1  | selecting default max_connections ... 100
+postgres-1  | selecting default shared_buffers ... 128MB
+postgres-1  | selecting default time zone ... Etc/UTC
+postgres-1  | creating configuration files ... ok
+postgres-1  | running bootstrap script ... ok
+postgres-1  | performing post-bootstrap initialization ... ok
+postgres-1  | initdb: warning: enabling "trust" authentication for local connections
+postgres-1  | initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+postgres-1  | syncing data to disk ... ok
+postgres-1  | 
+postgres-1  | 
+postgres-1  | Success. You can now start the database server using:
+postgres-1  | 
+postgres-1  |     pg_ctl -D /var/lib/postgresql/data -l logfile start
+postgres-1  | 
+postgres-1  | waiting for server to start....2024-10-09 03:05:08.523 UTC [48] LOG:  starting PostgreSQL 16.4 (Debian 16.4-1.pgdg120+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+postgres-1  | 2024-10-09 03:05:08.527 UTC [48] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+postgres-1  | 2024-10-09 03:05:08.536 UTC [51] LOG:  database system was shut down at 2024-10-09 03:05:08 UTC
+postgres-1  | 2024-10-09 03:05:08.541 UTC [48] LOG:  database system is ready to accept connections
+postgres-1  |  done
+postgres-1  | server started
+postgres-1  | CREATE DATABASE
+postgres-1  | 
+postgres-1  | 
+postgres-1  | /usr/local/bin/docker-entrypoint.sh: running /docker-entrypoint-initdb.d/init.sql
+postgres-1  | DO
+postgres-1  | DO
+postgres-1  | DO
+postgres-1  | DO
+postgres-1  | DO
+postgres-1  | CREATE TABLE
+postgres-1  | CREATE TABLE
+postgres-1  | CREATE TABLE
+postgres-1  | CREATE TABLE
+postgres-1  | CREATE TABLE
+postgres-1  | CREATE TABLE
+postgres-1  | CREATE TABLE
+postgres-1  | CREATE TABLE
+postgres-1  | CREATE TABLE
+postgres-1  | CREATE TABLE
+postgres-1  | DO
+postgres-1  | DO
+postgres-1  | DO
+postgres-1  | DO
+postgres-1  | DO
+postgres-1  | DO
+postgres-1  | DO
+postgres-1  | DO
+postgres-1  | DO
+postgres-1  | DO
+postgres-1  | CREATE INDEX
+postgres-1  | CREATE INDEX
+postgres-1  | CREATE INDEX
+postgres-1  | CREATE INDEX
+postgres-1  | CREATE INDEX
+postgres-1  | CREATE INDEX
+postgres-1  | CREATE INDEX
+postgres-1  | CREATE INDEX
+postgres-1  | 
+postgres-1  | 
+postgres-1  | waiting for server to shut down...2024-10-09 03:05:08.906 UTC [48] LOG:  received fast shutdown request
+postgres-1  | .2024-10-09 03:05:08.908 UTC [48] LOG:  aborting any active transactions
+postgres-1  | 2024-10-09 03:05:08.910 UTC [48] LOG:  background worker "logical replication launcher" (PID 54) exited with exit code 1
+postgres-1  | 2024-10-09 03:05:08.911 UTC [49] LOG:  shutting down
+postgres-1  | 2024-10-09 03:05:08.914 UTC [49] LOG:  checkpoint starting: shutdown immediate
+postgres-1  | 2024-10-09 03:05:08.979 UTC [49] LOG:  checkpoint complete: wrote 949 buffers (5.8%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.026 s, sync=0.031 s, total=0.069 s; sync files=345, longest=0.007 s, average=0.001 s; distance=4484 kB, estimate=4484 kB; lsn=0/194B570, redo lsn=0/194B570
+postgres-1  | 2024-10-09 03:05:08.984 UTC [48] LOG:  database system is shut down
+postgres-1  |  done
+postgres-1  | server stopped
+postgres-1  | 
+postgres-1  | PostgreSQL init process complete; ready for start up.
+postgres-1  | 
+postgres-1  | 2024-10-09 03:05:09.039 UTC [1] LOG:  starting PostgreSQL 16.4 (Debian 16.4-1.pgdg120+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+postgres-1  | 2024-10-09 03:05:09.039 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+postgres-1  | 2024-10-09 03:05:09.039 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+postgres-1  | 2024-10-09 03:05:09.047 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+postgres-1  | 2024-10-09 03:05:09.053 UTC [66] LOG:  database system was shut down at 2024-10-09 03:05:08 UTC
+postgres-1  | 2024-10-09 03:05:09.062 UTC [1] LOG:  database system is ready to accept connections
+postgres-1  | 2024-10-09 03:10:09.151 UTC [64] LOG:  checkpoint starting: time
+postgres-1  | 2024-10-09 03:10:14.041 UTC [64] LOG:  checkpoint complete: wrote 50 buffers (0.3%); 0 WAL file(s) added, 0 removed, 0 recycled; write=4.873 s, sync=0.005 s, total=4.892 s; sync files=14, longest=0.004 s, average=0.001 s; distance=261 kB, estimate=261 kB; lsn=0/198C9A8, redo lsn=0/198C970
+wyt-api-1   | bigint: Failed to load bindings, pure JS will be used (try npm run rebuild?)
+wyt-api-1   | Server is running on port 3000
+wyt-api-1   | info {
+wyt-api-1   |   request_id: '282697fe-fe22-4026-942d-44e9b6947c63',
+wyt-api-1   |   path: '/wallets/polygon-pos/0x6EDF968DA408a9640b8865826429a977a11C5048',
+wyt-api-1   |   method: 'GET'
+wyt-api-1   | }
+wyt-api-1   | (node:1) Warning: Setting the NODE_TLS_REJECT_UNAUTHORIZED environment variable to '0' makes TLS connections and HTTPS requests insecure by disabling certificate verification.
+wyt-api-1   | (Use `node --trace-warnings ...` to show where the warning was created)
+wyt-api-1   | info {
+wyt-api-1   |   request_id: '282697fe-fe22-4026-942d-44e9b6947c63',
+wyt-api-1   |   path: '/wallets/polygon-pos/0x6EDF968DA408a9640b8865826429a977a11C5048',
+wyt-api-1   |   method: 'GET',
+wyt-api-1   |   status: 200,
+wyt-api-1   |   duration_ms: 2252,
+wyt-api-1   |   timestamp: 1728443166755
+wyt-api-1   | }
+wyt-api-1   | info {
+wyt-api-1   |   request_id: 'c50913cf-69de-4b3e-ba3a-48ec47574c86',
+wyt-api-1   |   path: '/wallets/list/solana/',
+wyt-api-1   |   method: 'GET'
+wyt-api-1   | }
+wyt-api-1   | info {
+wyt-api-1   |   request_id: 'c50913cf-69de-4b3e-ba3a-48ec47574c86',
+wyt-api-1   |   path: '/wallets/list/solana/',
+wyt-api-1   |   method: 'GET',
+wyt-api-1   |   status: 404,
+wyt-api-1   |   duration_ms: 1,
+wyt-api-1   |   timestamp: 1728443199190
+wyt-api-1   | }
+wyt-api-1   | info {
+wyt-api-1   |   request_id: '12aaaabe-2371-4207-a969-a944019107ef',
+wyt-api-1   |   path: '/wallets/list/solana',
+wyt-api-1   |   method: 'GET'
+wyt-api-1   | }
+wyt-api-1   | info {
+wyt-api-1   |   request_id: '12aaaabe-2371-4207-a969-a944019107ef',
+wyt-api-1   |   path: '/wallets/list/solana',
+wyt-api-1   |   method: 'GET',
+wyt-api-1   |   status: 200,
+wyt-api-1   |   duration_ms: 454,
+wyt-api-1   |   timestamp: 1728443199651
+wyt-api-1   | }
+wyt-api-1   | info {
+wyt-api-1   |   request_id: 'a3f556d5-f7eb-454b-b886-adbc4b06a4fc',
+wyt-api-1   |   path: '/wallets/list/bitcoin/',
+wyt-api-1   |   method: 'GET'
+wyt-api-1   | }
+wyt-api-1   | info {
+wyt-api-1   |   request_id: 'a3f556d5-f7eb-454b-b886-adbc4b06a4fc',
+wyt-api-1   |   path: '/wallets/list/bitcoin/',
+wyt-api-1   |   method: 'GET',
+wyt-api-1   |   status: 404,
+wyt-api-1   |   duration_ms: 0,
+wyt-api-1   |   timestamp: 1728443211297
+wyt-api-1   | }
+wyt-api-1   | info {
+wyt-api-1   |   request_id: 'ea1ebe4a-8815-44a6-a7e5-78e9090dccab',
+wyt-api-1   |   path: '/wallets/list/bitcoin',
+wyt-api-1   |   method: 'GET'
+wyt-api-1   | }
+wyt-api-1   | info {
+wyt-api-1   |   request_id: 'ea1ebe4a-8815-44a6-a7e5-78e9090dccab',
+wyt-api-1   |   path: '/wallets/list/bitcoin',
+wyt-api-1   |   method: 'GET',
+wyt-api-1   |   status: 200,
+wyt-api-1   |   duration_ms: 388,
+wyt-api-1   |   timestamp: 1728443211693
+wyt-api-1   | }
+wyt-api-1   | info {
+wyt-api-1   |   request_id: 'e8324ce4-b773-40da-bf3d-f354bb4f03df',
+wyt-api-1   |   path: '/wallets/list/solana/',
+wyt-api-1   |   method: 'GET'
+wyt-api-1   | }
+wyt-api-1   | info {
+wyt-api-1   |   request_id: 'e8324ce4-b773-40da-bf3d-f354bb4f03df',
+wyt-api-1   |   path: '/wallets/list/solana/',
+wyt-api-1   |   method: 'GET',
+wyt-api-1   |   status: 404,
+wyt-api-1   |   duration_ms: 0,
+wyt-api-1   |   timestamp: 1728443226568
+wyt-api-1   | }
+wyt-api-1   | info {
+wyt-api-1   |   request_id: 'bebcdee1-e80c-45a0-9371-1d7625cf612b',
+wyt-api-1   |   path: '/wallets/list/solana',
+wyt-api-1   |   method: 'GET'
+wyt-api-1   | }
+wyt-api-1   | info {
+wyt-api-1   |   request_id: 'bebcdee1-e80c-45a0-9371-1d7625cf612b',
+wyt-api-1   |   path: '/wallets/list/solana',
+wyt-api-1   |   method: 'GET',
+wyt-api-1   |   status: 200,
+wyt-api-1   |   duration_ms: 307,
+wyt-api-1   |   timestamp: 1728443226881
+wyt-api-1   | }
+redis-1     | 1:C 09 Oct 2024 03:05:07.156 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+redis-1     | 1:C 09 Oct 2024 03:05:07.157 * Redis version=7.4.1, bits=64, commit=00000000, modified=0, pid=1, just started
+redis-1     | 1:C 09 Oct 2024 03:05:07.157 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+redis-1     | 1:M 09 Oct 2024 03:05:07.157 * monotonic clock: POSIX clock_gettime
+redis-1     | 1:M 09 Oct 2024 03:05:07.160 * Running mode=standalone, port=6379.
+redis-1     | 1:M 09 Oct 2024 03:05:07.163 * Server initialized
+redis-1     | 1:M 09 Oct 2024 03:05:07.163 * Ready to accept connections tcp
+redis-1     | 1:M 09 Oct 2024 03:13:09.562 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 03:13:09.565 * Background saving started by pid 21
+redis-1     | 21:C 09 Oct 2024 03:13:09.574 * DB saved on disk
+redis-1     | 21:C 09 Oct 2024 03:13:09.575 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 03:13:09.672 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 03:23:09.800 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 03:23:09.802 * Background saving started by pid 22
+redis-1     | 22:C 09 Oct 2024 03:23:09.812 * DB saved on disk
+redis-1     | 22:C 09 Oct 2024 03:23:09.812 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 03:23:09.908 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 03:33:10.227 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 03:33:10.228 * Background saving started by pid 23
+redis-1     | 23:C 09 Oct 2024 03:33:10.233 * DB saved on disk
+redis-1     | 23:C 09 Oct 2024 03:33:10.233 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 03:33:10.336 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 03:43:10.401 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 03:43:10.403 * Background saving started by pid 24
+redis-1     | 24:C 09 Oct 2024 03:43:10.410 * DB saved on disk
+redis-1     | 24:C 09 Oct 2024 03:43:10.410 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 03:43:10.507 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 03:53:10.507 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 03:53:10.511 * Background saving started by pid 25
+redis-1     | 25:C 09 Oct 2024 03:53:10.518 * DB saved on disk
+redis-1     | 25:C 09 Oct 2024 03:53:10.519 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 03:53:10.623 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 04:00:00.232 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 04:00:00.233 * Background saving started by pid 26
+redis-1     | 26:C 09 Oct 2024 04:00:00.237 * DB saved on disk
+redis-1     | 26:C 09 Oct 2024 04:00:00.237 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 04:00:00.335 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 04:05:01.013 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 04:05:01.015 * Background saving started by pid 27
+redis-1     | 27:C 09 Oct 2024 04:05:01.022 * DB saved on disk
+redis-1     | 27:C 09 Oct 2024 04:05:01.022 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 04:05:01.119 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 04:14:40.750 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 04:14:40.753 * Background saving started by pid 28
+redis-1     | 28:C 09 Oct 2024 04:14:40.762 * DB saved on disk
+redis-1     | 28:C 09 Oct 2024 04:14:40.762 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 04:14:40.856 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 04:24:40.964 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 04:24:40.965 * Background saving started by pid 29
+redis-1     | 29:C 09 Oct 2024 04:24:40.973 * DB saved on disk
+redis-1     | 29:C 09 Oct 2024 04:24:40.973 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 04:24:41.067 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 04:34:41.103 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 04:34:41.106 * Background saving started by pid 30
+redis-1     | 30:C 09 Oct 2024 04:34:41.113 * DB saved on disk
+redis-1     | 30:C 09 Oct 2024 04:34:41.114 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 04:34:41.218 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 04:45:10.853 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 04:45:10.856 * Background saving started by pid 31
+redis-1     | 31:C 09 Oct 2024 04:45:10.865 * DB saved on disk
+redis-1     | 31:C 09 Oct 2024 04:45:10.865 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 04:45:10.958 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 04:55:11.048 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 04:55:11.050 * Background saving started by pid 32
+redis-1     | 32:C 09 Oct 2024 04:55:11.058 * DB saved on disk
+redis-1     | 32:C 09 Oct 2024 04:55:11.058 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 04:55:11.153 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 05:00:12.079 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 05:00:12.080 * Background saving started by pid 33
+redis-1     | 33:C 09 Oct 2024 05:00:12.086 * DB saved on disk
+redis-1     | 33:C 09 Oct 2024 05:00:12.086 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 05:00:12.182 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 05:05:13.026 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 05:05:13.028 * Background saving started by pid 34
+redis-1     | 34:C 09 Oct 2024 05:05:13.035 * DB saved on disk
+redis-1     | 34:C 09 Oct 2024 05:05:13.035 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 05:05:13.140 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 05:15:11.612 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 05:15:11.615 * Background saving started by pid 35
+redis-1     | 35:C 09 Oct 2024 05:15:11.624 * DB saved on disk
+redis-1     | 35:C 09 Oct 2024 05:15:11.624 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 05:15:11.718 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 05:25:11.686 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 05:25:11.687 * Background saving started by pid 36
+redis-1     | 36:C 09 Oct 2024 05:25:11.697 * DB saved on disk
+redis-1     | 36:C 09 Oct 2024 05:25:11.697 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 05:25:11.791 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 05:35:11.857 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 05:35:11.859 * Background saving started by pid 37
+redis-1     | 37:C 09 Oct 2024 05:35:11.868 * DB saved on disk
+redis-1     | 37:C 09 Oct 2024 05:35:11.869 * Fork CoW for RDB: current 1 MB, peak 1 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 05:35:11.963 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 05:45:11.924 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 05:45:11.926 * Background saving started by pid 38
+redis-1     | 38:C 09 Oct 2024 05:45:11.933 * DB saved on disk
+redis-1     | 38:C 09 Oct 2024 05:45:11.933 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 05:45:12.030 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 05:55:12.131 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 05:55:12.133 * Background saving started by pid 39
+redis-1     | 39:C 09 Oct 2024 05:55:12.141 * DB saved on disk
+redis-1     | 39:C 09 Oct 2024 05:55:12.142 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 05:55:12.238 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 06:00:13.096 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 06:00:13.097 * Background saving started by pid 40
+redis-1     | 40:C 09 Oct 2024 06:00:13.100 * DB saved on disk
+redis-1     | 40:C 09 Oct 2024 06:00:13.100 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 06:00:13.199 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 06:05:14.037 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 06:05:14.038 * Background saving started by pid 41
+redis-1     | 41:C 09 Oct 2024 06:05:14.047 * DB saved on disk
+redis-1     | 41:C 09 Oct 2024 06:05:14.047 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 06:05:14.150 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 06:15:12.114 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 06:15:12.118 * Background saving started by pid 42
+redis-1     | 42:C 09 Oct 2024 06:15:12.126 * DB saved on disk
+redis-1     | 42:C 09 Oct 2024 06:15:12.127 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 06:15:12.220 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 06:25:12.397 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 06:25:12.398 * Background saving started by pid 43
+redis-1     | 43:C 09 Oct 2024 06:25:12.407 * DB saved on disk
+redis-1     | 43:C 09 Oct 2024 06:25:12.408 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 06:25:12.511 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 06:35:12.547 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 06:35:12.550 * Background saving started by pid 44
+redis-1     | 44:C 09 Oct 2024 06:35:12.559 * DB saved on disk
+redis-1     | 44:C 09 Oct 2024 06:35:12.560 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 06:35:12.653 * Background saving terminated with success
+workers-2   | bigint: Failed to load bindings, pure JS will be used (try npm run rebuild?)
+workers-2   | backfillWorker is ready!
+workers-2   | backfillChunkWorker is ready!
+workers-2   | walletJobsWorker is ready!
+workers-2   | coinJobsWorker is ready!
+workers-2   | transactionsStreamWorker is ready!
+workers-2   | Starting job updating coins with ID 2 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":4}}
+workers-2   | Starting job updating bitcoin wallets with ID 2 and undefined transactions
+workers-2   | (node:1) Warning: Setting the NODE_TLS_REJECT_UNAUTHORIZED environment variable to '0' makes TLS connections and HTTPS requests insecure by disabling certificate verification.
+workers-2   | (Use `node --trace-warnings ...` to show where the warning was created)
+workers-2   | Starting job updating coins with ID 4 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":4}}
+workers-2   | Starting job updating solana wallets with ID 5 and undefined transactions
+workers-2   | Starting job updating coins with ID 6 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":4}}
+redis-1     | 1:M 09 Oct 2024 06:45:12.732 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 06:45:12.733 * Background saving started by pid 45
+redis-1     | 45:C 09 Oct 2024 06:45:12.742 * DB saved on disk
+redis-1     | 45:C 09 Oct 2024 06:45:12.742 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 06:45:12.836 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 06:55:42.730 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 06:55:42.735 * Background saving started by pid 46
+redis-1     | 46:C 09 Oct 2024 06:55:42.744 * DB saved on disk
+redis-1     | 46:C 09 Oct 2024 06:55:42.744 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 06:55:42.840 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 07:00:43.031 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 07:00:43.032 * Background saving started by pid 47
+redis-1     | 47:C 09 Oct 2024 07:00:43.039 * DB saved on disk
+redis-1     | 47:C 09 Oct 2024 07:00:43.040 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 07:00:43.142 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 07:10:42.864 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 07:10:42.866 * Background saving started by pid 48
+redis-1     | 48:C 09 Oct 2024 07:10:42.876 * DB saved on disk
+redis-1     | 48:C 09 Oct 2024 07:10:42.877 * Fork CoW for RDB: current 1 MB, peak 1 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 07:10:42.973 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 07:21:12.967 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 07:21:12.969 * Background saving started by pid 49
+redis-1     | 49:C 09 Oct 2024 07:21:12.976 * DB saved on disk
+redis-1     | 49:C 09 Oct 2024 07:21:12.976 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 07:21:13.075 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 07:31:43.051 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 07:31:43.054 * Background saving started by pid 50
+redis-1     | 50:C 09 Oct 2024 07:31:43.062 * DB saved on disk
+redis-1     | 50:C 09 Oct 2024 07:31:43.063 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 07:31:43.158 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 07:42:13.105 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 07:42:13.107 * Background saving started by pid 51
+redis-1     | 51:C 09 Oct 2024 07:42:13.115 * DB saved on disk
+redis-1     | 51:C 09 Oct 2024 07:42:13.116 * Fork CoW for RDB: current 1 MB, peak 1 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 07:42:13.216 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 07:52:13.300 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 07:52:13.303 * Background saving started by pid 52
+redis-1     | 52:C 09 Oct 2024 07:52:13.314 * DB saved on disk
+redis-1     | 52:C 09 Oct 2024 07:52:13.314 * Fork CoW for RDB: current 1 MB, peak 1 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 07:52:13.410 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 08:00:00.106 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 08:00:00.106 * Background saving started by pid 53
+redis-1     | 53:C 09 Oct 2024 08:00:00.110 * DB saved on disk
+redis-1     | 53:C 09 Oct 2024 08:00:00.110 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 08:00:00.210 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 08:05:01.009 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 08:05:01.011 * Background saving started by pid 54
+redis-1     | 54:C 09 Oct 2024 08:05:01.022 * DB saved on disk
+redis-1     | 54:C 09 Oct 2024 08:05:01.022 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 08:05:01.122 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 08:14:43.634 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 08:14:43.637 * Background saving started by pid 55
+redis-1     | 55:C 09 Oct 2024 08:14:43.646 * DB saved on disk
+redis-1     | 55:C 09 Oct 2024 08:14:43.646 * Fork CoW for RDB: current 1 MB, peak 1 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 08:14:43.741 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 08:24:43.752 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 08:24:43.753 * Background saving started by pid 56
+redis-1     | 56:C 09 Oct 2024 08:24:43.761 * DB saved on disk
+redis-1     | 56:C 09 Oct 2024 08:24:43.762 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 08:24:43.856 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 08:34:43.844 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 08:34:43.846 * Background saving started by pid 57
+redis-1     | 57:C 09 Oct 2024 08:34:43.855 * DB saved on disk
+redis-1     | 57:C 09 Oct 2024 08:34:43.856 * Fork CoW for RDB: current 1 MB, peak 1 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 08:34:43.951 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 08:44:43.924 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 08:44:43.927 * Background saving started by pid 58
+redis-1     | 58:C 09 Oct 2024 08:44:43.936 * DB saved on disk
+redis-1     | 58:C 09 Oct 2024 08:44:43.936 * Fork CoW for RDB: current 1 MB, peak 1 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 08:44:44.040 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 08:55:14.082 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 08:55:14.083 * Background saving started by pid 59
+redis-1     | 59:C 09 Oct 2024 08:55:14.091 * DB saved on disk
+redis-1     | 59:C 09 Oct 2024 08:55:14.091 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 08:55:14.193 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 09:00:15.047 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 09:00:15.047 * Background saving started by pid 60
+redis-1     | 60:C 09 Oct 2024 09:00:15.053 * DB saved on disk
+redis-1     | 60:C 09 Oct 2024 09:00:15.054 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 09:00:15.150 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 09:06:44.168 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 09:06:44.171 * Background saving started by pid 61
+redis-1     | 61:C 09 Oct 2024 09:06:44.178 * DB saved on disk
+redis-1     | 61:C 09 Oct 2024 09:06:44.178 * Fork CoW for RDB: current 1 MB, peak 1 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 09:06:44.283 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 09:16:44.315 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 09:16:44.316 * Background saving started by pid 62
+redis-1     | 62:C 09 Oct 2024 09:16:44.324 * DB saved on disk
+redis-1     | 62:C 09 Oct 2024 09:16:44.325 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 09:16:44.425 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 09:26:44.461 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 09:26:44.465 * Background saving started by pid 63
+redis-1     | 63:C 09 Oct 2024 09:26:44.476 * DB saved on disk
+redis-1     | 63:C 09 Oct 2024 09:26:44.476 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 09:26:44.569 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 09:37:14.405 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 09:37:14.406 * Background saving started by pid 64
+redis-1     | 64:C 09 Oct 2024 09:37:14.416 * DB saved on disk
+redis-1     | 64:C 09 Oct 2024 09:37:14.416 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 09:37:14.517 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 09:47:44.530 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 09:47:44.533 * Background saving started by pid 65
+redis-1     | 65:C 09 Oct 2024 09:47:44.543 * DB saved on disk
+redis-1     | 65:C 09 Oct 2024 09:47:44.544 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 09:47:44.645 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 09:57:44.677 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 09:57:44.678 * Background saving started by pid 66
+redis-1     | 66:C 09 Oct 2024 09:57:44.688 * DB saved on disk
+redis-1     | 66:C 09 Oct 2024 09:57:44.688 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 09:57:44.790 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 10:02:45.054 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 10:02:45.056 * Background saving started by pid 67
+redis-1     | 67:C 09 Oct 2024 10:02:45.065 * DB saved on disk
+redis-1     | 67:C 09 Oct 2024 10:02:45.066 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 10:02:45.166 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 10:12:44.919 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 10:12:44.921 * Background saving started by pid 68
+redis-1     | 68:C 09 Oct 2024 10:12:44.931 * DB saved on disk
+redis-1     | 68:C 09 Oct 2024 10:12:44.931 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 10:12:45.032 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 10:22:44.902 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 10:22:44.903 * Background saving started by pid 69
+redis-1     | 69:C 09 Oct 2024 10:22:44.910 * DB saved on disk
+redis-1     | 69:C 09 Oct 2024 10:22:44.910 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 10:22:45.008 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 10:32:45.030 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 10:32:45.032 * Background saving started by pid 70
+redis-1     | 70:C 09 Oct 2024 10:32:45.043 * DB saved on disk
+redis-1     | 70:C 09 Oct 2024 10:32:45.043 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 10:32:45.136 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 10:42:45.211 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 10:42:45.212 * Background saving started by pid 71
+redis-1     | 71:C 09 Oct 2024 10:42:45.222 * DB saved on disk
+redis-1     | 71:C 09 Oct 2024 10:42:45.222 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 10:42:45.325 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 10:52:45.314 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 10:52:45.316 * Background saving started by pid 72
+redis-1     | 72:C 09 Oct 2024 10:52:45.326 * DB saved on disk
+redis-1     | 72:C 09 Oct 2024 10:52:45.327 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 10:52:45.425 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 11:00:00.321 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 11:00:00.322 * Background saving started by pid 73
+redis-1     | 73:C 09 Oct 2024 11:00:00.326 * DB saved on disk
+redis-1     | 73:C 09 Oct 2024 11:00:00.326 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 11:00:00.426 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 11:05:01.022 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 11:05:01.024 * Background saving started by pid 74
+redis-1     | 74:C 09 Oct 2024 11:05:01.035 * DB saved on disk
+redis-1     | 74:C 09 Oct 2024 11:05:01.036 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+workers-2   | Job: 2, for updateCoins has completed!
+workers-2   | Job: 4, for updateCoins has completed!
+workers-2   | Job: 6, for updateCoins has completed!
+workers-2   | Job updateBlockchainWallets-2 has failed with err:  <ref *1> ArkErrors(1) [
+workers-2   |   ArkError {
+workers-2   |     ' arkKind': 'error',
+workers-2   |     path: [],
+workers-2   |     data: {
+workers-2   |       hash160: null,
+workers-2   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-2   |       n_tx: 1152,
+workers-2   |       n_unredeemed: 400,
+workers-2   |       total_received: 391894757,
+workers-2   |       total_sent: 390470099,
+workers-2   |       final_balance: 1424658,
+workers-2   |       txs: [Array]
+workers-2   |     },
+workers-2   |     nodeConfig: {
+workers-2   |       description: [Function: description],
+workers-2   |       actual: [Function: actual],
+workers-2   |       expected: [Function (anonymous)],
+workers-2   |       problem: [Function (anonymous)],
+workers-2   |       message: [Function (anonymous)]
+workers-2   |     },
+workers-2   |     input: {
+workers-2   |       code: 'proto',
+workers-2   |       description: 'an array',
+workers-2   |       proto: [Function: Array]
+workers-2   |     },
+workers-2   |     code: 'proto',
+workers-2   |     description: 'an array',
+redis-1     | 1:M 09 Oct 2024 11:05:01.132 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 11:14:45.594 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 11:14:45.600 * Background saving started by pid 75
+redis-1     | 75:C 09 Oct 2024 11:14:45.609 * DB saved on disk
+redis-1     | 75:C 09 Oct 2024 11:14:45.610 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 11:14:45.712 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 11:24:45.743 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 11:24:45.744 * Background saving started by pid 76
+workers-3   | bigint: Failed to load bindings, pure JS will be used (try npm run rebuild?)
+workers-3   | backfillWorker is ready!
+workers-3   | backfillChunkWorker is ready!
+workers-3   | walletJobsWorker is ready!
+workers-3   | coinJobsWorker is ready!
+workers-3   | transactionsStreamWorker is ready!
+workers-3   | Starting job updating important coins with ID 3 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":1}}
+workers-3   | Starting job updating solana wallets with ID 3 and undefined transactions
+workers-3   | Starting job updating bitcoin wallets with ID 4 and undefined transactions
+workers-3   | (node:1) Warning: Setting the NODE_TLS_REJECT_UNAUTHORIZED environment variable to '0' makes TLS connections and HTTPS requests insecure by disabling certificate verification.
+workers-2   |     proto: [Function: Array]
+workers-2   |   },
+workers-3   | (Use `node --trace-warnings ...` to show where the warning was created)
+workers-3   | Job updateBlockchainWallets-4 has failed with err:  <ref *1> ArkErrors(1) [
+workers-3   |   ArkError {
+workers-3   |     ' arkKind': 'error',
+workers-3   |     path: [],
+workers-2   |   ctx: TraversalContext {
+workers-2   |     path: [],
+workers-2   |     queuedMorphs: [],
+workers-2   |     errors: [Circular *1],
+workers-2   |     branches: [],
+redis-1     | 76:C 09 Oct 2024 11:24:45.752 * DB saved on disk
+redis-1     | 76:C 09 Oct 2024 11:24:45.753 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 11:24:45.856 * Background saving terminated with success
+workers-2   |     seen: {},
+workers-2   |     root: {
+workers-2   |       hash160: null,
+workers-2   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-2   |       n_tx: 1152,
+workers-2   |       n_unredeemed: 400,
+workers-2   |       total_received: 391894757,
+workers-2   |       total_sent: 390470099,
+workers-2   |       final_balance: 1424658,
+workers-2   |       txs: [Array]
+workers-2   |     },
+workers-2   |     config: {
+workers-2   |       min: [Object],
+workers-2   |       max: [Object],
+workers-2   |       minLength: [Object],
+workers-2   |       maxLength: [Object],
+workers-2   |       exactLength: [Object],
+workers-3   |     data: {
+workers-3   |       hash160: null,
+workers-3   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-3   |       n_tx: 1152,
+redis-1     | 1:M 09 Oct 2024 11:34:45.859 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 11:34:45.860 * Background saving started by pid 77
+redis-1     | 77:C 09 Oct 2024 11:34:45.871 * DB saved on disk
+redis-1     | 77:C 09 Oct 2024 11:34:45.871 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 11:34:45.972 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 11:44:45.955 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 11:44:45.957 * Background saving started by pid 78
+redis-1     | 78:C 09 Oct 2024 11:44:45.963 * DB saved on disk
+redis-1     | 78:C 09 Oct 2024 11:44:45.964 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 11:44:46.061 * Background saving terminated with success
+workers-3   |       n_unredeemed: 400,
+workers-3   |       total_received: 391894757,
+redis-1     | 1:M 09 Oct 2024 11:54:46.053 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 11:54:46.056 * Background saving started by pid 79
+redis-1     | 79:C 09 Oct 2024 11:54:46.061 * DB saved on disk
+redis-1     | 79:C 09 Oct 2024 11:54:46.062 * Fork CoW for RDB: current 1 MB, peak 1 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 11:54:46.158 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 12:00:00.323 * 100 changes in 300 seconds. Saving...
+workers-3   |       total_sent: 390470099,
+workers-3   |       final_balance: 1424658,
+redis-1     | 1:M 09 Oct 2024 12:00:00.323 * Background saving started by pid 80
+redis-1     | 80:C 09 Oct 2024 12:00:00.327 * DB saved on disk
+redis-1     | 80:C 09 Oct 2024 12:00:00.327 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 12:00:00.429 * Background saving terminated with success
+redis-1     | 1:M 09 Oct 2024 12:05:01.066 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 12:05:01.068 * Background saving started by pid 81
+redis-1     | 81:C 09 Oct 2024 12:05:01.078 * DB saved on disk
+redis-1     | 81:C 09 Oct 2024 12:05:01.079 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 12:05:01.180 * Background saving terminated with success
+workers-2   |       after: [Object],
+workers-2   |       before: [Object],
+workers-2   |       alias: [Object],
+workers-2   |       domain: [Object],
+workers-2   |       unit: [Object],
+workers-2   |       proto: [Object],
+workers-2   |       union: [Object],
+workers-2   |       morph: [Object],
+redis-1     | 1:M 09 Oct 2024 12:14:46.355 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 12:14:46.358 * Background saving started by pid 82
+redis-1     | 82:C 09 Oct 2024 12:14:46.368 * DB saved on disk
+redis-1     | 82:C 09 Oct 2024 12:14:46.369 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 12:14:46.471 * Background saving terminated with success
+workers-3   |       txs: [Array]
+workers-3   |     },
+workers-3   |     nodeConfig: {
+workers-3   |       description: [Function: description],
+workers-3   |       actual: [Function: actual],
+workers-3   |       expected: [Function (anonymous)],
+workers-3   |       problem: [Function (anonymous)],
+workers-3   |       message: [Function (anonymous)]
+redis-1     | 1:M 09 Oct 2024 12:25:16.379 * 100 changes in 300 seconds. Saving...
+redis-1     | 1:M 09 Oct 2024 12:25:16.383 * Background saving started by pid 83
+redis-1     | 83:C 09 Oct 2024 12:25:16.394 * DB saved on disk
+redis-1     | 83:C 09 Oct 2024 12:25:16.394 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+redis-1     | 1:M 09 Oct 2024 12:25:16.485 * Background saving terminated with success
+workers-1   | bigint: Failed to load bindings, pure JS will be used (try npm run rebuild?)
+workers-1   | backfillWorker is ready!
+workers-1   | backfillChunkWorker is ready!
+workers-1   | walletJobsWorker is ready!
+workers-1   | coinJobsWorker is ready!
+workers-1   | transactionsStreamWorker is ready!
+workers-1   | Starting job updating solana wallets with ID 1 and undefined transactions
+workers-1   | Starting job updating important coins with ID 1 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":1}}
+workers-1   | (node:1) Warning: Setting the NODE_TLS_REJECT_UNAUTHORIZED environment variable to '0' makes TLS connections and HTTPS requests insecure by disabling certificate verification.
+workers-1   | (Use `node --trace-warnings ...` to show where the warning was created)
+workers-1   | Starting job updating bitcoin wallets with ID 6 and undefined transactions
+workers-1   | Starting job updating important coins with ID 5 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":1}}
+workers-1   | Job updateBlockchainWallets-6 has failed with err:  <ref *1> ArkErrors(1) [
+workers-1   |   ArkError {
+workers-1   |     ' arkKind': 'error',
+workers-1   |     path: [],
+workers-1   |     data: {
+workers-1   |       hash160: null,
+workers-1   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-1   |       n_tx: 1152,
+workers-1   |       n_unredeemed: 400,
+workers-1   |       total_received: 391894757,
+workers-1   |       total_sent: 390470099,
+workers-1   |       final_balance: 1424658,
+workers-1   |       txs: [Array]
+workers-3   |     },
+workers-3   |     input: {
+workers-3   |       code: 'proto',
+workers-3   |       description: 'an array',
+workers-3   |       proto: [Function: Array]
+workers-1   |     },
+workers-1   |     nodeConfig: {
+workers-1   |       description: [Function: description],
+workers-1   |       actual: [Function: actual],
+workers-1   |       expected: [Function (anonymous)],
+workers-1   |       problem: [Function (anonymous)],
+workers-1   |       message: [Function (anonymous)]
+workers-1   |     },
+workers-1   |     input: {
+workers-3   |     },
+workers-3   |     code: 'proto',
+workers-1   |       code: 'proto',
+workers-1   |       description: 'an array',
+workers-1   |       proto: [Function: Array]
+workers-1   |     },
+workers-1   |     code: 'proto',
+workers-1   |     description: 'an array',
+workers-1   |     proto: [Function: Array]
+workers-1   |   },
+workers-1   |   ctx: TraversalContext {
+workers-1   |     path: [],
+workers-1   |     queuedMorphs: [],
+workers-1   |     errors: [Circular *1],
+workers-1   |     branches: [],
+workers-1   |     seen: {},
+workers-1   |     root: {
+workers-1   |       hash160: null,
+workers-1   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-1   |       n_tx: 1152,
+workers-1   |       n_unredeemed: 400,
+workers-1   |       total_received: 391894757,
+workers-1   |       total_sent: 390470099,
+workers-1   |       final_balance: 1424658,
+workers-1   |       txs: [Array]
+workers-1   |     },
+workers-1   |     config: {
+workers-1   |       min: [Object],
+workers-1   |       max: [Object],
+workers-1   |       minLength: [Object],
+workers-1   |       maxLength: [Object],
+workers-3   |     description: 'an array',
+workers-3   |     proto: [Function: Array]
+workers-3   |   },
+workers-3   |   ctx: TraversalContext {
+workers-3   |     path: [],
+workers-3   |     queuedMorphs: [],
+workers-3   |     errors: [Circular *1],
+workers-2   |       intersection: [Object],
+workers-2   |       divisor: [Object],
+workers-2   |       pattern: [Object],
+workers-2   |       predicate: [Object],
+workers-1   |       exactLength: [Object],
+workers-2   |       required: [Object],
+workers-2   |       optional: [Object],
+workers-2   |       index: [Object],
+workers-2   |       sequence: [Object],
+workers-2   |       structure: [Object],
+workers-3   |     branches: [],
+workers-3   |     seen: {},
+workers-3   |     root: {
+workers-3   |       hash160: null,
+workers-3   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-3   |       n_tx: 1152,
+workers-3   |       n_unredeemed: 400,
+workers-3   |       total_received: 391894757,
+workers-2   |       jitless: false,
+workers-2   |       clone: [Function: deepClone],
+workers-2   |       onUndeclaredKey: 'ignore',
+workers-2   |       prereducedAliases: true,
+workers-3   |       total_sent: 390470099,
+workers-3   |       final_balance: 1424658,
+workers-3   |       txs: [Array]
+workers-3   |     },
+workers-3   |     config: {
+workers-3   |       min: [Object],
+workers-3   |       max: [Object],
+workers-3   |       minLength: [Object],
+workers-3   |       maxLength: [Object],
+workers-3   |       exactLength: [Object],
+workers-3   |       after: [Object],
+workers-3   |       before: [Object],
+workers-3   |       alias: [Object],
+workers-1   |       after: [Object],
+workers-1   |       before: [Object],
+workers-1   |       alias: [Object],
+workers-1   |       domain: [Object],
+workers-1   |       unit: [Object],
+workers-1   |       proto: [Object],
+workers-1   |       union: [Object],
+workers-1   |       morph: [Object],
+workers-1   |       intersection: [Object],
+workers-1   |       divisor: [Object],
+workers-1   |       pattern: [Object],
+workers-1   |       predicate: [Object],
+workers-1   |       required: [Object],
+workers-1   |       optional: [Object],
+workers-1   |       index: [Object],
+workers-1   |       sequence: [Object],
+workers-1   |       structure: [Object],
+workers-3   |       domain: [Object],
+workers-3   |       unit: [Object],
+workers-3   |       proto: [Object],
+workers-3   |       union: [Object],
+workers-3   |       morph: [Object],
+workers-3   |       intersection: [Object],
+workers-3   |       divisor: [Object],
+workers-3   |       pattern: [Object],
+workers-3   |       predicate: [Object],
+workers-3   |       required: [Object],
+workers-3   |       optional: [Object],
+workers-3   |       index: [Object],
+workers-3   |       sequence: [Object],
+workers-3   |       structure: [Object],
+workers-3   |       jitless: false,
+workers-1   |       jitless: false,
+workers-1   |       clone: [Function: deepClone],
+workers-1   |       onUndeclaredKey: 'ignore',
+workers-1   |       prereducedAliases: true,
+workers-1   |       ambient: true
+workers-1   |     }
+workers-1   |   },
+workers-1   |   byPath: {
+workers-1   |     '': ArkError {
+workers-1   |       ' arkKind': 'error',
+workers-1   |       path: [],
+workers-1   |       data: [Object],
+workers-1   |       nodeConfig: [Object],
+workers-1   |       input: [Object],
+workers-1   |       code: 'proto',
+workers-1   |       description: 'an array',
+workers-1   |       proto: [Function: Array]
+workers-1   |     }
+workers-3   |       clone: [Function: deepClone],
+workers-3   |       onUndeclaredKey: 'ignore',
+workers-3   |       prereducedAliases: true,
+workers-3   |       ambient: true
+workers-3   |     }
+workers-3   |   },
+workers-3   |   byPath: {
+workers-3   |     '': ArkError {
+workers-3   |       ' arkKind': 'error',
+workers-3   |       path: [],
+workers-3   |       data: [Object],
+workers-3   |       nodeConfig: [Object],
+workers-3   |       input: [Object],
+workers-3   |       code: 'proto',
+workers-3   |       description: 'an array',
+workers-3   |       proto: [Function: Array]
+workers-1   |   },
+workers-1   |   count: 1,
+workers-1   |   mutable: [Circular *1]
+workers-1   | ]
+workers-1   | Job updateCoins-1 has failed with err:  SyntaxError: Unexpected token 'T', "Throttled
+workers-1   | " is not valid JSON
+workers-1   |     at JSON.parse (<anonymous>)
+workers-1   |     at parseJSONFromBytes (node:internal/deps/undici/undici:5489:19)
+workers-3   |     }
+workers-3   |   },
+workers-3   |   count: 1,
+workers-3   |   mutable: [Circular *1]
+workers-3   | ]
+workers-3   | Job updateCoins-3 has failed with err:  SyntaxError: Unexpected token 'T', "Throttled
+workers-2   |       ambient: true
+workers-2   |     }
+workers-2   |   },
+workers-2   |   byPath: {
+workers-2   |     '': ArkError {
+workers-2   |       ' arkKind': 'error',
+workers-2   |       path: [],
+workers-2   |       data: [Object],
+workers-2   |       nodeConfig: [Object],
+workers-2   |       input: [Object],
+workers-3   | " is not valid JSON
+workers-3   |     at JSON.parse (<anonymous>)
+workers-3   |     at parseJSONFromBytes (node:internal/deps/undici/undici:5489:19)
+workers-3   |     at successSteps (node:internal/deps/undici/undici:5470:27)
+workers-3   |     at fullyReadBody (node:internal/deps/undici/undici:4381:9)
+workers-1   |     at successSteps (node:internal/deps/undici/undici:5470:27)
+workers-1   |     at fullyReadBody (node:internal/deps/undici/undici:4381:9)
+workers-1   |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+workers-1   |     at async consumeBody (node:internal/deps/undici/undici:5479:7)
+workers-1   |     at async CoinGecko.getCandleData (file:///app/packages/adapters/dist/providers/coins.provider.js:159:26)
+workers-1   |     at async CoinsService.saveCandles (file:///app/packages/domain/dist/core/coins.service.js:198:25)
+workers-2   |       code: 'proto',
+workers-2   |       description: 'an array',
+workers-2   |       proto: [Function: Array]
+workers-2   |     }
+workers-2   |   },
+workers-2   |   count: 1,
+workers-2   |   mutable: [Circular *1]
+workers-2   | ]
+workers-2   | Job: 5, for updateBlockchainWallets has completed!
+workers-2   | Starting job updating bitcoin wallets with ID 8 and undefined transactions
+workers-2   | Starting job updating solana wallets with ID 9 and undefined transactions
+workers-2   | Starting job updating important coins with ID 8 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":1}}
+workers-2   | Starting job updating solana wallets with ID 11 and undefined transactions
+workers-2   | Job updateBlockchainWallets-8 has failed with err:  <ref *1> ArkErrors(1) [
+workers-2   |   ArkError {
+workers-2   |     ' arkKind': 'error',
+workers-2   |     path: [],
+workers-2   |     data: {
+workers-2   |       hash160: null,
+workers-2   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-2   |       n_tx: 1152,
+workers-2   |       n_unredeemed: 400,
+workers-2   |       total_received: 391894757,
+workers-3   |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+workers-3   |     at async consumeBody (node:internal/deps/undici/undici:5479:7)
+workers-3   |     at async CoinGecko.getCandleData (file:///app/packages/adapters/dist/providers/coins.provider.js:159:26)
+workers-3   |     at async CoinsService.saveCandles (file:///app/packages/domain/dist/core/coins.service.js:198:25)
+workers-2   |       total_sent: 390470099,
+workers-2   |       final_balance: 1424658,
+workers-2   |       txs: [Array]
+workers-2   |     },
+workers-2   |     nodeConfig: {
+workers-2   |       description: [Function: description],
+workers-2   |       actual: [Function: actual],
+workers-2   |       expected: [Function (anonymous)],
+workers-2   |       problem: [Function (anonymous)],
+workers-2   |       message: [Function (anonymous)]
+workers-2   |     },
+workers-1   |     at async CoinsService.updateCoinsByMarketcap (file:///app/packages/domain/dist/core/coins.service.js:188:13)
+workers-1   |     at async Worker.connection.host [as processFn] (file:///app/apps/workers/dist/coins.worker.js:15:17)
+workers-1   | Job updateCoins-5 has failed with err:  SyntaxError: Unexpected token 'T', "Throttled
+workers-1   | " is not valid JSON
+workers-3   |     at async CoinsService.updateCoinsByMarketcap (file:///app/packages/domain/dist/core/coins.service.js:188:13)
+workers-3   |     at async Worker.connection.host [as processFn] (file:///app/apps/workers/dist/coins.worker.js:15:17)
+workers-1   |     at JSON.parse (<anonymous>)
+workers-1   |     at parseJSONFromBytes (node:internal/deps/undici/undici:5489:19)
+workers-1   |     at successSteps (node:internal/deps/undici/undici:5470:27)
+workers-1   |     at fullyReadBody (node:internal/deps/undici/undici:4381:9)
+workers-1   |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+workers-1   |     at async consumeBody (node:internal/deps/undici/undici:5479:7)
+workers-1   |     at async CoinGecko.getCandleData (file:///app/packages/adapters/dist/providers/coins.provider.js:159:26)
+workers-1   |     at async CoinsService.saveCandles (file:///app/packages/domain/dist/core/coins.service.js:198:25)
+workers-1   |     at async CoinsService.updateCoinsByMarketcap (file:///app/packages/domain/dist/core/coins.service.js:188:13)
+workers-1   |     at async Worker.connection.host [as processFn] (file:///app/apps/workers/dist/coins.worker.js:15:17)
+workers-1   | Job: 1, for updateBlockchainWallets has completed!
+workers-1   | Starting job updating solana wallets with ID 7 and undefined transactions
+workers-1   | Starting job updating important coins with ID 7 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":1}}
+workers-1   | Starting job updating bitcoin wallets with ID 12 and undefined transactions
+workers-1   | Job updateBlockchainWallets-12 has failed with err:  <ref *1> ArkErrors(1) [
+workers-1   |   ArkError {
+workers-1   |     ' arkKind': 'error',
+workers-1   |     path: [],
+workers-1   |     data: {
+workers-1   |       hash160: null,
+workers-1   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-1   |       n_tx: 1152,
+workers-1   |       n_unredeemed: 400,
+workers-1   |       total_received: 391894757,
+workers-1   |       total_sent: 390470099,
+workers-3   | Job: 3, for updateBlockchainWallets has completed!
+workers-3   | Starting job updating bitcoin wallets with ID 10 and undefined transactions
+workers-3   | Starting job updating important coins with ID 9 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":1}}
+workers-1   |       final_balance: 1424658,
+workers-1   |       txs: [Array]
+workers-1   |     },
+workers-1   |     nodeConfig: {
+workers-1   |       description: [Function: description],
+workers-1   |       actual: [Function: actual],
+workers-3   | Job updateBlockchainWallets-10 has failed with err:  <ref *1> ArkErrors(1) [
+workers-3   |   ArkError {
+workers-3   |     ' arkKind': 'error',
+workers-3   |     path: [],
+workers-3   |     data: {
+workers-3   |       hash160: null,
+workers-3   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-3   |       n_tx: 1152,
+workers-1   |       expected: [Function (anonymous)],
+workers-1   |       problem: [Function (anonymous)],
+workers-1   |       message: [Function (anonymous)]
+workers-1   |     },
+workers-1   |     input: {
+workers-1   |       code: 'proto',
+workers-1   |       description: 'an array',
+workers-1   |       proto: [Function: Array]
+workers-1   |     },
+workers-1   |     code: 'proto',
+workers-1   |     description: 'an array',
+workers-1   |     proto: [Function: Array]
+workers-1   |   },
+workers-1   |   ctx: TraversalContext {
+workers-3   |       n_unredeemed: 400,
+workers-3   |       total_received: 391894757,
+workers-3   |       total_sent: 390470099,
+workers-3   |       final_balance: 1424658,
+workers-3   |       txs: [Array]
+workers-3   |     },
+workers-3   |     nodeConfig: {
+workers-3   |       description: [Function: description],
+workers-3   |       actual: [Function: actual],
+workers-3   |       expected: [Function (anonymous)],
+workers-3   |       problem: [Function (anonymous)],
+workers-3   |       message: [Function (anonymous)]
+workers-3   |     },
+workers-3   |     input: {
+workers-3   |       code: 'proto',
+workers-3   |       description: 'an array',
+workers-3   |       proto: [Function: Array]
+workers-2   |     input: {
+workers-2   |       code: 'proto',
+workers-2   |       description: 'an array',
+workers-2   |       proto: [Function: Array]
+workers-2   |     },
+workers-2   |     code: 'proto',
+workers-2   |     description: 'an array',
+workers-3   |     },
+workers-3   |     code: 'proto',
+workers-3   |     description: 'an array',
+workers-2   |     proto: [Function: Array]
+workers-2   |   },
+workers-2   |   ctx: TraversalContext {
+workers-2   |     path: [],
+workers-2   |     queuedMorphs: [],
+workers-3   |     proto: [Function: Array]
+workers-3   |   },
+workers-3   |   ctx: TraversalContext {
+workers-3   |     path: [],
+workers-3   |     queuedMorphs: [],
+workers-3   |     errors: [Circular *1],
+workers-3   |     branches: [],
+workers-3   |     seen: {},
+workers-3   |     root: {
+workers-3   |       hash160: null,
+workers-3   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-2   |     errors: [Circular *1],
+workers-2   |     branches: [],
+workers-2   |     seen: {},
+workers-2   |     root: {
+workers-2   |       hash160: null,
+workers-2   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-2   |       n_tx: 1152,
+workers-2   |       n_unredeemed: 400,
+workers-2   |       total_received: 391894757,
+workers-2   |       total_sent: 390470099,
+workers-2   |       final_balance: 1424658,
+workers-2   |       txs: [Array]
+workers-2   |     },
+workers-2   |     config: {
+workers-2   |       min: [Object],
+workers-3   |       n_tx: 1152,
+workers-3   |       n_unredeemed: 400,
+workers-3   |       total_received: 391894757,
+workers-3   |       total_sent: 390470099,
+workers-3   |       final_balance: 1424658,
+workers-3   |       txs: [Array]
+workers-2   |       max: [Object],
+workers-2   |       minLength: [Object],
+workers-2   |       maxLength: [Object],
+workers-2   |       exactLength: [Object],
+workers-2   |       after: [Object],
+workers-1   |     path: [],
+workers-1   |     queuedMorphs: [],
+workers-1   |     errors: [Circular *1],
+workers-1   |     branches: [],
+workers-1   |     seen: {},
+workers-1   |     root: {
+workers-1   |       hash160: null,
+workers-1   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-1   |       n_tx: 1152,
+workers-1   |       n_unredeemed: 400,
+workers-1   |       total_received: 391894757,
+workers-1   |       total_sent: 390470099,
+workers-1   |       final_balance: 1424658,
+workers-1   |       txs: [Array]
+workers-1   |     },
+workers-1   |     config: {
+workers-1   |       min: [Object],
+workers-1   |       max: [Object],
+workers-1   |       minLength: [Object],
+workers-1   |       maxLength: [Object],
+workers-1   |       exactLength: [Object],
+workers-1   |       after: [Object],
+workers-1   |       before: [Object],
+workers-1   |       alias: [Object],
+workers-3   |     },
+workers-3   |     config: {
+workers-3   |       min: [Object],
+workers-3   |       max: [Object],
+workers-3   |       minLength: [Object],
+workers-3   |       maxLength: [Object],
+workers-3   |       exactLength: [Object],
+workers-3   |       after: [Object],
+workers-3   |       before: [Object],
+workers-3   |       alias: [Object],
+workers-3   |       domain: [Object],
+workers-3   |       unit: [Object],
+workers-3   |       proto: [Object],
+workers-3   |       union: [Object],
+workers-3   |       morph: [Object],
+workers-3   |       intersection: [Object],
+workers-3   |       divisor: [Object],
+workers-2   |       before: [Object],
+workers-2   |       alias: [Object],
+workers-2   |       domain: [Object],
+workers-3   |       pattern: [Object],
+workers-3   |       predicate: [Object],
+workers-3   |       required: [Object],
+workers-3   |       optional: [Object],
+workers-3   |       index: [Object],
+workers-3   |       sequence: [Object],
+workers-3   |       structure: [Object],
+workers-3   |       jitless: false,
+workers-3   |       clone: [Function: deepClone],
+workers-3   |       onUndeclaredKey: 'ignore',
+workers-3   |       prereducedAliases: true,
+workers-3   |       ambient: true
+workers-3   |     }
+workers-3   |   },
+workers-3   |   byPath: {
+workers-3   |     '': ArkError {
+workers-3   |       ' arkKind': 'error',
+workers-1   |       domain: [Object],
+workers-1   |       unit: [Object],
+workers-1   |       proto: [Object],
+workers-3   |       path: [],
+workers-1   |       union: [Object],
+workers-1   |       morph: [Object],
+workers-1   |       intersection: [Object],
+workers-1   |       divisor: [Object],
+workers-1   |       pattern: [Object],
+workers-1   |       predicate: [Object],
+workers-1   |       required: [Object],
+workers-1   |       optional: [Object],
+workers-1   |       index: [Object],
+workers-1   |       sequence: [Object],
+workers-1   |       structure: [Object],
+workers-1   |       jitless: false,
+workers-1   |       clone: [Function: deepClone],
+workers-1   |       onUndeclaredKey: 'ignore',
+workers-1   |       prereducedAliases: true,
+workers-1   |       ambient: true
+workers-1   |     }
+workers-1   |   },
+workers-1   |   byPath: {
+workers-1   |     '': ArkError {
+workers-1   |       ' arkKind': 'error',
+workers-1   |       path: [],
+workers-1   |       data: [Object],
+workers-1   |       nodeConfig: [Object],
+workers-1   |       input: [Object],
+workers-1   |       code: 'proto',
+workers-1   |       description: 'an array',
+workers-1   |       proto: [Function: Array]
+workers-1   |     }
+workers-2   |       unit: [Object],
+workers-2   |       proto: [Object],
+workers-2   |       union: [Object],
+workers-2   |       morph: [Object],
+workers-2   |       intersection: [Object],
+workers-2   |       divisor: [Object],
+workers-2   |       pattern: [Object],
+workers-2   |       predicate: [Object],
+workers-2   |       required: [Object],
+workers-2   |       optional: [Object],
+workers-2   |       index: [Object],
+workers-2   |       sequence: [Object],
+workers-2   |       structure: [Object],
+workers-2   |       jitless: false,
+workers-2   |       clone: [Function: deepClone],
+workers-1   |   },
+workers-1   |   count: 1,
+workers-1   |   mutable: [Circular *1]
+workers-3   |       data: [Object],
+workers-3   |       nodeConfig: [Object],
+workers-3   |       input: [Object],
+workers-1   | ]
+workers-1   | Job: 7, for updateBlockchainWallets has completed!
+workers-1   | Job: 7, for updateCoins has completed!
+workers-3   |       code: 'proto',
+workers-3   |       description: 'an array',
+workers-1   | Starting job updating important coins with ID 10 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":1}}
+workers-1   | Starting job updating bitcoin wallets with ID 16 and undefined transactions
+workers-1   | Starting job updating solana wallets with ID 17 and undefined transactions
+workers-1   | Starting job updating bitcoin wallets with ID 18 and undefined transactions
+workers-1   | Job updateBlockchainWallets-18 has failed with err:  <ref *1> ArkErrors(1) [
+workers-1   |   ArkError {
+workers-3   |       proto: [Function: Array]
+workers-3   |     }
+workers-3   |   },
+workers-3   |   count: 1,
+workers-3   |   mutable: [Circular *1]
+workers-3   | ]
+workers-1   |     ' arkKind': 'error',
+workers-1   |     path: [],
+workers-1   |     data: {
+workers-1   |       hash160: null,
+workers-1   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-1   |       n_tx: 1152,
+workers-1   |       n_unredeemed: 400,
+workers-1   |       total_received: 391894757,
+workers-1   |       total_sent: 390470099,
+workers-1   |       final_balance: 1424658,
+workers-1   |       txs: [Array]
+workers-1   |     },
+workers-1   |     nodeConfig: {
+workers-1   |       description: [Function: description],
+workers-1   |       actual: [Function: actual],
+workers-3   | Job: 9, for updateCoins has completed!
+workers-3   | Starting job updating solana wallets with ID 13 and undefined transactions
+workers-3   | Starting job updating important coins with ID 11 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":1}}
+workers-3   | Job: 13, for updateBlockchainWallets has completed!
+workers-1   |       expected: [Function (anonymous)],
+workers-1   |       problem: [Function (anonymous)],
+workers-1   |       message: [Function (anonymous)]
+workers-1   |     },
+workers-1   |     input: {
+workers-1   |       code: 'proto',
+workers-1   |       description: 'an array',
+workers-1   |       proto: [Function: Array]
+workers-1   |     },
+workers-1   |     code: 'proto',
+workers-1   |     description: 'an array',
+workers-3   | Job: 11, for updateCoins has completed!
+workers-3   | Starting job updating bitcoin wallets with ID 20 and undefined transactions
+workers-3   | Starting job updating important coins with ID 14 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":1}}
+workers-3   | Starting job updating solana wallets with ID 23 and undefined transactions
+workers-3   | Starting job updating bitcoin wallets with ID 24 and undefined transactions
+workers-3   | Job updateBlockchainWallets-20 has failed with err:  <ref *1> ArkErrors(1) [
+workers-3   |   ArkError {
+workers-3   |     ' arkKind': 'error',
+workers-3   |     path: [],
+workers-3   |     data: {
+workers-3   |       hash160: null,
+workers-3   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-3   |       n_tx: 1152,
+workers-3   |       n_unredeemed: 400,
+workers-3   |       total_received: 391894757,
+workers-3   |       total_sent: 390470099,
+workers-3   |       final_balance: 1424658,
+workers-3   |       txs: [Array]
+workers-3   |     },
+workers-3   |     nodeConfig: {
+workers-3   |       description: [Function: description],
+workers-3   |       actual: [Function: actual],
+workers-3   |       expected: [Function (anonymous)],
+workers-3   |       problem: [Function (anonymous)],
+workers-3   |       message: [Function (anonymous)]
+workers-3   |     },
+workers-3   |     input: {
+workers-3   |       code: 'proto',
+workers-3   |       description: 'an array',
+workers-3   |       proto: [Function: Array]
+workers-3   |     },
+workers-3   |     code: 'proto',
+workers-3   |     description: 'an array',
+workers-3   |     proto: [Function: Array]
+workers-3   |   },
+workers-3   |   ctx: TraversalContext {
+workers-3   |     path: [],
+workers-3   |     queuedMorphs: [],
+workers-3   |     errors: [Circular *1],
+workers-3   |     branches: [],
+workers-3   |     seen: {},
+workers-3   |     root: {
+workers-3   |       hash160: null,
+workers-3   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-3   |       n_tx: 1152,
+workers-3   |       n_unredeemed: 400,
+workers-3   |       total_received: 391894757,
+workers-3   |       total_sent: 390470099,
+workers-3   |       final_balance: 1424658,
+workers-3   |       txs: [Array]
+workers-3   |     },
+workers-3   |     config: {
+workers-3   |       min: [Object],
+workers-3   |       max: [Object],
+workers-3   |       minLength: [Object],
+workers-3   |       maxLength: [Object],
+workers-3   |       exactLength: [Object],
+workers-3   |       after: [Object],
+workers-1   |     proto: [Function: Array]
+workers-1   |   },
+workers-1   |   ctx: TraversalContext {
+workers-1   |     path: [],
+workers-1   |     queuedMorphs: [],
+workers-2   |       onUndeclaredKey: 'ignore',
+workers-2   |       prereducedAliases: true,
+workers-2   |       ambient: true
+workers-2   |     }
+workers-2   |   },
+workers-2   |   byPath: {
+workers-2   |     '': ArkError {
+workers-2   |       ' arkKind': 'error',
+workers-2   |       path: [],
+workers-3   |       before: [Object],
+workers-3   |       alias: [Object],
+workers-3   |       domain: [Object],
+workers-3   |       unit: [Object],
+workers-2   |       data: [Object],
+workers-2   |       nodeConfig: [Object],
+workers-2   |       input: [Object],
+workers-2   |       code: 'proto',
+workers-2   |       description: 'an array',
+workers-2   |       proto: [Function: Array]
+workers-2   |     }
+workers-2   |   },
+workers-2   |   count: 1,
+workers-2   |   mutable: [Circular *1]
+workers-2   | ]
+workers-2   | Job: 9, for updateBlockchainWallets has completed!
+workers-2   | Job: 11, for updateBlockchainWallets has completed!
+workers-2   | Job: 8, for updateCoins has completed!
+workers-2   | Starting job updating bitcoin wallets with ID 14 and undefined transactions
+workers-1   |     errors: [Circular *1],
+workers-1   |     branches: [],
+workers-1   |     seen: {},
+workers-1   |     root: {
+workers-1   |       hash160: null,
+workers-1   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-1   |       n_tx: 1152,
+workers-1   |       n_unredeemed: 400,
+workers-1   |       total_received: 391894757,
+workers-1   |       total_sent: 390470099,
+workers-2   | Starting job updating solana wallets with ID 15 and undefined transactions
+workers-2   | Starting job updating important coins with ID 12 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":1}}
+workers-2   | Job updateBlockchainWallets-14 has failed with err:  <ref *1> ArkErrors(1) [
+workers-2   |   ArkError {
+workers-2   |     ' arkKind': 'error',
+workers-2   |     path: [],
+workers-2   |     data: {
+workers-2   |       hash160: null,
+workers-2   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-2   |       n_tx: 1152,
+workers-3   |       proto: [Object],
+workers-3   |       union: [Object],
+workers-3   |       morph: [Object],
+workers-3   |       intersection: [Object],
+workers-2   |       n_unredeemed: 400,
+workers-2   |       total_received: 391894757,
+workers-2   |       total_sent: 390470099,
+workers-2   |       final_balance: 1424658,
+workers-2   |       txs: [Array]
+workers-2   |     },
+workers-2   |     nodeConfig: {
+workers-2   |       description: [Function: description],
+workers-2   |       actual: [Function: actual],
+workers-2   |       expected: [Function (anonymous)],
+workers-2   |       problem: [Function (anonymous)],
+workers-2   |       message: [Function (anonymous)]
+workers-2   |     },
+workers-2   |     input: {
+workers-2   |       code: 'proto',
+workers-2   |       description: 'an array',
+workers-2   |       proto: [Function: Array]
+workers-2   |     },
+workers-2   |     code: 'proto',
+workers-2   |     description: 'an array',
+workers-2   |     proto: [Function: Array]
+workers-2   |   },
+workers-2   |   ctx: TraversalContext {
+workers-2   |     path: [],
+workers-2   |     queuedMorphs: [],
+workers-2   |     errors: [Circular *1],
+workers-2   |     branches: [],
+workers-2   |     seen: {},
+workers-2   |     root: {
+workers-2   |       hash160: null,
+workers-2   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-3   |       divisor: [Object],
+workers-3   |       pattern: [Object],
+workers-3   |       predicate: [Object],
+workers-3   |       required: [Object],
+workers-3   |       optional: [Object],
+workers-3   |       index: [Object],
+workers-3   |       sequence: [Object],
+workers-3   |       structure: [Object],
+workers-3   |       jitless: false,
+workers-3   |       clone: [Function: deepClone],
+workers-3   |       onUndeclaredKey: 'ignore',
+workers-3   |       prereducedAliases: true,
+workers-3   |       ambient: true
+workers-3   |     }
+workers-3   |   },
+workers-2   |       n_tx: 1152,
+workers-2   |       n_unredeemed: 400,
+workers-2   |       total_received: 391894757,
+workers-2   |       total_sent: 390470099,
+workers-2   |       final_balance: 1424658,
+workers-2   |       txs: [Array]
+workers-2   |     },
+workers-2   |     config: {
+workers-2   |       min: [Object],
+workers-2   |       max: [Object],
+workers-2   |       minLength: [Object],
+workers-2   |       maxLength: [Object],
+workers-2   |       exactLength: [Object],
+workers-2   |       after: [Object],
+workers-1   |       final_balance: 1424658,
+workers-1   |       txs: [Array]
+workers-1   |     },
+workers-2   |       before: [Object],
+workers-2   |       alias: [Object],
+workers-2   |       domain: [Object],
+workers-2   |       unit: [Object],
+workers-2   |       proto: [Object],
+workers-2   |       union: [Object],
+workers-2   |       morph: [Object],
+workers-2   |       intersection: [Object],
+workers-2   |       divisor: [Object],
+workers-2   |       pattern: [Object],
+workers-2   |       predicate: [Object],
+workers-2   |       required: [Object],
+workers-2   |       optional: [Object],
+workers-2   |       index: [Object],
+workers-2   |       sequence: [Object],
+workers-2   |       structure: [Object],
+workers-2   |       jitless: false,
+workers-2   |       clone: [Function: deepClone],
+workers-2   |       onUndeclaredKey: 'ignore',
+workers-2   |       prereducedAliases: true,
+workers-2   |       ambient: true
+workers-2   |     }
+workers-2   |   },
+workers-1   |     config: {
+workers-1   |       min: [Object],
+workers-1   |       max: [Object],
+workers-1   |       minLength: [Object],
+workers-3   |   byPath: {
+workers-3   |     '': ArkError {
+workers-3   |       ' arkKind': 'error',
+workers-3   |       path: [],
+workers-1   |       maxLength: [Object],
+workers-1   |       exactLength: [Object],
+workers-1   |       after: [Object],
+workers-1   |       before: [Object],
+workers-1   |       alias: [Object],
+workers-1   |       domain: [Object],
+workers-1   |       unit: [Object],
+workers-1   |       proto: [Object],
+workers-1   |       union: [Object],
+workers-1   |       morph: [Object],
+workers-2   |   byPath: {
+workers-2   |     '': ArkError {
+workers-2   |       ' arkKind': 'error',
+workers-1   |       intersection: [Object],
+workers-1   |       divisor: [Object],
+workers-1   |       pattern: [Object],
+workers-1   |       predicate: [Object],
+workers-1   |       required: [Object],
+workers-1   |       optional: [Object],
+workers-1   |       index: [Object],
+workers-1   |       sequence: [Object],
+workers-1   |       structure: [Object],
+workers-1   |       jitless: false,
+workers-1   |       clone: [Function: deepClone],
+workers-1   |       onUndeclaredKey: 'ignore',
+workers-1   |       prereducedAliases: true,
+workers-1   |       ambient: true
+workers-1   |     }
+workers-1   |   },
+workers-1   |   byPath: {
+workers-1   |     '': ArkError {
+workers-1   |       ' arkKind': 'error',
+workers-3   |       data: [Object],
+workers-3   |       nodeConfig: [Object],
+workers-3   |       input: [Object],
+workers-3   |       code: 'proto',
+workers-3   |       description: 'an array',
+workers-3   |       proto: [Function: Array]
+workers-3   |     }
+workers-3   |   },
+workers-3   |   count: 1,
+workers-3   |   mutable: [Circular *1]
+workers-3   | ]
+workers-2   |       path: [],
+workers-2   |       data: [Object],
+workers-2   |       nodeConfig: [Object],
+workers-2   |       input: [Object],
+workers-2   |       code: 'proto',
+workers-2   |       description: 'an array',
+workers-2   |       proto: [Function: Array]
+workers-2   |     }
+workers-1   |       path: [],
+workers-1   |       data: [Object],
+workers-1   |       nodeConfig: [Object],
+workers-1   |       input: [Object],
+workers-1   |       code: 'proto',
+workers-1   |       description: 'an array',
+workers-1   |       proto: [Function: Array]
+workers-1   |     }
+workers-1   |   },
+workers-1   |   count: 1,
+workers-1   |   mutable: [Circular *1]
+workers-1   | ]
+workers-1   | Job updateBlockchainWallets-16 has failed with err:  <ref *1> ArkErrors(1) [
+workers-3   | Job updateBlockchainWallets-24 has failed with err:  <ref *1> ArkErrors(1) [
+workers-3   |   ArkError {
+workers-3   |     ' arkKind': 'error',
+workers-3   |     path: [],
+workers-2   |   },
+workers-2   |   count: 1,
+workers-2   |   mutable: [Circular *1]
+workers-3   |     data: {
+workers-3   |       hash160: null,
+workers-3   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-3   |       n_tx: 1152,
+workers-3   |       n_unredeemed: 400,
+workers-3   |       total_received: 391894757,
+workers-3   |       total_sent: 390470099,
+workers-3   |       final_balance: 1424658,
+workers-3   |       txs: [Array]
+workers-3   |     },
+workers-3   |     nodeConfig: {
+workers-3   |       description: [Function: description],
+workers-1   |   ArkError {
+workers-1   |     ' arkKind': 'error',
+workers-1   |     path: [],
+workers-3   |       actual: [Function: actual],
+workers-3   |       expected: [Function (anonymous)],
+workers-3   |       problem: [Function (anonymous)],
+workers-3   |       message: [Function (anonymous)]
+workers-3   |     },
+workers-3   |     input: {
+workers-3   |       code: 'proto',
+workers-3   |       description: 'an array',
+workers-3   |       proto: [Function: Array]
+workers-3   |     },
+workers-3   |     code: 'proto',
+workers-3   |     description: 'an array',
+workers-1   |     data: {
+workers-1   |       hash160: null,
+workers-1   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-1   |       n_tx: 1152,
+workers-1   |       n_unredeemed: 400,
+workers-2   | ]
+workers-2   | Job: 15, for updateBlockchainWallets has completed!
+workers-2   | Job: 12, for updateCoins has completed!
+workers-2   | Starting job updating bitcoin wallets with ID 22 and undefined transactions
+workers-2   | Starting job updating important coins with ID 15 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":1}}
+workers-2   | Job updateBlockchainWallets-22 has failed with err:  <ref *1> ArkErrors(1) [
+workers-1   |       total_received: 391894757,
+workers-1   |       total_sent: 390470099,
+workers-1   |       final_balance: 1424658,
+workers-1   |       txs: [Array]
+workers-1   |     },
+workers-2   |   ArkError {
+workers-2   |     ' arkKind': 'error',
+workers-2   |     path: [],
+workers-2   |     data: {
+workers-3   |     proto: [Function: Array]
+workers-1   |     nodeConfig: {
+workers-1   |       description: [Function: description],
+workers-1   |       actual: [Function: actual],
+workers-1   |       expected: [Function (anonymous)],
+workers-1   |       problem: [Function (anonymous)],
+workers-1   |       message: [Function (anonymous)]
+workers-1   |     },
+workers-1   |     input: {
+workers-1   |       code: 'proto',
+workers-1   |       description: 'an array',
+workers-1   |       proto: [Function: Array]
+workers-1   |     },
+workers-1   |     code: 'proto',
+workers-1   |     description: 'an array',
+workers-1   |     proto: [Function: Array]
+workers-3   |   },
+workers-3   |   ctx: TraversalContext {
+workers-3   |     path: [],
+workers-3   |     queuedMorphs: [],
+workers-3   |     errors: [Circular *1],
+workers-3   |     branches: [],
+workers-3   |     seen: {},
+workers-3   |     root: {
+workers-3   |       hash160: null,
+workers-3   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-1   |   },
+workers-1   |   ctx: TraversalContext {
+workers-1   |     path: [],
+workers-1   |     queuedMorphs: [],
+workers-1   |     errors: [Circular *1],
+workers-1   |     branches: [],
+workers-1   |     seen: {},
+workers-2   |       hash160: null,
+workers-2   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-2   |       n_tx: 1152,
+workers-2   |       n_unredeemed: 400,
+workers-2   |       total_received: 391894757,
+workers-1   |     root: {
+workers-1   |       hash160: null,
+workers-1   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-1   |       n_tx: 1152,
+workers-1   |       n_unredeemed: 400,
+workers-1   |       total_received: 391894757,
+workers-1   |       total_sent: 390470099,
+workers-1   |       final_balance: 1424658,
+workers-1   |       txs: [Array]
+workers-2   |       total_sent: 390470099,
+workers-2   |       final_balance: 1424658,
+workers-2   |       txs: [Array]
+workers-2   |     },
+workers-2   |     nodeConfig: {
+workers-3   |       n_tx: 1152,
+workers-3   |       n_unredeemed: 400,
+workers-3   |       total_received: 391894757,
+workers-3   |       total_sent: 390470099,
+workers-3   |       final_balance: 1424658,
+workers-2   |       description: [Function: description],
+workers-2   |       actual: [Function: actual],
+workers-2   |       expected: [Function (anonymous)],
+workers-2   |       problem: [Function (anonymous)],
+workers-2   |       message: [Function (anonymous)]
+workers-2   |     },
+workers-1   |     },
+workers-1   |     config: {
+workers-1   |       min: [Object],
+workers-3   |       txs: [Array]
+workers-3   |     },
+workers-3   |     config: {
+workers-3   |       min: [Object],
+workers-2   |     input: {
+workers-2   |       code: 'proto',
+workers-2   |       description: 'an array',
+workers-2   |       proto: [Function: Array]
+workers-2   |     },
+workers-2   |     code: 'proto',
+workers-3   |       max: [Object],
+workers-3   |       minLength: [Object],
+workers-3   |       maxLength: [Object],
+workers-3   |       exactLength: [Object],
+workers-3   |       after: [Object],
+workers-3   |       before: [Object],
+workers-3   |       alias: [Object],
+workers-3   |       domain: [Object],
+workers-3   |       unit: [Object],
+workers-3   |       proto: [Object],
+workers-3   |       union: [Object],
+workers-1   |       max: [Object],
+workers-1   |       minLength: [Object],
+workers-1   |       maxLength: [Object],
+workers-1   |       exactLength: [Object],
+workers-1   |       after: [Object],
+workers-1   |       before: [Object],
+workers-1   |       alias: [Object],
+workers-1   |       domain: [Object],
+workers-1   |       unit: [Object],
+workers-1   |       proto: [Object],
+workers-2   |     description: 'an array',
+workers-2   |     proto: [Function: Array]
+workers-2   |   },
+workers-2   |   ctx: TraversalContext {
+workers-2   |     path: [],
+workers-2   |     queuedMorphs: [],
+workers-2   |     errors: [Circular *1],
+workers-2   |     branches: [],
+workers-2   |     seen: {},
+workers-2   |     root: {
+workers-2   |       hash160: null,
+workers-2   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-3   |       morph: [Object],
+workers-3   |       intersection: [Object],
+workers-3   |       divisor: [Object],
+workers-3   |       pattern: [Object],
+workers-3   |       predicate: [Object],
+workers-3   |       required: [Object],
+workers-3   |       optional: [Object],
+workers-1   |       union: [Object],
+workers-1   |       morph: [Object],
+workers-1   |       intersection: [Object],
+workers-1   |       divisor: [Object],
+workers-2   |       n_tx: 1152,
+workers-2   |       n_unredeemed: 400,
+workers-2   |       total_received: 391894757,
+workers-2   |       total_sent: 390470099,
+workers-2   |       final_balance: 1424658,
+workers-2   |       txs: [Array]
+workers-2   |     },
+workers-2   |     config: {
+workers-2   |       min: [Object],
+workers-2   |       max: [Object],
+workers-1   |       pattern: [Object],
+workers-1   |       predicate: [Object],
+workers-1   |       required: [Object],
+workers-1   |       optional: [Object],
+workers-1   |       index: [Object],
+workers-1   |       sequence: [Object],
+workers-1   |       structure: [Object],
+workers-1   |       jitless: false,
+workers-1   |       clone: [Function: deepClone],
+workers-1   |       onUndeclaredKey: 'ignore',
+workers-1   |       prereducedAliases: true,
+workers-1   |       ambient: true
+workers-1   |     }
+workers-1   |   },
+workers-1   |   byPath: {
+workers-1   |     '': ArkError {
+workers-1   |       ' arkKind': 'error',
+workers-2   |       minLength: [Object],
+workers-2   |       maxLength: [Object],
+workers-2   |       exactLength: [Object],
+workers-2   |       after: [Object],
+workers-2   |       before: [Object],
+workers-2   |       alias: [Object],
+workers-1   |       path: [],
+workers-1   |       data: [Object],
+workers-1   |       nodeConfig: [Object],
+workers-2   |       domain: [Object],
+workers-2   |       unit: [Object],
+workers-2   |       proto: [Object],
+workers-2   |       union: [Object],
+workers-2   |       morph: [Object],
+workers-2   |       intersection: [Object],
+workers-2   |       divisor: [Object],
+workers-2   |       pattern: [Object],
+workers-2   |       predicate: [Object],
+workers-1   |       input: [Object],
+workers-1   |       code: 'proto',
+workers-1   |       description: 'an array',
+workers-2   |       required: [Object],
+workers-2   |       optional: [Object],
+workers-2   |       index: [Object],
+workers-2   |       sequence: [Object],
+workers-2   |       structure: [Object],
+workers-2   |       jitless: false,
+workers-3   |       index: [Object],
+workers-3   |       sequence: [Object],
+workers-3   |       structure: [Object],
+workers-2   |       clone: [Function: deepClone],
+workers-2   |       onUndeclaredKey: 'ignore',
+workers-2   |       prereducedAliases: true,
+workers-2   |       ambient: true
+workers-2   |     }
+workers-2   |   },
+workers-2   |   byPath: {
+workers-3   |       jitless: false,
+workers-3   |       clone: [Function: deepClone],
+workers-3   |       onUndeclaredKey: 'ignore',
+workers-2   |     '': ArkError {
+workers-2   |       ' arkKind': 'error',
+workers-2   |       path: [],
+workers-2   |       data: [Object],
+workers-2   |       nodeConfig: [Object],
+workers-2   |       input: [Object],
+workers-2   |       code: 'proto',
+workers-2   |       description: 'an array',
+workers-2   |       proto: [Function: Array]
+workers-2   |     }
+workers-3   |       prereducedAliases: true,
+workers-3   |       ambient: true
+workers-3   |     }
+workers-3   |   },
+workers-3   |   byPath: {
+workers-3   |     '': ArkError {
+workers-3   |       ' arkKind': 'error',
+workers-2   |   },
+workers-2   |   count: 1,
+workers-3   |       path: [],
+workers-3   |       data: [Object],
+workers-3   |       nodeConfig: [Object],
+workers-3   |       input: [Object],
+workers-3   |       code: 'proto',
+workers-3   |       description: 'an array',
+workers-3   |       proto: [Function: Array]
+workers-3   |     }
+workers-3   |   },
+workers-3   |   count: 1,
+workers-3   |   mutable: [Circular *1]
+workers-3   | ]
+workers-3   | Job: 23, for updateBlockchainWallets has completed!
+workers-3   | Job: 14, for updateCoins has completed!
+workers-3   | Starting job updating solana wallets with ID 25 and undefined transactions
+workers-3   | Starting job updating coins with ID 17 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":4}}
+workers-3   | Starting job updating bitcoin wallets with ID 28 and undefined transactions
+workers-3   | Starting job updating bitcoin wallets with ID 30 and undefined transactions
+workers-3   | Starting job updating coins with ID 21 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":4}}
+workers-3   | Job updateBlockchainWallets-30 has failed with err:  <ref *1> ArkErrors(1) [
+workers-1   |       proto: [Function: Array]
+workers-1   |     }
+workers-1   |   },
+workers-3   |   ArkError {
+workers-3   |     ' arkKind': 'error',
+workers-3   |     path: [],
+workers-3   |     data: {
+workers-3   |       hash160: null,
+workers-3   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-3   |       n_tx: 1152,
+workers-3   |       n_unredeemed: 400,
+workers-3   |       total_received: 391894757,
+workers-2   |   mutable: [Circular *1]
+workers-3   |       total_sent: 390470099,
+workers-2   | ]
+workers-2   | Job: 15, for updateCoins has completed!
+workers-2   | Starting job updating bitcoin wallets with ID 26 and undefined transactions
+workers-2   | Starting job updating important coins with ID 18 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":1}}
+workers-3   |       final_balance: 1424658,
+workers-3   |       txs: [Array]
+workers-3   |     },
+workers-3   |     nodeConfig: {
+workers-3   |       description: [Function: description],
+workers-3   |       actual: [Function: actual],
+workers-3   |       expected: [Function (anonymous)],
+workers-3   |       problem: [Function (anonymous)],
+workers-3   |       message: [Function (anonymous)]
+workers-3   |     },
+workers-3   |     input: {
+workers-3   |       code: 'proto',
+workers-3   |       description: 'an array',
+workers-3   |       proto: [Function: Array]
+workers-3   |     },
+workers-3   |     code: 'proto',
+workers-3   |     description: 'an array',
+workers-2   | Starting job updating coins with ID 19 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":4}}
+workers-2   | Starting job updating solana wallets with ID 29 and undefined transactions
+workers-2   | Starting job updating important coins with ID 20 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":1}}
+workers-3   |     proto: [Function: Array]
+workers-3   |   },
+workers-3   |   ctx: TraversalContext {
+workers-3   |     path: [],
+workers-3   |     queuedMorphs: [],
+workers-3   |     errors: [Circular *1],
+workers-3   |     branches: [],
+workers-3   |     seen: {},
+workers-3   |     root: {
+workers-3   |       hash160: null,
+workers-3   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-3   |       n_tx: 1152,
+workers-3   |       n_unredeemed: 400,
+workers-3   |       total_received: 391894757,
+workers-3   |       total_sent: 390470099,
+workers-3   |       final_balance: 1424658,
+workers-3   |       txs: [Array]
+workers-1   |   count: 1,
+workers-1   |   mutable: [Circular *1]
+workers-1   | ]
+workers-3   |     },
+workers-3   |     config: {
+workers-3   |       min: [Object],
+workers-3   |       max: [Object],
+workers-3   |       minLength: [Object],
+workers-3   |       maxLength: [Object],
+workers-3   |       exactLength: [Object],
+workers-3   |       after: [Object],
+workers-3   |       before: [Object],
+workers-3   |       alias: [Object],
+workers-3   |       domain: [Object],
+workers-3   |       unit: [Object],
+workers-3   |       proto: [Object],
+workers-2   | Job updateBlockchainWallets-26 has failed with err:  <ref *1> ArkErrors(1) [
+workers-2   |   ArkError {
+workers-2   |     ' arkKind': 'error',
+workers-2   |     path: [],
+workers-2   |     data: {
+workers-3   |       union: [Object],
+workers-3   |       morph: [Object],
+workers-3   |       intersection: [Object],
+workers-3   |       divisor: [Object],
+workers-3   |       pattern: [Object],
+workers-3   |       predicate: [Object],
+workers-3   |       required: [Object],
+workers-3   |       optional: [Object],
+workers-3   |       index: [Object],
+workers-3   |       sequence: [Object],
+workers-2   |       hash160: null,
+workers-2   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-2   |       n_tx: 1152,
+workers-2   |       n_unredeemed: 400,
+workers-1   | Job: 17, for updateBlockchainWallets has completed!
+workers-1   | Job: 10, for updateCoins has completed!
+workers-1   | Starting job updating solana wallets with ID 19 and undefined transactions
+workers-1   | Starting job updating important coins with ID 13 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":1}}
+workers-1   | Starting job updating solana wallets with ID 21 and undefined transactions
+workers-1   | Job: 19, for updateBlockchainWallets has completed!
+workers-1   | Job: 21, for updateBlockchainWallets has completed!
+workers-1   | Job: 13, for updateCoins has completed!
+workers-1   | Starting job updating important coins with ID 16 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":1}}
+workers-2   |       total_received: 391894757,
+workers-2   |       total_sent: 390470099,
+workers-2   |       final_balance: 1424658,
+workers-1   | Starting job updating solana wallets with ID 27 and undefined transactions
+workers-1   | Job: 27, for updateBlockchainWallets has completed!
+workers-1   | Job updateCoins-16 has failed with err:  SyntaxError: Unexpected token 'T', "Throttled
+workers-2   |       txs: [Array]
+workers-2   |     },
+workers-2   |     nodeConfig: {
+workers-1   | " is not valid JSON
+workers-1   |     at JSON.parse (<anonymous>)
+workers-1   |     at parseJSONFromBytes (node:internal/deps/undici/undici:5489:19)
+workers-1   |     at successSteps (node:internal/deps/undici/undici:5470:27)
+workers-1   |     at fullyReadBody (node:internal/deps/undici/undici:4381:9)
+workers-1   |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+workers-1   |     at async consumeBody (node:internal/deps/undici/undici:5479:7)
+workers-1   |     at async CoinGecko.getCandleData (file:///app/packages/adapters/dist/providers/coins.provider.js:159:26)
+workers-1   |     at async CoinsService.saveCandles (file:///app/packages/domain/dist/core/coins.service.js:198:25)
+workers-1   |     at async CoinsService.updateCoinsByMarketcap (file:///app/packages/domain/dist/core/coins.service.js:188:13)
+workers-1   |     at async Worker.connection.host [as processFn] (file:///app/apps/workers/dist/coins.worker.js:15:17)
+workers-1   | Starting job updating solana wallets with ID 31 and undefined transactions
+workers-1   | Starting job updating important coins with ID 22 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":1}}
+workers-1   | Starting job updating bitcoin wallets with ID 36 and undefined transactions
+workers-1   | Job updateBlockchainWallets-36 has failed with err:  <ref *1> ArkErrors(1) [
+workers-1   |   ArkError {
+workers-1   |     ' arkKind': 'error',
+workers-1   |     path: [],
+workers-1   |     data: {
+workers-1   |       hash160: null,
+workers-1   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-1   |       n_tx: 1152,
+workers-1   |       n_unredeemed: 400,
+workers-1   |       total_received: 391894757,
+workers-1   |       total_sent: 390470099,
+workers-1   |       final_balance: 1424658,
+workers-1   |       txs: [Array]
+workers-1   |     },
+workers-1   |     nodeConfig: {
+workers-1   |       description: [Function: description],
+workers-1   |       actual: [Function: actual],
+workers-1   |       expected: [Function (anonymous)],
+workers-3   |       structure: [Object],
+workers-3   |       jitless: false,
+workers-3   |       clone: [Function: deepClone],
+workers-1   |       problem: [Function (anonymous)],
+workers-1   |       message: [Function (anonymous)]
+workers-1   |     },
+workers-1   |     input: {
+workers-2   |       description: [Function: description],
+workers-2   |       actual: [Function: actual],
+workers-2   |       expected: [Function (anonymous)],
+workers-2   |       problem: [Function (anonymous)],
+workers-2   |       message: [Function (anonymous)]
+workers-2   |     },
+workers-2   |     input: {
+workers-2   |       code: 'proto',
+workers-1   |       code: 'proto',
+workers-1   |       description: 'an array',
+workers-2   |       description: 'an array',
+workers-2   |       proto: [Function: Array]
+workers-2   |     },
+workers-2   |     code: 'proto',
+workers-1   |       proto: [Function: Array]
+workers-1   |     },
+workers-1   |     code: 'proto',
+workers-1   |     description: 'an array',
+workers-2   |     description: 'an array',
+workers-2   |     proto: [Function: Array]
+workers-2   |   },
+workers-2   |   ctx: TraversalContext {
+workers-2   |     path: [],
+workers-2   |     queuedMorphs: [],
+workers-2   |     errors: [Circular *1],
+workers-2   |     branches: [],
+workers-2   |     seen: {},
+workers-2   |     root: {
+workers-3   |       onUndeclaredKey: 'ignore',
+workers-3   |       prereducedAliases: true,
+workers-3   |       ambient: true
+workers-3   |     }
+workers-3   |   },
+workers-3   |   byPath: {
+workers-2   |       hash160: null,
+workers-2   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-2   |       n_tx: 1152,
+workers-2   |       n_unredeemed: 400,
+workers-2   |       total_received: 391894757,
+workers-3   |     '': ArkError {
+workers-3   |       ' arkKind': 'error',
+workers-3   |       path: [],
+workers-3   |       data: [Object],
+workers-3   |       nodeConfig: [Object],
+workers-3   |       input: [Object],
+workers-3   |       code: 'proto',
+workers-2   |       total_sent: 390470099,
+workers-2   |       final_balance: 1424658,
+workers-2   |       txs: [Array]
+workers-2   |     },
+workers-2   |     config: {
+workers-2   |       min: [Object],
+workers-2   |       max: [Object],
+workers-2   |       minLength: [Object],
+workers-2   |       maxLength: [Object],
+workers-2   |       exactLength: [Object],
+workers-2   |       after: [Object],
+workers-2   |       before: [Object],
+workers-2   |       alias: [Object],
+workers-2   |       domain: [Object],
+workers-2   |       unit: [Object],
+workers-1   |     proto: [Function: Array]
+workers-2   |       proto: [Object],
+workers-2   |       union: [Object],
+workers-2   |       morph: [Object],
+workers-3   |       description: 'an array',
+workers-3   |       proto: [Function: Array]
+workers-3   |     }
+workers-3   |   },
+workers-3   |   count: 1,
+workers-3   |   mutable: [Circular *1]
+workers-3   | ]
+workers-3   | Job updateBlockchainWallets-28 has failed with err:  <ref *1> ArkErrors(1) [
+workers-3   |   ArkError {
+workers-3   |     ' arkKind': 'error',
+workers-3   |     path: [],
+workers-2   |       intersection: [Object],
+workers-2   |       divisor: [Object],
+workers-2   |       pattern: [Object],
+workers-2   |       predicate: [Object],
+workers-2   |       required: [Object],
+workers-2   |       optional: [Object],
+workers-2   |       index: [Object],
+workers-2   |       sequence: [Object],
+workers-2   |       structure: [Object],
+workers-2   |       jitless: false,
+workers-2   |       clone: [Function: deepClone],
+workers-2   |       onUndeclaredKey: 'ignore',
+workers-3   |     data: {
+workers-3   |       hash160: null,
+workers-3   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-2   |       prereducedAliases: true,
+workers-2   |       ambient: true
+workers-2   |     }
+workers-2   |   },
+workers-2   |   byPath: {
+workers-2   |     '': ArkError {
+workers-2   |       ' arkKind': 'error',
+workers-2   |       path: [],
+workers-3   |       n_tx: 1152,
+workers-3   |       n_unredeemed: 400,
+workers-3   |       total_received: 391894757,
+workers-3   |       total_sent: 390470099,
+workers-3   |       final_balance: 1424658,
+workers-3   |       txs: [Array]
+workers-3   |     },
+workers-3   |     nodeConfig: {
+workers-3   |       description: [Function: description],
+workers-3   |       actual: [Function: actual],
+workers-1   |   },
+workers-1   |   ctx: TraversalContext {
+workers-1   |     path: [],
+workers-1   |     queuedMorphs: [],
+workers-1   |     errors: [Circular *1],
+workers-1   |     branches: [],
+workers-1   |     seen: {},
+workers-1   |     root: {
+workers-1   |       hash160: null,
+workers-1   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-1   |       n_tx: 1152,
+workers-1   |       n_unredeemed: 400,
+workers-1   |       total_received: 391894757,
+workers-3   |       expected: [Function (anonymous)],
+workers-3   |       problem: [Function (anonymous)],
+workers-3   |       message: [Function (anonymous)]
+workers-1   |       total_sent: 390470099,
+workers-1   |       final_balance: 1424658,
+workers-1   |       txs: [Array]
+workers-1   |     },
+workers-1   |     config: {
+workers-1   |       min: [Object],
+workers-1   |       max: [Object],
+workers-1   |       minLength: [Object],
+workers-3   |     },
+workers-3   |     input: {
+workers-3   |       code: 'proto',
+workers-3   |       description: 'an array',
+workers-2   |       data: [Object],
+workers-2   |       nodeConfig: [Object],
+workers-2   |       input: [Object],
+workers-2   |       code: 'proto',
+workers-2   |       description: 'an array',
+workers-2   |       proto: [Function: Array]
+workers-2   |     }
+workers-1   |       maxLength: [Object],
+workers-1   |       exactLength: [Object],
+workers-1   |       after: [Object],
+workers-1   |       before: [Object],
+workers-1   |       alias: [Object],
+workers-1   |       domain: [Object],
+workers-1   |       unit: [Object],
+workers-1   |       proto: [Object],
+workers-1   |       union: [Object],
+workers-3   |       proto: [Function: Array]
+workers-3   |     },
+workers-3   |     code: 'proto',
+workers-3   |     description: 'an array',
+workers-3   |     proto: [Function: Array]
+workers-3   |   },
+workers-3   |   ctx: TraversalContext {
+workers-3   |     path: [],
+workers-3   |     queuedMorphs: [],
+workers-3   |     errors: [Circular *1],
+workers-3   |     branches: [],
+workers-1   |       morph: [Object],
+workers-1   |       intersection: [Object],
+workers-1   |       divisor: [Object],
+workers-3   |     seen: {},
+workers-3   |     root: {
+workers-3   |       hash160: null,
+workers-1   |       pattern: [Object],
+workers-1   |       predicate: [Object],
+workers-1   |       required: [Object],
+workers-3   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-3   |       n_tx: 1152,
+workers-3   |       n_unredeemed: 400,
+workers-3   |       total_received: 391894757,
+workers-3   |       total_sent: 390470099,
+workers-3   |       final_balance: 1424658,
+workers-3   |       txs: [Array]
+workers-3   |     },
+workers-3   |     config: {
+workers-3   |       min: [Object],
+workers-3   |       max: [Object],
+workers-3   |       minLength: [Object],
+workers-3   |       maxLength: [Object],
+workers-1   |       optional: [Object],
+workers-1   |       index: [Object],
+workers-1   |       sequence: [Object],
+workers-1   |       structure: [Object],
+workers-1   |       jitless: false,
+workers-1   |       clone: [Function: deepClone],
+workers-1   |       onUndeclaredKey: 'ignore',
+workers-1   |       prereducedAliases: true,
+workers-1   |       ambient: true
+workers-1   |     }
+workers-1   |   },
+workers-1   |   byPath: {
+workers-3   |       exactLength: [Object],
+workers-3   |       after: [Object],
+workers-3   |       before: [Object],
+workers-1   |     '': ArkError {
+workers-1   |       ' arkKind': 'error',
+workers-1   |       path: [],
+workers-3   |       alias: [Object],
+workers-3   |       domain: [Object],
+workers-3   |       unit: [Object],
+workers-3   |       proto: [Object],
+workers-3   |       union: [Object],
+workers-3   |       morph: [Object],
+workers-3   |       intersection: [Object],
+workers-2   |   },
+workers-2   |   count: 1,
+workers-2   |   mutable: [Circular *1]
+workers-2   | ]
+workers-2   | Job: 19, for updateCoins has completed!
+workers-3   |       divisor: [Object],
+workers-3   |       pattern: [Object],
+workers-3   |       predicate: [Object],
+workers-3   |       required: [Object],
+workers-3   |       optional: [Object],
+workers-3   |       index: [Object],
+workers-1   |       data: [Object],
+workers-1   |       nodeConfig: [Object],
+workers-1   |       input: [Object],
+workers-1   |       code: 'proto',
+workers-1   |       description: 'an array',
+workers-1   |       proto: [Function: Array]
+workers-1   |     }
+workers-1   |   },
+workers-1   |   count: 1,
+workers-1   |   mutable: [Circular *1]
+workers-1   | ]
+workers-1   | Job: 31, for updateBlockchainWallets has completed!
+workers-1   | Job: 22, for updateCoins has completed!
+workers-1   | Starting job updating solana wallets with ID 39 and undefined transactions
+workers-1   | Starting job updating important coins with ID 27 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":1}}
+workers-1   | Job: 39, for updateBlockchainWallets has completed!
+workers-1   | Job updateCoins-27 has failed with err:  SyntaxError: Unexpected token 'T', "Throttled
+workers-1   | " is not valid JSON
+workers-3   |       sequence: [Object],
+workers-3   |       structure: [Object],
+workers-3   |       jitless: false,
+workers-3   |       clone: [Function: deepClone],
+workers-2   | Job: 29, for updateBlockchainWallets has completed!
+workers-2   | Job updateCoins-18 has failed with err:  SyntaxError: Unexpected token 'T', "Throttled
+workers-2   | " is not valid JSON
+workers-2   |     at JSON.parse (<anonymous>)
+workers-2   |     at parseJSONFromBytes (node:internal/deps/undici/undici:5489:19)
+workers-2   |     at successSteps (node:internal/deps/undici/undici:5470:27)
+workers-2   |     at fullyReadBody (node:internal/deps/undici/undici:4381:9)
+workers-1   |     at JSON.parse (<anonymous>)
+workers-1   |     at parseJSONFromBytes (node:internal/deps/undici/undici:5489:19)
+workers-1   |     at successSteps (node:internal/deps/undici/undici:5470:27)
+workers-1   |     at fullyReadBody (node:internal/deps/undici/undici:4381:9)
+workers-2   |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+workers-2   |     at async consumeBody (node:internal/deps/undici/undici:5479:7)
+workers-2   |     at async CoinGecko.getCandleData (file:///app/packages/adapters/dist/providers/coins.provider.js:159:26)
+workers-2   |     at async CoinsService.saveCandles (file:///app/packages/domain/dist/core/coins.service.js:198:25)
+workers-2   |     at async CoinsService.updateCoinsByMarketcap (file:///app/packages/domain/dist/core/coins.service.js:188:13)
+workers-2   |     at async Worker.connection.host [as processFn] (file:///app/apps/workers/dist/coins.worker.js:15:17)
+workers-2   | Job updateCoins-20 has failed with err:  SyntaxError: Unexpected token 'T', "Throttled
+workers-2   | " is not valid JSON
+workers-1   |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+workers-1   |     at async consumeBody (node:internal/deps/undici/undici:5479:7)
+workers-1   |     at async CoinGecko.getCandleData (file:///app/packages/adapters/dist/providers/coins.provider.js:159:26)
+workers-1   |     at async CoinsService.saveCandles (file:///app/packages/domain/dist/core/coins.service.js:198:25)
+workers-1   |     at async CoinsService.updateCoinsByMarketcap (file:///app/packages/domain/dist/core/coins.service.js:188:13)
+workers-1   |     at async Worker.connection.host [as processFn] (file:///app/apps/workers/dist/coins.worker.js:15:17)
+workers-1   | Starting job updating important coins with ID 28 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":1}}
+workers-1   | Starting job updating solana wallets with ID 45 and undefined transactions
+workers-1   | Job: 45, for updateBlockchainWallets has completed!
+workers-1   | Job: 28, for updateCoins has completed!
+workers-1   | Starting job updating solana wallets with ID 49 and undefined transactions
+workers-3   |       onUndeclaredKey: 'ignore',
+workers-3   |       prereducedAliases: true,
+workers-3   |       ambient: true
+workers-3   |     }
+workers-3   |   },
+workers-3   |   byPath: {
+workers-3   |     '': ArkError {
+workers-3   |       ' arkKind': 'error',
+workers-2   |     at JSON.parse (<anonymous>)
+workers-2   |     at parseJSONFromBytes (node:internal/deps/undici/undici:5489:19)
+workers-3   |       path: [],
+workers-3   |       data: [Object],
+workers-3   |       nodeConfig: [Object],
+workers-3   |       input: [Object],
+workers-3   |       code: 'proto',
+workers-3   |       description: 'an array',
+workers-3   |       proto: [Function: Array]
+workers-3   |     }
+workers-2   |     at successSteps (node:internal/deps/undici/undici:5470:27)
+workers-2   |     at fullyReadBody (node:internal/deps/undici/undici:4381:9)
+workers-2   |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+workers-3   |   },
+workers-3   |   count: 1,
+workers-3   |   mutable: [Circular *1]
+workers-3   | ]
+workers-3   | Job: 21, for updateCoins has completed!
+workers-3   | Job: 17, for updateCoins has completed!
+workers-3   | Job: 25, for updateBlockchainWallets has completed!
+workers-3   | Starting job updating bitcoin wallets with ID 32 and undefined transactions
+workers-3   | Starting job updating bitcoin wallets with ID 34 and undefined transactions
+workers-1   | Starting job updating bitcoin wallets with ID 52 and undefined transactions
+workers-1   | Starting job updating less importan coins with ID 36 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":12}}
+workers-1   | Starting job updating bitcoin wallets with ID 54 and undefined transactions
+workers-1   | Starting job updating less importan coins with ID 39 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":12}}
+workers-3   | Starting job updating solana wallets with ID 35 and undefined transactions
+workers-3   | Starting job updating important coins with ID 24 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":1}}
+workers-3   | Job updateBlockchainWallets-32 has failed with err:  <ref *1> ArkErrors(1) [
+workers-3   |   ArkError {
+workers-3   |     ' arkKind': 'error',
+workers-3   |     path: [],
+workers-1   | Job updateBlockchainWallets-54 has failed with err:  <ref *1> ArkErrors(1) [
+workers-1   |   ArkError {
+workers-1   |     ' arkKind': 'error',
+workers-1   |     path: [],
+workers-1   |     data: {
+workers-1   |       hash160: null,
+workers-1   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-1   |       n_tx: 1152,
+workers-3   |     data: {
+workers-3   |       hash160: null,
+workers-3   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-3   |       n_tx: 1152,
+workers-1   |       n_unredeemed: 400,
+workers-1   |       total_received: 391894757,
+workers-1   |       total_sent: 390470099,
+workers-1   |       final_balance: 1424658,
+workers-1   |       txs: [Array]
+workers-1   |     },
+workers-1   |     nodeConfig: {
+workers-1   |       description: [Function: description],
+workers-1   |       actual: [Function: actual],
+workers-1   |       expected: [Function (anonymous)],
+workers-2   |     at async consumeBody (node:internal/deps/undici/undici:5479:7)
+workers-2   |     at async CoinGecko.getCandleData (file:///app/packages/adapters/dist/providers/coins.provider.js:159:26)
+workers-2   |     at async CoinsService.saveCandles (file:///app/packages/domain/dist/core/coins.service.js:198:25)
+workers-2   |     at async CoinsService.updateCoinsByMarketcap (file:///app/packages/domain/dist/core/coins.service.js:188:13)
+workers-2   |     at async Worker.connection.host [as processFn] (file:///app/apps/workers/dist/coins.worker.js:15:17)
+workers-2   | Starting job updating solana wallets with ID 33 and undefined transactions
+workers-2   | Starting job updating important coins with ID 23 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":1}}
+workers-2   | Job: 33, for updateBlockchainWallets has completed!
+workers-2   | Job: 23, for updateCoins has completed!
+workers-2   | Starting job updating bitcoin wallets with ID 38 and undefined transactions
+workers-2   | Starting job updating important coins with ID 26 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":1}}
+workers-2   | Starting job updating bitcoin wallets with ID 42 and undefined transactions
+workers-1   |       problem: [Function (anonymous)],
+workers-1   |       message: [Function (anonymous)]
+workers-1   |     },
+workers-2   | Job updateBlockchainWallets-42 has failed with err:  <ref *1> ArkErrors(1) [
+workers-2   |   ArkError {
+workers-2   |     ' arkKind': 'error',
+workers-1   |     input: {
+workers-1   |       code: 'proto',
+workers-1   |       description: 'an array',
+workers-2   |     path: [],
+workers-2   |     data: {
+workers-2   |       hash160: null,
+workers-1   |       proto: [Function: Array]
+workers-1   |     },
+workers-2   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-2   |       n_tx: 1152,
+workers-2   |       n_unredeemed: 400,
+workers-2   |       total_received: 391894757,
+workers-2   |       total_sent: 390470099,
+workers-2   |       final_balance: 1424658,
+workers-2   |       txs: [Array]
+workers-2   |     },
+workers-2   |     nodeConfig: {
+workers-1   |     code: 'proto',
+workers-1   |     description: 'an array',
+workers-1   |     proto: [Function: Array]
+workers-2   |       description: [Function: description],
+workers-2   |       actual: [Function: actual],
+workers-2   |       expected: [Function (anonymous)],
+workers-2   |       problem: [Function (anonymous)],
+workers-2   |       message: [Function (anonymous)]
+workers-2   |     },
+workers-3   |       n_unredeemed: 400,
+workers-3   |       total_received: 391894757,
+workers-3   |       total_sent: 390470099,
+workers-2   |     input: {
+workers-2   |       code: 'proto',
+workers-2   |       description: 'an array',
+workers-2   |       proto: [Function: Array]
+workers-1   |   },
+workers-1   |   ctx: TraversalContext {
+workers-1   |     path: [],
+workers-1   |     queuedMorphs: [],
+workers-1   |     errors: [Circular *1],
+workers-1   |     branches: [],
+workers-1   |     seen: {},
+workers-1   |     root: {
+workers-1   |       hash160: null,
+workers-1   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-1   |       n_tx: 1152,
+workers-3   |       final_balance: 1424658,
+workers-3   |       txs: [Array]
+workers-3   |     },
+workers-1   |       n_unredeemed: 400,
+workers-1   |       total_received: 391894757,
+workers-2   |     },
+workers-2   |     code: 'proto',
+workers-1   |       total_sent: 390470099,
+workers-1   |       final_balance: 1424658,
+workers-1   |       txs: [Array]
+workers-1   |     },
+workers-1   |     config: {
+workers-2   |     description: 'an array',
+workers-2   |     proto: [Function: Array]
+workers-2   |   },
+workers-2   |   ctx: TraversalContext {
+workers-2   |     path: [],
+workers-1   |       min: [Object],
+workers-1   |       max: [Object],
+workers-1   |       minLength: [Object],
+workers-1   |       maxLength: [Object],
+workers-1   |       exactLength: [Object],
+workers-1   |       after: [Object],
+workers-1   |       before: [Object],
+workers-1   |       alias: [Object],
+workers-1   |       domain: [Object],
+workers-1   |       unit: [Object],
+workers-1   |       proto: [Object],
+workers-1   |       union: [Object],
+workers-1   |       morph: [Object],
+workers-1   |       intersection: [Object],
+workers-1   |       divisor: [Object],
+workers-1   |       pattern: [Object],
+workers-1   |       predicate: [Object],
+workers-2   |     queuedMorphs: [],
+workers-2   |     errors: [Circular *1],
+workers-2   |     branches: [],
+workers-1   |       required: [Object],
+workers-1   |       optional: [Object],
+workers-1   |       index: [Object],
+workers-1   |       sequence: [Object],
+workers-1   |       structure: [Object],
+workers-1   |       jitless: false,
+workers-1   |       clone: [Function: deepClone],
+workers-1   |       onUndeclaredKey: 'ignore',
+workers-1   |       prereducedAliases: true,
+workers-1   |       ambient: true
+workers-1   |     }
+workers-1   |   },
+workers-1   |   byPath: {
+workers-1   |     '': ArkError {
+workers-1   |       ' arkKind': 'error',
+workers-3   |     nodeConfig: {
+workers-3   |       description: [Function: description],
+workers-3   |       actual: [Function: actual],
+workers-1   |       path: [],
+workers-1   |       data: [Object],
+workers-1   |       nodeConfig: [Object],
+workers-1   |       input: [Object],
+workers-1   |       code: 'proto',
+workers-1   |       description: 'an array',
+workers-1   |       proto: [Function: Array]
+workers-1   |     }
+workers-1   |   },
+workers-1   |   count: 1,
+workers-1   |   mutable: [Circular *1]
+workers-1   | ]
+workers-3   |       expected: [Function (anonymous)],
+workers-3   |       problem: [Function (anonymous)],
+workers-3   |       message: [Function (anonymous)]
+workers-1   | Job updateBlockchainWallets-52 has failed with err:  <ref *1> ArkErrors(1) [
+workers-1   |   ArkError {
+workers-1   |     ' arkKind': 'error',
+workers-1   |     path: [],
+workers-1   |     data: {
+workers-1   |       hash160: null,
+workers-1   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-1   |       n_tx: 1152,
+workers-1   |       n_unredeemed: 400,
+workers-1   |       total_received: 391894757,
+workers-2   |     seen: {},
+workers-2   |     root: {
+workers-2   |       hash160: null,
+workers-2   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-2   |       n_tx: 1152,
+workers-2   |       n_unredeemed: 400,
+workers-2   |       total_received: 391894757,
+workers-2   |       total_sent: 390470099,
+workers-2   |       final_balance: 1424658,
+workers-2   |       txs: [Array]
+workers-2   |     },
+workers-2   |     config: {
+workers-2   |       min: [Object],
+workers-2   |       max: [Object],
+workers-2   |       minLength: [Object],
+workers-2   |       maxLength: [Object],
+workers-3   |     },
+workers-3   |     input: {
+workers-3   |       code: 'proto',
+workers-2   |       exactLength: [Object],
+workers-2   |       after: [Object],
+workers-2   |       before: [Object],
+workers-3   |       description: 'an array',
+workers-3   |       proto: [Function: Array]
+workers-3   |     },
+workers-3   |     code: 'proto',
+workers-3   |     description: 'an array',
+workers-3   |     proto: [Function: Array]
+workers-3   |   },
+workers-3   |   ctx: TraversalContext {
+workers-3   |     path: [],
+workers-2   |       alias: [Object],
+workers-2   |       domain: [Object],
+workers-2   |       unit: [Object],
+workers-3   |     queuedMorphs: [],
+workers-3   |     errors: [Circular *1],
+workers-3   |     branches: [],
+workers-3   |     seen: {},
+workers-3   |     root: {
+workers-3   |       hash160: null,
+workers-2   |       proto: [Object],
+workers-2   |       union: [Object],
+workers-3   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-3   |       n_tx: 1152,
+workers-3   |       n_unredeemed: 400,
+workers-3   |       total_received: 391894757,
+workers-3   |       total_sent: 390470099,
+workers-3   |       final_balance: 1424658,
+workers-3   |       txs: [Array]
+workers-3   |     },
+workers-3   |     config: {
+workers-3   |       min: [Object],
+workers-3   |       max: [Object],
+workers-3   |       minLength: [Object],
+workers-3   |       maxLength: [Object],
+workers-3   |       exactLength: [Object],
+workers-3   |       after: [Object],
+workers-3   |       before: [Object],
+workers-3   |       alias: [Object],
+workers-3   |       domain: [Object],
+workers-3   |       unit: [Object],
+workers-3   |       proto: [Object],
+workers-3   |       union: [Object],
+workers-3   |       morph: [Object],
+workers-3   |       intersection: [Object],
+workers-3   |       divisor: [Object],
+workers-3   |       pattern: [Object],
+workers-3   |       predicate: [Object],
+workers-3   |       required: [Object],
+workers-3   |       optional: [Object],
+workers-3   |       index: [Object],
+workers-3   |       sequence: [Object],
+workers-3   |       structure: [Object],
+workers-3   |       jitless: false,
+workers-3   |       clone: [Function: deepClone],
+workers-3   |       onUndeclaredKey: 'ignore',
+workers-3   |       prereducedAliases: true,
+workers-3   |       ambient: true
+workers-3   |     }
+workers-3   |   },
+workers-3   |   byPath: {
+workers-3   |     '': ArkError {
+workers-2   |       morph: [Object],
+workers-2   |       intersection: [Object],
+workers-2   |       divisor: [Object],
+workers-2   |       pattern: [Object],
+workers-2   |       predicate: [Object],
+workers-2   |       required: [Object],
+workers-2   |       optional: [Object],
+workers-2   |       index: [Object],
+workers-2   |       sequence: [Object],
+workers-2   |       structure: [Object],
+workers-2   |       jitless: false,
+workers-1   |       total_sent: 390470099,
+workers-1   |       final_balance: 1424658,
+workers-1   |       txs: [Array]
+workers-1   |     },
+workers-1   |     nodeConfig: {
+workers-1   |       description: [Function: description],
+workers-3   |       ' arkKind': 'error',
+workers-3   |       path: [],
+workers-3   |       data: [Object],
+workers-3   |       nodeConfig: [Object],
+workers-3   |       input: [Object],
+workers-3   |       code: 'proto',
+workers-3   |       description: 'an array',
+workers-3   |       proto: [Function: Array]
+workers-2   |       clone: [Function: deepClone],
+workers-2   |       onUndeclaredKey: 'ignore',
+workers-2   |       prereducedAliases: true,
+workers-2   |       ambient: true
+workers-1   |       actual: [Function: actual],
+workers-1   |       expected: [Function (anonymous)],
+workers-1   |       problem: [Function (anonymous)],
+workers-1   |       message: [Function (anonymous)]
+workers-1   |     },
+workers-1   |     input: {
+workers-1   |       code: 'proto',
+workers-1   |       description: 'an array',
+workers-1   |       proto: [Function: Array]
+workers-1   |     },
+workers-1   |     code: 'proto',
+workers-1   |     description: 'an array',
+workers-3   |     }
+workers-3   |   },
+workers-3   |   count: 1,
+workers-3   |   mutable: [Circular *1]
+workers-3   | ]
+workers-3   | Job updateBlockchainWallets-34 has failed with err:  <ref *1> ArkErrors(1) [
+workers-3   |   ArkError {
+workers-3   |     ' arkKind': 'error',
+workers-2   |     }
+workers-2   |   },
+workers-2   |   byPath: {
+workers-2   |     '': ArkError {
+workers-3   |     path: [],
+workers-3   |     data: {
+workers-3   |       hash160: null,
+workers-3   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-3   |       n_tx: 1152,
+workers-3   |       n_unredeemed: 400,
+workers-3   |       total_received: 391894757,
+workers-3   |       total_sent: 390470099,
+workers-3   |       final_balance: 1424658,
+workers-3   |       txs: [Array]
+workers-3   |     },
+workers-3   |     nodeConfig: {
+workers-3   |       description: [Function: description],
+workers-3   |       actual: [Function: actual],
+workers-3   |       expected: [Function (anonymous)],
+workers-3   |       problem: [Function (anonymous)],
+workers-2   |       ' arkKind': 'error',
+workers-2   |       path: [],
+workers-2   |       data: [Object],
+workers-3   |       message: [Function (anonymous)]
+workers-3   |     },
+workers-3   |     input: {
+workers-3   |       code: 'proto',
+workers-3   |       description: 'an array',
+workers-3   |       proto: [Function: Array]
+workers-3   |     },
+workers-3   |     code: 'proto',
+workers-3   |     description: 'an array',
+workers-3   |     proto: [Function: Array]
+workers-3   |   },
+workers-3   |   ctx: TraversalContext {
+workers-3   |     path: [],
+workers-2   |       nodeConfig: [Object],
+workers-2   |       input: [Object],
+workers-2   |       code: 'proto',
+workers-2   |       description: 'an array',
+workers-2   |       proto: [Function: Array]
+workers-2   |     }
+workers-2   |   },
+workers-2   |   count: 1,
+workers-2   |   mutable: [Circular *1]
+workers-1   |     proto: [Function: Array]
+workers-1   |   },
+workers-1   |   ctx: TraversalContext {
+workers-1   |     path: [],
+workers-1   |     queuedMorphs: [],
+workers-1   |     errors: [Circular *1],
+workers-1   |     branches: [],
+workers-1   |     seen: {},
+workers-1   |     root: {
+workers-1   |       hash160: null,
+workers-3   |     queuedMorphs: [],
+workers-3   |     errors: [Circular *1],
+workers-3   |     branches: [],
+workers-2   | ]
+workers-2   | Job updateBlockchainWallets-38 has failed with err:  <ref *1> ArkErrors(1) [
+workers-2   |   ArkError {
+workers-2   |     ' arkKind': 'error',
+workers-2   |     path: [],
+workers-2   |     data: {
+workers-2   |       hash160: null,
+workers-2   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-2   |       n_tx: 1152,
+workers-2   |       n_unredeemed: 400,
+workers-2   |       total_received: 391894757,
+workers-2   |       total_sent: 390470099,
+workers-3   |     seen: {},
+workers-3   |     root: {
+workers-3   |       hash160: null,
+workers-3   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-1   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-1   |       n_tx: 1152,
+workers-1   |       n_unredeemed: 400,
+workers-1   |       total_received: 391894757,
+workers-1   |       total_sent: 390470099,
+workers-1   |       final_balance: 1424658,
+workers-1   |       txs: [Array]
+workers-1   |     },
+workers-1   |     config: {
+workers-1   |       min: [Object],
+workers-1   |       max: [Object],
+workers-1   |       minLength: [Object],
+workers-1   |       maxLength: [Object],
+workers-1   |       exactLength: [Object],
+workers-1   |       after: [Object],
+workers-2   |       final_balance: 1424658,
+workers-2   |       txs: [Array]
+workers-2   |     },
+workers-2   |     nodeConfig: {
+workers-2   |       description: [Function: description],
+workers-2   |       actual: [Function: actual],
+workers-2   |       expected: [Function (anonymous)],
+workers-2   |       problem: [Function (anonymous)],
+workers-2   |       message: [Function (anonymous)]
+workers-2   |     },
+workers-2   |     input: {
+workers-2   |       code: 'proto',
+workers-2   |       description: 'an array',
+workers-2   |       proto: [Function: Array]
+workers-2   |     },
+workers-2   |     code: 'proto',
+workers-2   |     description: 'an array',
+workers-2   |     proto: [Function: Array]
+workers-2   |   },
+workers-2   |   ctx: TraversalContext {
+workers-1   |       before: [Object],
+workers-1   |       alias: [Object],
+workers-1   |       domain: [Object],
+workers-1   |       unit: [Object],
+workers-2   |     path: [],
+workers-2   |     queuedMorphs: [],
+workers-2   |     errors: [Circular *1],
+workers-2   |     branches: [],
+workers-2   |     seen: {},
+workers-2   |     root: {
+workers-2   |       hash160: null,
+workers-3   |       n_tx: 1152,
+workers-3   |       n_unredeemed: 400,
+workers-3   |       total_received: 391894757,
+workers-3   |       total_sent: 390470099,
+workers-3   |       final_balance: 1424658,
+workers-3   |       txs: [Array]
+workers-3   |     },
+workers-3   |     config: {
+workers-3   |       min: [Object],
+workers-3   |       max: [Object],
+workers-3   |       minLength: [Object],
+workers-2   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-2   |       n_tx: 1152,
+workers-2   |       n_unredeemed: 400,
+workers-3   |       maxLength: [Object],
+workers-3   |       exactLength: [Object],
+workers-3   |       after: [Object],
+workers-2   |       total_received: 391894757,
+workers-2   |       total_sent: 390470099,
+workers-2   |       final_balance: 1424658,
+workers-2   |       txs: [Array]
+workers-2   |     },
+workers-2   |     config: {
+workers-2   |       min: [Object],
+workers-2   |       max: [Object],
+workers-2   |       minLength: [Object],
+workers-2   |       maxLength: [Object],
+workers-1   |       proto: [Object],
+workers-1   |       union: [Object],
+workers-1   |       morph: [Object],
+workers-1   |       intersection: [Object],
+workers-1   |       divisor: [Object],
+workers-1   |       pattern: [Object],
+workers-1   |       predicate: [Object],
+workers-1   |       required: [Object],
+workers-1   |       optional: [Object],
+workers-1   |       index: [Object],
+workers-1   |       sequence: [Object],
+workers-1   |       structure: [Object],
+workers-2   |       exactLength: [Object],
+workers-2   |       after: [Object],
+workers-2   |       before: [Object],
+workers-2   |       alias: [Object],
+workers-2   |       domain: [Object],
+workers-2   |       unit: [Object],
+workers-2   |       proto: [Object],
+workers-3   |       before: [Object],
+workers-3   |       alias: [Object],
+workers-3   |       domain: [Object],
+workers-3   |       unit: [Object],
+workers-2   |       union: [Object],
+workers-2   |       morph: [Object],
+workers-2   |       intersection: [Object],
+workers-2   |       divisor: [Object],
+workers-2   |       pattern: [Object],
+workers-2   |       predicate: [Object],
+workers-3   |       proto: [Object],
+workers-3   |       union: [Object],
+workers-3   |       morph: [Object],
+workers-2   |       required: [Object],
+workers-2   |       optional: [Object],
+workers-2   |       index: [Object],
+workers-2   |       sequence: [Object],
+workers-3   |       intersection: [Object],
+workers-3   |       divisor: [Object],
+workers-3   |       pattern: [Object],
+workers-3   |       predicate: [Object],
+workers-3   |       required: [Object],
+workers-3   |       optional: [Object],
+workers-3   |       index: [Object],
+workers-3   |       sequence: [Object],
+workers-3   |       structure: [Object],
+workers-3   |       jitless: false,
+workers-3   |       clone: [Function: deepClone],
+workers-1   |       jitless: false,
+workers-1   |       clone: [Function: deepClone],
+workers-1   |       onUndeclaredKey: 'ignore',
+workers-3   |       onUndeclaredKey: 'ignore',
+workers-3   |       prereducedAliases: true,
+workers-3   |       ambient: true
+workers-3   |     }
+workers-3   |   },
+workers-3   |   byPath: {
+workers-3   |     '': ArkError {
+workers-3   |       ' arkKind': 'error',
+workers-3   |       path: [],
+workers-3   |       data: [Object],
+workers-3   |       nodeConfig: [Object],
+workers-1   |       prereducedAliases: true,
+workers-1   |       ambient: true
+workers-1   |     }
+workers-1   |   },
+workers-1   |   byPath: {
+workers-1   |     '': ArkError {
+workers-1   |       ' arkKind': 'error',
+workers-1   |       path: [],
+workers-1   |       data: [Object],
+workers-1   |       nodeConfig: [Object],
+workers-1   |       input: [Object],
+workers-1   |       code: 'proto',
+workers-1   |       description: 'an array',
+workers-1   |       proto: [Function: Array]
+workers-3   |       input: [Object],
+workers-3   |       code: 'proto',
+workers-3   |       description: 'an array',
+workers-1   |     }
+workers-1   |   },
+workers-1   |   count: 1,
+workers-1   |   mutable: [Circular *1]
+workers-1   | ]
+workers-1   | Job: 36, for updateCoins has completed!
+workers-1   | Job: 39, for updateCoins has completed!
+workers-1   | Job: 49, for updateBlockchainWallets has completed!
+workers-3   |       proto: [Function: Array]
+workers-2   |       structure: [Object],
+workers-2   |       jitless: false,
+workers-2   |       clone: [Function: deepClone],
+workers-2   |       onUndeclaredKey: 'ignore',
+workers-3   |     }
+workers-3   |   },
+workers-3   |   count: 1,
+workers-3   |   mutable: [Circular *1]
+workers-3   | ]
+workers-3   | Job: 35, for updateBlockchainWallets has completed!
+workers-3   | Job: 24, for updateCoins has completed!
+workers-3   | Starting job updating solana wallets with ID 37 and undefined transactions
+workers-3   | Starting job updating important coins with ID 25 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":1}}
+workers-3   | Starting job updating bitcoin wallets with ID 40 and undefined transactions
+workers-3   | Starting job updating solana wallets with ID 41 and undefined transactions
+workers-3   | Job updateBlockchainWallets-40 has failed with err:  <ref *1> ArkErrors(1) [
+workers-3   |   ArkError {
+workers-3   |     ' arkKind': 'error',
+workers-3   |     path: [],
+workers-3   |     data: {
+workers-3   |       hash160: null,
+workers-3   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-3   |       n_tx: 1152,
+workers-2   |       prereducedAliases: true,
+workers-2   |       ambient: true
+workers-2   |     }
+workers-3   |       n_unredeemed: 400,
+workers-3   |       total_received: 391894757,
+workers-3   |       total_sent: 390470099,
+workers-3   |       final_balance: 1424658,
+workers-3   |       txs: [Array]
+workers-3   |     },
+workers-2   |   },
+workers-2   |   byPath: {
+workers-2   |     '': ArkError {
+workers-3   |     nodeConfig: {
+workers-3   |       description: [Function: description],
+workers-3   |       actual: [Function: actual],
+workers-3   |       expected: [Function (anonymous)],
+workers-3   |       problem: [Function (anonymous)],
+workers-3   |       message: [Function (anonymous)]
+workers-3   |     },
+workers-3   |     input: {
+workers-3   |       code: 'proto',
+workers-3   |       description: 'an array',
+workers-3   |       proto: [Function: Array]
+workers-3   |     },
+workers-3   |     code: 'proto',
+workers-2   |       ' arkKind': 'error',
+workers-2   |       path: [],
+workers-2   |       data: [Object],
+workers-2   |       nodeConfig: [Object],
+workers-2   |       input: [Object],
+workers-2   |       code: 'proto',
+workers-2   |       description: 'an array',
+workers-2   |       proto: [Function: Array]
+workers-2   |     }
+workers-2   |   },
+workers-2   |   count: 1,
+workers-2   |   mutable: [Circular *1]
+workers-2   | ]
+workers-2   | Job updateCoins-26 has failed with err:  SyntaxError: Unexpected token 'T', "Throttled
+workers-3   |     description: 'an array',
+workers-3   |     proto: [Function: Array]
+workers-3   |   },
+workers-2   | " is not valid JSON
+workers-2   |     at JSON.parse (<anonymous>)
+workers-2   |     at parseJSONFromBytes (node:internal/deps/undici/undici:5489:19)
+workers-2   |     at successSteps (node:internal/deps/undici/undici:5470:27)
+workers-2   |     at fullyReadBody (node:internal/deps/undici/undici:4381:9)
+workers-2   |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+workers-3   |   ctx: TraversalContext {
+workers-3   |     path: [],
+workers-3   |     queuedMorphs: [],
+workers-3   |     errors: [Circular *1],
+workers-3   |     branches: [],
+workers-3   |     seen: {},
+workers-3   |     root: {
+workers-3   |       hash160: null,
+workers-3   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-3   |       n_tx: 1152,
+workers-3   |       n_unredeemed: 400,
+workers-3   |       total_received: 391894757,
+workers-3   |       total_sent: 390470099,
+workers-3   |       final_balance: 1424658,
+workers-3   |       txs: [Array]
+workers-3   |     },
+workers-3   |     config: {
+workers-3   |       min: [Object],
+workers-3   |       max: [Object],
+workers-2   |     at async consumeBody (node:internal/deps/undici/undici:5479:7)
+workers-2   |     at async CoinGecko.getCandleData (file:///app/packages/adapters/dist/providers/coins.provider.js:159:26)
+workers-2   |     at async CoinsService.saveCandles (file:///app/packages/domain/dist/core/coins.service.js:198:25)
+workers-3   |       minLength: [Object],
+workers-3   |       maxLength: [Object],
+workers-2   |     at async CoinsService.updateCoinsByMarketcap (file:///app/packages/domain/dist/core/coins.service.js:188:13)
+workers-2   |     at async Worker.connection.host [as processFn] (file:///app/apps/workers/dist/coins.worker.js:15:17)
+workers-2   | Starting job updating bitcoin wallets with ID 44 and undefined transactions
+workers-2   | Starting job updating bitcoin wallets with ID 48 and undefined transactions
+workers-2   | Starting job updating important coins with ID 30 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":1}}
+workers-2   | Job updateBlockchainWallets-44 has failed with err:  <ref *1> ArkErrors(1) [
+workers-2   |   ArkError {
+workers-2   |     ' arkKind': 'error',
+workers-2   |     path: [],
+workers-2   |     data: {
+workers-2   |       hash160: null,
+workers-2   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-2   |       n_tx: 1152,
+workers-3   |       exactLength: [Object],
+workers-3   |       after: [Object],
+workers-3   |       before: [Object],
+workers-3   |       alias: [Object],
+workers-3   |       domain: [Object],
+workers-3   |       unit: [Object],
+workers-3   |       proto: [Object],
+workers-3   |       union: [Object],
+workers-3   |       morph: [Object],
+workers-3   |       intersection: [Object],
+workers-3   |       divisor: [Object],
+workers-3   |       pattern: [Object],
+workers-3   |       predicate: [Object],
+workers-3   |       required: [Object],
+workers-3   |       optional: [Object],
+workers-3   |       index: [Object],
+workers-3   |       sequence: [Object],
+workers-3   |       structure: [Object],
+workers-3   |       jitless: false,
+workers-3   |       clone: [Function: deepClone],
+workers-3   |       onUndeclaredKey: 'ignore',
+workers-2   |       n_unredeemed: 400,
+workers-2   |       total_received: 391894757,
+workers-2   |       total_sent: 390470099,
+workers-2   |       final_balance: 1424658,
+workers-2   |       txs: [Array]
+workers-2   |     },
+workers-2   |     nodeConfig: {
+workers-2   |       description: [Function: description],
+workers-2   |       actual: [Function: actual],
+workers-2   |       expected: [Function (anonymous)],
+workers-2   |       problem: [Function (anonymous)],
+workers-2   |       message: [Function (anonymous)]
+workers-2   |     },
+workers-2   |     input: {
+workers-2   |       code: 'proto',
+workers-2   |       description: 'an array',
+workers-2   |       proto: [Function: Array]
+workers-2   |     },
+workers-2   |     code: 'proto',
+workers-2   |     description: 'an array',
+workers-2   |     proto: [Function: Array]
+workers-2   |   },
+workers-2   |   ctx: TraversalContext {
+workers-2   |     path: [],
+workers-3   |       prereducedAliases: true,
+workers-3   |       ambient: true
+workers-3   |     }
+workers-3   |   },
+workers-3   |   byPath: {
+workers-3   |     '': ArkError {
+workers-3   |       ' arkKind': 'error',
+workers-3   |       path: [],
+workers-3   |       data: [Object],
+workers-3   |       nodeConfig: [Object],
+workers-3   |       input: [Object],
+workers-3   |       code: 'proto',
+workers-3   |       description: 'an array',
+workers-3   |       proto: [Function: Array]
+workers-3   |     }
+workers-3   |   },
+workers-3   |   count: 1,
+workers-3   |   mutable: [Circular *1]
+workers-3   | ]
+workers-3   | Job: 37, for updateBlockchainWallets has completed!
+workers-3   | Job: 41, for updateBlockchainWallets has completed!
+workers-3   | Job updateCoins-25 has failed with err:  SyntaxError: Unexpected token 'T', "Throttled
+workers-3   | " is not valid JSON
+workers-3   |     at JSON.parse (<anonymous>)
+workers-3   |     at parseJSONFromBytes (node:internal/deps/undici/undici:5489:19)
+workers-2   |     queuedMorphs: [],
+workers-2   |     errors: [Circular *1],
+workers-2   |     branches: [],
+workers-2   |     seen: {},
+workers-2   |     root: {
+workers-2   |       hash160: null,
+workers-2   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-2   |       n_tx: 1152,
+workers-2   |       n_unredeemed: 400,
+workers-2   |       total_received: 391894757,
+workers-2   |       total_sent: 390470099,
+workers-2   |       final_balance: 1424658,
+workers-2   |       txs: [Array]
+workers-2   |     },
+workers-2   |     config: {
+workers-2   |       min: [Object],
+workers-2   |       max: [Object],
+workers-2   |       minLength: [Object],
+workers-2   |       maxLength: [Object],
+workers-2   |       exactLength: [Object],
+workers-2   |       after: [Object],
+workers-2   |       before: [Object],
+workers-2   |       alias: [Object],
+workers-2   |       domain: [Object],
+workers-2   |       unit: [Object],
+workers-2   |       proto: [Object],
+workers-2   |       union: [Object],
+workers-3   |     at successSteps (node:internal/deps/undici/undici:5470:27)
+workers-3   |     at fullyReadBody (node:internal/deps/undici/undici:4381:9)
+workers-3   |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+workers-2   |       morph: [Object],
+workers-2   |       intersection: [Object],
+workers-2   |       divisor: [Object],
+workers-2   |       pattern: [Object],
+workers-2   |       predicate: [Object],
+workers-2   |       required: [Object],
+workers-2   |       optional: [Object],
+workers-2   |       index: [Object],
+workers-2   |       sequence: [Object],
+workers-3   |     at async consumeBody (node:internal/deps/undici/undici:5479:7)
+workers-3   |     at async CoinGecko.getCandleData (file:///app/packages/adapters/dist/providers/coins.provider.js:159:26)
+workers-3   |     at async CoinsService.saveCandles (file:///app/packages/domain/dist/core/coins.service.js:198:25)
+workers-2   |       structure: [Object],
+workers-2   |       jitless: false,
+workers-2   |       clone: [Function: deepClone],
+workers-2   |       onUndeclaredKey: 'ignore',
+workers-2   |       prereducedAliases: true,
+workers-2   |       ambient: true
+workers-2   |     }
+workers-2   |   },
+workers-2   |   byPath: {
+workers-2   |     '': ArkError {
+workers-2   |       ' arkKind': 'error',
+workers-2   |       path: [],
+workers-2   |       data: [Object],
+workers-3   |     at async CoinsService.updateCoinsByMarketcap (file:///app/packages/domain/dist/core/coins.service.js:188:13)
+workers-3   |     at async Worker.connection.host [as processFn] (file:///app/apps/workers/dist/coins.worker.js:15:17)
+workers-3   | Starting job updating solana wallets with ID 43 and undefined transactions
+workers-3   | Starting job updating bitcoin wallets with ID 46 and undefined transactions
+workers-3   | Starting job updating important coins with ID 29 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":1}}
+workers-3   | Starting job updating solana wallets with ID 47 and undefined transactions
+workers-3   | Job updateBlockchainWallets-46 has failed with err:  <ref *1> ArkErrors(1) [
+workers-3   |   ArkError {
+workers-3   |     ' arkKind': 'error',
+workers-3   |     path: [],
+workers-3   |     data: {
+workers-3   |       hash160: null,
+workers-3   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-3   |       n_tx: 1152,
+workers-3   |       n_unredeemed: 400,
+workers-2   |       nodeConfig: [Object],
+workers-2   |       input: [Object],
+workers-2   |       code: 'proto',
+workers-2   |       description: 'an array',
+workers-2   |       proto: [Function: Array]
+workers-2   |     }
+workers-3   |       total_received: 391894757,
+workers-3   |       total_sent: 390470099,
+workers-3   |       final_balance: 1424658,
+workers-2   |   },
+workers-2   |   count: 1,
+workers-2   |   mutable: [Circular *1]
+workers-2   | ]
+workers-2   | Job updateBlockchainWallets-48 has failed with err:  <ref *1> ArkErrors(1) [
+workers-2   |   ArkError {
+workers-3   |       txs: [Array]
+workers-3   |     },
+workers-3   |     nodeConfig: {
+workers-2   |     ' arkKind': 'error',
+workers-2   |     path: [],
+workers-2   |     data: {
+workers-2   |       hash160: null,
+workers-2   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-2   |       n_tx: 1152,
+workers-3   |       description: [Function: description],
+workers-3   |       actual: [Function: actual],
+workers-3   |       expected: [Function (anonymous)],
+workers-3   |       problem: [Function (anonymous)],
+workers-3   |       message: [Function (anonymous)]
+workers-3   |     },
+workers-2   |       n_unredeemed: 400,
+workers-2   |       total_received: 391894757,
+workers-2   |       total_sent: 390470099,
+workers-2   |       final_balance: 1424658,
+workers-2   |       txs: [Array]
+workers-2   |     },
+workers-2   |     nodeConfig: {
+workers-2   |       description: [Function: description],
+workers-2   |       actual: [Function: actual],
+workers-2   |       expected: [Function (anonymous)],
+workers-3   |     input: {
+workers-3   |       code: 'proto',
+workers-3   |       description: 'an array',
+workers-3   |       proto: [Function: Array]
+workers-3   |     },
+workers-3   |     code: 'proto',
+workers-3   |     description: 'an array',
+workers-3   |     proto: [Function: Array]
+workers-3   |   },
+workers-3   |   ctx: TraversalContext {
+workers-3   |     path: [],
+workers-2   |       problem: [Function (anonymous)],
+workers-2   |       message: [Function (anonymous)]
+workers-2   |     },
+workers-2   |     input: {
+workers-2   |       code: 'proto',
+workers-2   |       description: 'an array',
+workers-2   |       proto: [Function: Array]
+workers-2   |     },
+workers-2   |     code: 'proto',
+workers-2   |     description: 'an array',
+workers-2   |     proto: [Function: Array]
+workers-2   |   },
+workers-2   |   ctx: TraversalContext {
+workers-2   |     path: [],
+workers-2   |     queuedMorphs: [],
+workers-2   |     errors: [Circular *1],
+workers-2   |     branches: [],
+workers-2   |     seen: {},
+workers-2   |     root: {
+workers-2   |       hash160: null,
+workers-3   |     queuedMorphs: [],
+workers-3   |     errors: [Circular *1],
+workers-3   |     branches: [],
+workers-2   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-2   |       n_tx: 1152,
+workers-2   |       n_unredeemed: 400,
+workers-2   |       total_received: 391894757,
+workers-2   |       total_sent: 390470099,
+workers-2   |       final_balance: 1424658,
+workers-2   |       txs: [Array]
+workers-2   |     },
+workers-2   |     config: {
+workers-2   |       min: [Object],
+workers-2   |       max: [Object],
+workers-2   |       minLength: [Object],
+workers-2   |       maxLength: [Object],
+workers-2   |       exactLength: [Object],
+workers-2   |       after: [Object],
+workers-3   |     seen: {},
+workers-3   |     root: {
+workers-3   |       hash160: null,
+workers-2   |       before: [Object],
+workers-2   |       alias: [Object],
+workers-2   |       domain: [Object],
+workers-2   |       unit: [Object],
+workers-2   |       proto: [Object],
+workers-2   |       union: [Object],
+workers-2   |       morph: [Object],
+workers-2   |       intersection: [Object],
+workers-2   |       divisor: [Object],
+workers-2   |       pattern: [Object],
+workers-2   |       predicate: [Object],
+workers-2   |       required: [Object],
+workers-2   |       optional: [Object],
+workers-2   |       index: [Object],
+workers-2   |       sequence: [Object],
+workers-2   |       structure: [Object],
+workers-3   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-3   |       n_tx: 1152,
+workers-3   |       n_unredeemed: 400,
+workers-3   |       total_received: 391894757,
+workers-3   |       total_sent: 390470099,
+workers-3   |       final_balance: 1424658,
+workers-3   |       txs: [Array]
+workers-3   |     },
+workers-3   |     config: {
+workers-2   |       jitless: false,
+workers-2   |       clone: [Function: deepClone],
+workers-2   |       onUndeclaredKey: 'ignore',
+workers-2   |       prereducedAliases: true,
+workers-2   |       ambient: true
+workers-2   |     }
+workers-2   |   },
+workers-2   |   byPath: {
+workers-2   |     '': ArkError {
+workers-2   |       ' arkKind': 'error',
+workers-2   |       path: [],
+workers-2   |       data: [Object],
+workers-2   |       nodeConfig: [Object],
+workers-2   |       input: [Object],
+workers-2   |       code: 'proto',
+workers-2   |       description: 'an array',
+workers-2   |       proto: [Function: Array]
+workers-2   |     }
+workers-2   |   },
+workers-2   |   count: 1,
+workers-2   |   mutable: [Circular *1]
+workers-2   | ]
+workers-2   | Job: 30, for updateCoins has completed!
+workers-2   | Starting job updating coins with ID 32 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":4}}
+workers-2   | Starting job updating less importan coins with ID 33 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":12}}
+workers-2   | Starting job updating important coins with ID 34 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":1}}
+workers-2   | Starting job updating solana wallets with ID 51 and undefined transactions
+workers-2   | Starting job updating coins with ID 38 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":4}}
+workers-2   | Job: 32, for updateCoins has completed!
+workers-2   | Job: 38, for updateCoins has completed!
+workers-2   | Job: 33, for updateCoins has completed!
+workers-2   | Job: 51, for updateBlockchainWallets has completed!
+workers-2   | Job updateCoins-34 has failed with err:  SyntaxError: Unexpected token 'T', "Throttled
+workers-2   | " is not valid JSON
+workers-2   |     at JSON.parse (<anonymous>)
+workers-2   |     at parseJSONFromBytes (node:internal/deps/undici/undici:5489:19)
+workers-2   |     at successSteps (node:internal/deps/undici/undici:5470:27)
+workers-2   |     at fullyReadBody (node:internal/deps/undici/undici:4381:9)
+workers-2   |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+workers-2   |     at async consumeBody (node:internal/deps/undici/undici:5479:7)
+workers-2   |     at async CoinGecko.getCandleData (file:///app/packages/adapters/dist/providers/coins.provider.js:159:26)
+workers-2   |     at async CoinsService.saveCandles (file:///app/packages/domain/dist/core/coins.service.js:198:25)
+workers-2   |     at async CoinsService.updateCoinsByMarketcap (file:///app/packages/domain/dist/core/coins.service.js:188:13)
+workers-2   |     at async Worker.connection.host [as processFn] (file:///app/apps/workers/dist/coins.worker.js:15:17)
+workers-3   |       min: [Object],
+workers-3   |       max: [Object],
+workers-3   |       minLength: [Object],
+workers-3   |       maxLength: [Object],
+workers-3   |       exactLength: [Object],
+workers-3   |       after: [Object],
+workers-3   |       before: [Object],
+workers-3   |       alias: [Object],
+workers-3   |       domain: [Object],
+workers-3   |       unit: [Object],
+workers-3   |       proto: [Object],
+workers-3   |       union: [Object],
+workers-3   |       morph: [Object],
+workers-3   |       intersection: [Object],
+workers-3   |       divisor: [Object],
+workers-3   |       pattern: [Object],
+workers-3   |       predicate: [Object],
+workers-3   |       required: [Object],
+workers-3   |       optional: [Object],
+workers-3   |       index: [Object],
+workers-3   |       sequence: [Object],
+workers-3   |       structure: [Object],
+workers-3   |       jitless: false,
+workers-3   |       clone: [Function: deepClone],
+workers-3   |       onUndeclaredKey: 'ignore',
+workers-3   |       prereducedAliases: true,
+workers-3   |       ambient: true
+workers-3   |     }
+workers-3   |   },
+workers-3   |   byPath: {
+workers-3   |     '': ArkError {
+workers-3   |       ' arkKind': 'error',
+workers-3   |       path: [],
+workers-3   |       data: [Object],
+workers-3   |       nodeConfig: [Object],
+workers-3   |       input: [Object],
+workers-3   |       code: 'proto',
+workers-3   |       description: 'an array',
+workers-3   |       proto: [Function: Array]
+workers-3   |     }
+workers-3   |   },
+workers-3   |   count: 1,
+workers-3   |   mutable: [Circular *1]
+workers-3   | ]
+workers-3   | Job: 43, for updateBlockchainWallets has completed!
+workers-3   | Job: 47, for updateBlockchainWallets has completed!
+workers-3   | Job: 29, for updateCoins has completed!
+workers-3   | Starting job updating important coins with ID 31 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":1}}
+workers-3   | Starting job updating bitcoin wallets with ID 50 and undefined transactions
+workers-3   | Starting job updating coins with ID 35 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":4}}
+workers-3   | Starting job updating solana wallets with ID 53 and undefined transactions
+workers-3   | Starting job updating important coins with ID 37 and data: {"jobName":"updateCoins","updateCoinsData":{"frequency":"hourly","refresh_rate":1}}
+workers-3   | Job updateBlockchainWallets-50 has failed with err:  <ref *1> ArkErrors(1) [
+workers-3   |   ArkError {
+workers-3   |     ' arkKind': 'error',
+workers-3   |     path: [],
+workers-3   |     data: {
+workers-3   |       hash160: null,
+workers-3   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-3   |       n_tx: 1152,
+workers-3   |       n_unredeemed: 400,
+workers-3   |       total_received: 391894757,
+workers-3   |       total_sent: 390470099,
+workers-3   |       final_balance: 1424658,
+workers-3   |       txs: [Array]
+workers-3   |     },
+workers-3   |     nodeConfig: {
+workers-3   |       description: [Function: description],
+workers-3   |       actual: [Function: actual],
+workers-3   |       expected: [Function (anonymous)],
+workers-3   |       problem: [Function (anonymous)],
+workers-3   |       message: [Function (anonymous)]
+workers-3   |     },
+workers-3   |     input: {
+workers-3   |       code: 'proto',
+workers-3   |       description: 'an array',
+workers-3   |       proto: [Function: Array]
+workers-3   |     },
+workers-3   |     code: 'proto',
+workers-3   |     description: 'an array',
+workers-3   |     proto: [Function: Array]
+workers-3   |   },
+workers-3   |   ctx: TraversalContext {
+workers-3   |     path: [],
+workers-3   |     queuedMorphs: [],
+workers-3   |     errors: [Circular *1],
+workers-3   |     branches: [],
+workers-3   |     seen: {},
+workers-3   |     root: {
+workers-3   |       hash160: null,
+workers-3   |       address: 'bc1parshqlggzradt2s9uv2kwcdelj6lu9pcx76pajmpfdjetzwlq7qsuw4d4p',
+workers-3   |       n_tx: 1152,
+workers-3   |       n_unredeemed: 400,
+workers-3   |       total_received: 391894757,
+workers-3   |       total_sent: 390470099,
+workers-3   |       final_balance: 1424658,
+workers-3   |       txs: [Array]
+workers-3   |     },
+workers-3   |     config: {
+workers-3   |       min: [Object],
+workers-3   |       max: [Object],
+workers-3   |       minLength: [Object],
+workers-3   |       maxLength: [Object],
+workers-3   |       exactLength: [Object],
+workers-3   |       after: [Object],
+workers-3   |       before: [Object],
+workers-3   |       alias: [Object],
+workers-3   |       domain: [Object],
+workers-3   |       unit: [Object],
+workers-3   |       proto: [Object],
+workers-3   |       union: [Object],
+workers-3   |       morph: [Object],
+workers-3   |       intersection: [Object],
+workers-3   |       divisor: [Object],
+workers-3   |       pattern: [Object],
+workers-3   |       predicate: [Object],
+workers-3   |       required: [Object],
+workers-3   |       optional: [Object],
+workers-3   |       index: [Object],
+workers-3   |       sequence: [Object],
+workers-3   |       structure: [Object],
+workers-3   |       jitless: false,
+workers-3   |       clone: [Function: deepClone],
+workers-3   |       onUndeclaredKey: 'ignore',
+workers-3   |       prereducedAliases: true,
+workers-3   |       ambient: true
+workers-3   |     }
+workers-3   |   },
+workers-3   |   byPath: {
+workers-3   |     '': ArkError {
+workers-3   |       ' arkKind': 'error',
+workers-3   |       path: [],
+workers-3   |       data: [Object],
+workers-3   |       nodeConfig: [Object],
+workers-3   |       input: [Object],
+workers-3   |       code: 'proto',
+workers-3   |       description: 'an array',
+workers-3   |       proto: [Function: Array]
+workers-3   |     }
+workers-3   |   },
+workers-3   |   count: 1,
+workers-3   |   mutable: [Circular *1]
+workers-3   | ]
+workers-3   | Job: 35, for updateCoins has completed!
+workers-3   | Job: 53, for updateBlockchainWallets has completed!
+workers-3   | Job updateCoins-31 has failed with err:  SyntaxError: Unexpected token 'T', "Throttled
+workers-3   | " is not valid JSON
+workers-3   |     at JSON.parse (<anonymous>)
+workers-3   |     at parseJSONFromBytes (node:internal/deps/undici/undici:5489:19)
+workers-3   |     at successSteps (node:internal/deps/undici/undici:5470:27)
+workers-3   |     at fullyReadBody (node:internal/deps/undici/undici:4381:9)
+workers-3   |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+workers-3   |     at async consumeBody (node:internal/deps/undici/undici:5479:7)
+workers-3   |     at async CoinGecko.getCandleData (file:///app/packages/adapters/dist/providers/coins.provider.js:159:26)
+workers-3   |     at async CoinsService.saveCandles (file:///app/packages/domain/dist/core/coins.service.js:198:25)
+workers-3   |     at async CoinsService.updateCoinsByMarketcap (file:///app/packages/domain/dist/core/coins.service.js:188:13)
+workers-3   |     at async Worker.connection.host [as processFn] (file:///app/apps/workers/dist/coins.worker.js:15:17)
+workers-3   | Job updateCoins-37 has failed with err:  SyntaxError: Unexpected token 'T', "Throttled
+workers-3   | " is not valid JSON
+workers-3   |     at JSON.parse (<anonymous>)
+workers-3   |     at parseJSONFromBytes (node:internal/deps/undici/undici:5489:19)
+workers-3   |     at successSteps (node:internal/deps/undici/undici:5470:27)
+workers-3   |     at fullyReadBody (node:internal/deps/undici/undici:4381:9)
+workers-3   |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+workers-3   |     at async consumeBody (node:internal/deps/undici/undici:5479:7)
+workers-3   |     at async CoinGecko.getCandleData (file:///app/packages/adapters/dist/providers/coins.provider.js:159:26)
+workers-3   |     at async CoinsService.saveCandles (file:///app/packages/domain/dist/core/coins.service.js:198:25)
+workers-3   |     at async CoinsService.updateCoinsByMarketcap (file:///app/packages/domain/dist/core/coins.service.js:188:13)
+workers-3   |     at async Worker.connection.host [as processFn] (file:///app/apps/workers/dist/coins.worker.js:15:17)
