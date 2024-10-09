@@ -187,6 +187,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
         order: "DESC",
         includeInternalTransactions: false,
         fromDate: from_date,
+        cursor: loop_cursor,
       });
 
       if (new_transactions.result.length > 0) {

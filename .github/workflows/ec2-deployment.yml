@@ -10,68 +10,76 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 2
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
-    - name: Setup Node.js environment
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
-        cache: 'npm'
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
 
-    - name: Install Turbo CLI
-      run: npm install -g turbo
+      - name: Install Turbo CLI
+        run: npm install -g turbo
 
-    - name: Run Biome Lint
-      run: turbo run format-and-lint
+      - name: Run Biome Lint
+        run: turbo run format-and-lint
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
 
-    - name: Log in to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-    - name: Build and push web-api Docker image
-      run: |
-        docker build -t ${{ secrets.ECR_REPOSITORY_URI }}:latest -f apps/web/api/Dockerfile .
-        docker push ${{ secrets.ECR_REPOSITORY_URI }}:latest
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
-    - name: Build and push workers Docker image
-      run: |
-        docker build -t ${{ secrets.ECR_REPOSITORY_URI }}:latest -f apps/workers/Dockerfile .
-        docker push ${{ secrets.ECR_REPOSITORY_URI }}:latest
+      - name: Build and push web-api Docker image
+        run: |
+          docker build -t ${{ secrets.ECR_REPOSITORY_URI }}:latest -f apps/web/api/Dockerfile .
+          docker push ${{ secrets.ECR_REPOSITORY_URI }}:latest
 
-    - name: Run SQL schema generation
-      run: turbo run @repo/adapters#generate
+      - name: Build and push workers Docker image
+        run: |
+          docker build -t ${{ secrets.ECR_REPOSITORY_URI }}:latest -f apps/workers/Dockerfile .
+          docker push ${{ secrets.ECR_REPOSITORY_URI }}:latest
 
-    - name: Copy .sql file to EC2
-      run: |
-        SQL_FILE=$(find packages/adapters/src/repositories/migrations/ -name "*.sql")
-        scp -i ${{ secrets.EC2_KEY }} $SQL_FILE ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/wyt-api/
+      - name: Run SQL schema generation
+        run: turbo run @repo/adapters#generate
 
-    - name: Copy docker-compose.yml to EC2
-      run: |
-        scp -i ${{ secrets.EC2_KEY }} docker-compose.yml ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/wyt-api/
+      - name: Copy .sql file to EC2
+        run: |
+          SQL_FILE=$(find packages/adapters/src/repositories/migrations/ -name "*.sql")
+          scp -i ${{ secrets.EC2_KEY }} $SQL_FILE ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/wyt-api/
 
-    - name: Run docker-compose on EC2
-      run: |
-        ssh -i ${{ secrets.EC2_KEY }} ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-          cd ~/wyt-api/
-          export WORKERS_IMAGE=${{ secrets.ECR_REPOSITORY_URI }}/workers:latest
-          export WEB_API_IMAGE=${{ secrets.ECR_REPOSITORY_URI }}/web-api:latest
-          export POSTGRES_URL=your_postgres_url
-          export COINGECKO_API_KEY=your_coingecko_api_key
-          export QUICKNODE_SOLANA_RPC=your_quicknode_solana_rpc
-          export NODE_ENV=your_node_env
-          export BASE_URL=your_base_url
-          export MORALIS_API_KEY=your_moralis_api_key
-          export REDIS_URL=your_redis_url
-          export PG_USER=your_pg_user
-          export PG_PASSWORD=your_pg_password
-          export PG_DB=your_pg_db
-          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY_URI }}
-          docker-compose up -d
-        EOF
+      - name: Copy docker-compose.yml to EC2
+        run: |
+          scp -i ${{ secrets.EC2_KEY }} docker-compose.yml ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/wyt-api/
+
+      - name: Run docker-compose on EC2
+        run: |
+          ssh -i ${{ secrets.EC2_KEY }} ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            cd ~/wyt-api/
+            export WORKERS_IMAGE=${{ secrets.ECR_REPOSITORY_URI }}/workers:latest
+            export WEB_API_IMAGE=${{ secrets.ECR_REPOSITORY_URI }}/web-api:latest
+            export POSTGRES_URL=${{ secrets.POSTGRES_URL }}
+            export COINGECKO_API_KEY=${{ secrets.COINGECKO_API_KEY }}
+            export QUICKNODE_SOLANA_RPC=${{ secrets.QUICKNODE_SOLANA_RPC }}
+            export NODE_ENV=production
+            export BASE_URL=${{ secrets.BASE_URL }}
+            export MORALIS_API_KEY=${{ secrets.MORALIS_API_KEY }}
+            export REDIS_URL=${{ secrets.REDIS_URL }}
+            export API_TOKEN=${{ secrets.API_TOKEN }}
+            export PG_USER=${{ secrets.PG_USER }}
+            export PG_PASSWORD=${{ secrets.PG_PASSWORD }}
+            export PG_DB=${{ secrets.PG_DB }}
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY_URI }}
+            docker-compose up -d
+          EOF

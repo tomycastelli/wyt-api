@@ -23,7 +23,7 @@ services:
   web-api:
     image: ${WEB-API_IMAGE}
     ports:
-      - "3000:3000"
+      - "80:80"
     environment:
       POSTGRES_URL: postgresql://${PG_USER}:${PG_PASSWORD}@postgres:5432/${PG_DB}
       COINGECKO_API_KEY: ${COINGECKO_API_KEY}
@@ -32,6 +32,7 @@ services:
       BASE_URL: ${BASE_URL}
       MORALIS_API_KEY: ${MORALIS_API_KEY}
       REDIS_URL: redis
+      API_TOKEN: ${API_TOKEN}
     networks:
       - app-network
     depends_on:

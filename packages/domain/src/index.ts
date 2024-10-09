@@ -25,6 +25,7 @@ export type {
   ValuedWalletCoin,
   Wallet,
   WalletCoin,
+  ValuedSavedWallet,
   SavedWallet,
   Stream,
 } from "./core/wallets.entities.js";

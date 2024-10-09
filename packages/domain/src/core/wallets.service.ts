@@ -26,6 +26,7 @@ import type {
   SavedWallet,
   Transaction,
   ValueChangeGraph,
+  ValuedSavedWallet,
   ValuedTransaction,
   ValuedTransfer,
   ValuedWallet,
@@ -65,7 +66,7 @@ export class WalletsService<
     blockchain: BlockchainsName,
     stream_webhook_url: string,
   ): Promise<{
-    valued_wallet_with_transactions: ValuedWalletWithTransactions;
+    valued_wallet: ValuedSavedWallet;
     new_coins: SavedCoin[];
   } | null> {
     // Chequeo que no exista antes
@@ -83,19 +84,12 @@ export class WalletsService<
 
     if (!wallet_data) return null;
 
-    const { valued_wallet, new_coins: new_wallet_coins } =
+    const { valued_wallet, new_coins } =
       await this.getValuedWallet(wallet_data);
 
     // La guardo
     const { id, last_update } =
       await this.walletsRepository.saveWallet(valued_wallet);
-
-    // Devuelvo las ultimas transacciones de la [Wallet]
-    const recent_transactions: Transaction[] =
-      await this.walletsProvider.getRecentTransactions(wallet_data);
-
-    const { valued_transactions, new_coins: new_tx_coins } =
-      await this.getValuedTransactions(recent_transactions, blockchain);
 
     // La añado al Stream
     await this.addWalletToStream(
@@ -104,13 +98,12 @@ export class WalletsService<
     );
 
     return {
-      valued_wallet_with_transactions: {
+      valued_wallet: {
         id,
-        ...valued_wallet,
         last_update,
-        transactions: valued_transactions,
+        ...valued_wallet,
       },
-      new_coins: [...new_wallet_coins, ...new_tx_coins],
+      new_coins,
     };
   }
 

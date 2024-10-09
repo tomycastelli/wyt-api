@@ -50,6 +50,11 @@ export const valuedWalletType = coinedWalletType.merge({
   coins: valuedWalletCoin.array(),
 });
 
+export const valuedSavedWalletType = valuedWalletType.merge({
+  id: "number",
+  last_update: "Date",
+});
+
 export const transferType = type({
   type: "'native'|'token'|'nft'",
   value: "bigint",
@@ -133,6 +138,9 @@ export type CoinedWallet = typeof coinedWalletType.infer;
 
 /** # Una [Wallet] con su valor en USD y las [Coin] integradas */
 export type ValuedWallet = typeof valuedWalletType.infer;
+
+/** # Una [SavedWallet] con su valor en USD y las [Coin] integradas */
+export type ValuedSavedWallet = typeof valuedSavedWalletType.infer;
 
 /** # Una [WalletCoin] con la [Coin] integrada */
 export type CoinedWalletCoin = typeof coinedWalletCoin.infer;

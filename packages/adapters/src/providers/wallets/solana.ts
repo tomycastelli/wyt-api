@@ -196,8 +196,7 @@ export class SolanaProvider implements WalletsProvider {
 
     const transactions: Transaction[] = [];
 
-    let has_next_page = false;
-    do {
+    while (true) {
       const transactions_data =
         await this.getConnection().getSignaturesForAddress(public_key, {
           limit: 1000,
@@ -209,15 +208,12 @@ export class SolanaProvider implements WalletsProvider {
           (t) => new Date(t.blockTime! * 1000) > from_date,
         ),
       );
-      // Si despues del filtrado siguen siendo 1000 transacciones, entonces tengo que buscar mas atrás
-      if (mapped_transactions.length === 1000) {
-        has_next_page = true;
-      } else {
-        has_next_page = false;
-      }
 
       transactions.push(...mapped_transactions);
-    } while (has_next_page === true);
+
+      // Si despues del filtrado siguen siendo 1000 transacciones, entonces tengo que buscar mas atrás
+      if (mapped_transactions.length < 1000) break;
+    }
 
     return transactions;
   }

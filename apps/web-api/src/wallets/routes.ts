@@ -79,10 +79,10 @@ export const setup_wallets_routes = (
 
       // Enviar a una queue
       await backfillQueue.add("backfillWallet", {
-        wallet: wallet_data.valued_wallet_with_transactions,
+        wallet: wallet_data.valued_wallet,
       });
 
-      return c.json(wallet_data.valued_wallet_with_transactions);
+      return c.json(wallet_data.valued_wallet);
     },
   );
 

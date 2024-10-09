@@ -17,6 +17,7 @@ import type { BlankEnv, BlankSchema } from "hono/types";
 import { setup_coins_routes } from "./coins/routes.js";
 import { logger } from "./logger.js";
 import { setup_wallets_routes } from "./wallets/routes.js";
+import { bearerAuth } from "hono/bearer-auth";
 
 // Deserialización de BigInts
 declare global {
@@ -48,6 +49,7 @@ export const create_app = (
   base_url: string,
   moralis_streams_secret_key: string,
   redis_url: string,
+  api_token: string,
 ): Hono<BlankEnv, BlankSchema, "/"> => {
   // El servidor Node
   const app = new Hono();
@@ -123,6 +125,23 @@ export const create_app = (
   app.route("/coins", coins_routes);
   app.route("/wallets", wallets_routes);
 
+  app.use(
+    "/coins/*",
+    bearerAuth({
+      verifyToken: async (token) => {
+        return token === api_token;
+      },
+    }),
+  );
+  app.use(
+    "/wallets/*",
+    bearerAuth({
+      verifyToken: async (token) => {
+        return token === api_token;
+      },
+    }),
+  );
+
   return app;
 };
 
@@ -137,6 +156,9 @@ if (!MORALIS_STREAMS_SECRET_KEY)
 
 const REDIS_URL = process.env.REDIS_URL;
 if (!REDIS_URL) throw Error("REDIS_URL missing");
+
+const API_TOKEN = process.env.API_TOKEN;
+if (!API_TOKEN) throw Error("API_TOKEN missing");
 
 // Los adapters
 const coingecko = new CoinGecko(process.env.COINGECKO_API_KEY ?? "");
@@ -169,9 +191,10 @@ const app = create_app(
   BASE_URL,
   MORALIS_STREAMS_SECRET_KEY,
   REDIS_URL,
+  API_TOKEN,
 );
 
-const port = 3000;
+const port = 80;
 console.log(`Server is running on port ${port}`);
 
 serve({
