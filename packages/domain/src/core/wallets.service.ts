@@ -23,7 +23,6 @@ import { type BlockchainsName, blockchains } from "./vars.js";
 import type {
   CoinedTransaction,
   CoinedTransfer,
-  CoinedWallet,
   SavedWallet,
   Transaction,
   ValueChangeGraph,

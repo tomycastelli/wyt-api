@@ -1,8 +1,7 @@
 import Fuse from "fuse.js";
-import moment from "moment";
 import type { Candle, SavedCoin, SavedNFT } from "./coins.entities.js";
 import type { CoinsProvider, CoinsRepository } from "./coins.ports.js";
-import { type BlockchainsName, base_coins, blockchains } from "./vars.js";
+import type { BlockchainsName } from "./vars.js";
 
 /// Logica de negocio para el servicio de Tokens
 // Quiero que haga las siguientes acciones:
@@ -306,6 +305,7 @@ export class CoinsService<
 
     // Candelas
     for (const coin of coins) {
+      // Vamos a darle un espaciado a las requests
       await this.saveCandles(coin.id, frequency, refresh_rate);
     }
 

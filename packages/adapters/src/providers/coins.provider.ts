@@ -7,10 +7,9 @@ import {
   type CoinsProvider,
   EveryBlockainsName,
   base_coins,
-  blockchains,
 } from "@repo/domain";
-import { type } from "arktype";
-import pLimit, { type LimitFunction } from "p-limit";
+import { type Type, type } from "arktype";
+import { RateLimiter } from "./ratelimiter.js";
 
 const coinsResponseSchema = type({
   id: "string",
@@ -101,7 +100,8 @@ export class CoinGecko implements CoinsProvider {
     solana: "solana",
   };
 
-  private rate_limit: LimitFunction = pLimit(5);
+  // Por ahora cada instancia de CoinGecko va a tener 80 req/min
+  private rate_limiter: RateLimiter = new RateLimiter(80, 60);
 
   private request_data: RequestInit;
 
@@ -115,15 +115,27 @@ export class CoinGecko implements CoinsProvider {
     };
   }
 
+  async rateLimitedCallApi<T>(url: string, schema: Type<T>): Promise<T> {
+    await this.rate_limiter.acquire();
+
+    const response = await fetch(url, this.request_data);
+    if (!response.ok) {
+      throw Error(`Invalid request: ${response}`);
+    }
+
+    const json = await response.json();
+    const parsedResponse = schema(json);
+
+    if (parsedResponse instanceof type.errors) throw parsedResponse;
+
+    return parsedResponse as T;
+  }
+
   async getAllCoins(minimum_market_cap: number): Promise<Coin[]> {
-    const response = await fetch(
+    const parsedList = await this.rateLimitedCallApi(
       `${this.base_url}/coins/list?include_platform=true`,
-      this.request_data,
-    ).then((res) => res.json());
-
-    const parsedList = coinsResponseSchema(response);
-
-    if (parsedList instanceof type.errors) throw parsedList;
+      coinsResponseSchema,
+    );
 
     // Se filtran los tokens que esten dentro de las blockchains que nos interesan
     const filteredList = parsedList.filter(
@@ -135,25 +147,18 @@ export class CoinGecko implements CoinsProvider {
 
     // Para cada token se consulta el resto de info:
     // 'descripcion', 'image_url', 'market_data'
-    const detailsListPromises = filteredList.map((coin, index) => {
-      // Rate limit de 360req/min, menos que el limite de CoinGecko (500)
-      // Para darle espacio a otras requests que puedan suceder
-      return this.rate_limit(async () => {
-        // Distribuyo en intervalos de 1 segundo por rate limiting
-        await new Promise((resolve) => setTimeout(resolve, (index % 5) * 500));
-
-        const response = await fetch(
-          `
+    const detailsListPromises = filteredList.map(async (coin) => {
+      const response = await fetch(
+        `
           ${this.base_url}/coins/${coin.id}?localization=false&tickers=false&market_data=true&sparkline=false&community_data=false&developer_data=false`,
-          this.request_data,
-        ).then((res) => res.json());
+        this.request_data,
+      ).then((res) => res.json());
 
-        const parsedCoinDetails = coinDetailsSchema(response);
+      const parsedCoinDetails = coinDetailsSchema(response);
 
-        if (parsedCoinDetails instanceof type.errors) throw parsedCoinDetails;
+      if (parsedCoinDetails instanceof type.errors) throw parsedCoinDetails;
 
-        return { ...parsedCoinDetails, ...coin };
-      });
+      return { ...parsedCoinDetails, ...coin };
     });
 
     const coinDetails = await Promise.all(detailsListPromises);
@@ -214,14 +219,10 @@ export class CoinGecko implements CoinsProvider {
     const acceptedDays = [1, 7, 14, 30, 90].filter((d) => d >= minimumDays);
     const daysToFetch = acceptedDays.length > 0 ? Math.min(...acceptedDays) : 1;
 
-    const response = await fetch(
+    const parsedCandles = await this.rateLimitedCallApi(
       `${this.base_url}/coins/${coin_name}/ohlc?vs_currency=usd&days=${daysToFetch}&precision=18&interval=${frequency}`,
-      this.request_data,
-    ).then((res) => res.json());
-
-    const parsedCandles = candlesResponseSchema(response);
-
-    if (parsedCandles instanceof type.errors) throw parsedCandles;
+      candlesResponseSchema,
+    );
 
     // Segun la frecuencia, agarro las ultimas velas
     const mappedCandles = parsedCandles.slice(-refresh_rate).map((c) => ({
@@ -237,37 +238,22 @@ export class CoinGecko implements CoinsProvider {
   }
 
   async getLatestCoins(minimum_market_cap: number): Promise<Coin[]> {
-    const response = await fetch(
+    const parsedLatestCoins = await this.rateLimitedCallApi(
       `${this.base_url}/coins/list/new`,
-      this.request_data,
-    ).then((res) => res.json());
-
-    const parsedLatestCoins = latestCoinsResponseSchema(response);
-
-    if (parsedLatestCoins instanceof type.errors) throw parsedLatestCoins;
+      latestCoinsResponseSchema,
+    );
 
     // Para cada token se consulta el resto de info:
     // 'descripcion', 'image_url', 'market_data'
-    const detailsListPromises = parsedLatestCoins.map((coin, index) => {
-      return this.rate_limit(async () => {
-        await new Promise((resolve) => setTimeout(resolve, (index % 5) * 500));
-
-        const response = await fetch(
-          `
-          ${this.base_url}/coins/${coin.id}?localization=false&tickers=false&market_data=true&sparkline=false&community_data=false&developer_data=false`,
-          this.request_data,
-        ).then((res) => res.json());
-
-        const parsedCoinDetails = coinDetailsSchema.merge({
+    const detailsListPromises = parsedLatestCoins.map(async (coin) => {
+      const parsedCoinDetails = await this.rateLimitedCallApi(
+        `${this.base_url}/coins/${coin.id}?localization=false&tickers=false&market_data=true&sparkline=false&community_data=false&developer_data=false`,
+        coinDetailsSchema.merge({
           platforms: "Record<string, string|null>",
-        })(response);
+        }),
+      );
 
-        if (parsedCoinDetails instanceof type.errors) {
-          throw parsedCoinDetails;
-        }
-
-        return { ...parsedCoinDetails, ...coin };
-      });
+      return { ...parsedCoinDetails, ...coin };
     });
 
     const coinDetails = await Promise.all(detailsListPromises);
@@ -318,17 +304,10 @@ export class CoinGecko implements CoinsProvider {
     coin_address: string[],
     blockchain: BlockchainsName,
   ): Promise<Coin[]> {
-    // Consigo las ids de coingecko
-    const response = await fetch(
+    const parsedCoinData = await this.rateLimitedCallApi(
       `${this.base_url}/onchain/networks/${this.blockchains_to_networks_mapper[blockchain]}/tokens/multi/${coin_address.join(",")}`,
-      this.request_data,
+      tokenDataByAddressSchema,
     );
-
-    if (!response.ok) return [];
-
-    const parsedCoinData = tokenDataByAddressSchema(await response.json());
-
-    if (parsedCoinData instanceof type.errors) throw parsedCoinData;
 
     const coins_to_return: Coin[] = [];
 
@@ -337,19 +316,12 @@ export class CoinGecko implements CoinsProvider {
     for (const coin_data of coins_data
       .filter((c) => c.attributes.coingecko_coin_id)
       .map((a) => a.attributes)) {
-      const coinDetailsResponse = await fetch(
-        `
-      ${this.base_url}/coins/${coin_data.coingecko_coin_id}?localization=false&tickers=false&market_data=true&sparkline=false&community_data=false&developer_data=false`,
-        this.request_data,
-      ).then((res) => res.json());
-
-      const parsedCoinDetails = coinDetailsSchema.merge({
-        platforms: "Record<string, string|null>",
-      })(coinDetailsResponse);
-
-      if (parsedCoinDetails instanceof type.errors) {
-        throw parsedCoinDetails;
-      }
+      const parsedCoinDetails = await this.rateLimitedCallApi(
+        `${this.base_url}/coins/${coin_data.coingecko_coin_id}?localization=false&tickers=false&market_data=true&sparkline=false&community_data=false&developer_data=false`,
+        coinDetailsSchema.merge({
+          platforms: "Record<string, string|null>",
+        }),
+      );
 
       if (
         parsedCoinDetails.description &&
@@ -402,16 +374,10 @@ export class CoinGecko implements CoinsProvider {
         let is_last_page = false;
         let page = 1;
         while (!is_last_page) {
-          const response = await fetch(
+          const parsedMarketData = await this.rateLimitedCallApi(
             `${this.base_url}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&price_change_percentage=24h&locale=en&precision=18&category=${category}&page=${page}`,
-            this.request_data,
-          ).then((res) => res.json());
-
-          page++;
-
-          const parsedMarketData = marketDataListSchema.array()(response);
-
-          if (parsedMarketData instanceof type.errors) throw parsedMarketData;
+            marketDataListSchema.array(),
+          );
 
           if (parsedMarketData.length < 250) {
             // Termino el loop con esta iteracion
@@ -426,6 +392,8 @@ export class CoinGecko implements CoinsProvider {
             }),
           );
 
+          page++;
+
           market_data_array.push(...mappedMarketData);
         }
       }
@@ -438,14 +406,11 @@ export class CoinGecko implements CoinsProvider {
           index_cursor,
           index_cursor + 250,
         );
-        const response = await fetch(
+
+        const parsedMarketData = await this.rateLimitedCallApi(
           `${this.base_url}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&price_change_percentage=24h&locale=en&precision=18&ids=${coins_to_fetch.join(",")}`,
-          this.request_data,
-        ).then((res) => res.json());
-
-        const parsedMarketData = marketDataListSchema.array()(response);
-
-        if (parsedMarketData instanceof type.errors) throw parsedMarketData;
+          marketDataListSchema.array(),
+        );
 
         if (parsedMarketData.length < 250) {
           // Termino el loop con esta iteracion
@@ -470,15 +435,10 @@ export class CoinGecko implements CoinsProvider {
   }
 
   async getCoinMarketData(coin_name: string): Promise<CoinMarketData> {
-    const response = await fetch(
-      `
-      ${this.base_url}/coins/${coin_name}?localization=false&tickers=false&market_data=true&sparkline=false&community_data=false&developer_data=false`,
-      this.request_data,
-    ).then((res) => res.json());
-
-    const parsedCoinDetails = coinDetailsSchema(response);
-
-    if (parsedCoinDetails instanceof type.errors) throw parsedCoinDetails;
+    const parsedCoinDetails = await this.rateLimitedCallApi(
+      `${this.base_url}/coins/${coin_name}?localization=false&tickers=false&market_data=true&sparkline=false&community_data=false&developer_data=false`,
+      coinDetailsSchema,
+    );
 
     const market_data = parsedCoinDetails.market_data;
 
@@ -518,14 +478,10 @@ export class CoinGecko implements CoinsProvider {
     from_date: Date,
     to_date: Date,
   ): Promise<Omit<Candle, "coin_id">[]> {
-    const response = await fetch(
+    const parsedCandles = await this.rateLimitedCallApi(
       `${this.base_url}/coins/${coin_name}/ohlc/range?vs_currency=usd&interval=${frequency}&from=${Math.floor(from_date.getTime() / 1000)}&to=${Math.floor(to_date.getTime() / 1000)}`,
-      this.request_data,
-    ).then((res) => res.json());
-
-    const parsedCandles = candlesResponseSchema(response);
-
-    if (parsedCandles instanceof type.errors) throw parsedCandles;
+      candlesResponseSchema,
+    );
 
     const mapped_candles = parsedCandles.map((c) => ({
       frequency,

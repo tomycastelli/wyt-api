@@ -6,8 +6,7 @@ import type {
   WalletsService,
   WalletsStreamsProvider,
 } from "@repo/domain";
-import { type Queue, Worker } from "bullmq";
-import type { CoinJobsQueue } from "./index.js";
+import { Worker } from "bullmq";
 
 export const setupTransactionsWorker = (
   wallets_service: WalletsService<

@@ -5,14 +5,13 @@ import {
   WalletsPostgres,
   WalletsProviderAdapters,
 } from "@repo/adapters";
-import { CoinsService, type SavedCoin, WalletsService } from "@repo/domain";
+import { CoinsService, WalletsService } from "@repo/domain";
 import { Hono } from "hono";
 import { prettyJSON } from "hono/pretty-json";
 import { requestId } from "hono/request-id";
 import { trimTrailingSlash } from "hono/trailing-slash";
 import { getPath } from "hono/utils/url";
 import "dotenv/config";
-import { Queue } from "bullmq";
 import { compress } from "hono/compress";
 import type { BlankEnv, BlankSchema } from "hono/types";
 import { setup_coins_routes } from "./coins/routes.js";
@@ -31,12 +30,11 @@ BigInt.prototype.toJSON = function () {
 };
 
 export type CoinJobsQueue = {
-  jobName: "saveAllCoins" | "saveLatestCoins" | "updateCoins" | "newCoins";
+  jobName: "saveAllCoins" | "saveLatestCoins" | "updateCoins";
   updateCoinsData?: {
     frequency: "daily" | "hourly";
     refresh_rate: number;
   };
-  newCoinsData?: SavedCoin[];
 };
 
 export const create_app = (

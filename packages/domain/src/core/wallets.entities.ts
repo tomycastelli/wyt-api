@@ -1,5 +1,5 @@
 import { type } from "arktype";
-import { nftType, savedCoinType, savedNftType } from "./coins.entities.js";
+import { savedCoinType, savedNftType } from "./coins.entities.js";
 import { EveryBlockainsName } from "./vars.js";
 
 // Things to think:

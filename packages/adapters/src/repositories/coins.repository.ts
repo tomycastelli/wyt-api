@@ -4,7 +4,6 @@ import {
   type Coin,
   type CoinMarketData,
   type CoinsRepository,
-  NFT,
   type SavedCoin,
   type SavedNFT,
   blockchains,

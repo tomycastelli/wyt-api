@@ -1,10 +1,9 @@
-import {
-  type Candle,
-  type Coin,
-  type CoinMarketData,
-  NFT,
-  type SavedCoin,
-  type SavedNFT,
+import type {
+  Candle,
+  Coin,
+  CoinMarketData,
+  SavedCoin,
+  SavedNFT,
 } from "./coins.entities.js";
 import type { BlockchainsName } from "./vars.js";
 

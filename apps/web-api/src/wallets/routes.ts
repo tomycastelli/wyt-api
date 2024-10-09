@@ -28,7 +28,7 @@ export const setup_wallets_routes = (
   moralis_streams_secret_key: string,
   redis_url: string,
 ): Hono<BlankEnv, BlankSchema, "/"> => {
-  const coin_jobs_queue = new Queue<CoinJobsQueue>("coinJobsQueue", {
+  const _coin_jobs_queue = new Queue<CoinJobsQueue>("coinJobsQueue", {
     connection: {
       host: redis_url,
       port: 6379,
@@ -81,14 +81,6 @@ export const setup_wallets_routes = (
       await backfillQueue.add("backfillWallet", {
         wallet: wallet_data.valued_wallet_with_transactions,
       });
-
-      if (wallet_data.new_coins.length > 0) {
-        // Enviar nuevas [Coin]s a conseguir la data nueva
-        await coin_jobs_queue.add("new_wallet_coins", {
-          jobName: "newCoins",
-          newCoinsData: wallet_data.new_coins,
-        });
-      }
 
       return c.json(wallet_data.valued_wallet_with_transactions);
     },
@@ -145,15 +137,7 @@ export const setup_wallets_routes = (
 
       if (!wallet_with_tx) return c.notFound();
 
-      const data = await wallets_service.updateWallet(wallet_with_tx);
-
-      if (data && data.new_coins.length > 0) {
-        // Enviar nuevas [Coin]s a conseguir la data nueva
-        await coin_jobs_queue.add("update_wallet_coins", {
-          jobName: "newCoins",
-          newCoinsData: data.new_coins,
-        });
-      }
+      await wallets_service.updateWallet(wallet_with_tx);
 
       return c.text("Wallet updated", 200);
     },

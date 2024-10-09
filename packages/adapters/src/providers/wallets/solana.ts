@@ -1,6 +1,5 @@
 import type {
   BlockchainsName,
-  SavedWallet,
   Transaction,
   Transfer,
   Wallet,
@@ -164,8 +163,8 @@ export class SolanaProvider implements WalletsProvider {
 
   async getTransactionHistory(
     wallet_data: Wallet,
-    from_date: Date,
-    to_date: Date,
+    _from_date: Date,
+    _to_date: Date,
     loop_cursor: string | undefined,
   ): Promise<{ transactions: Transaction[]; cursor: string | undefined }> {
     const public_key = new PublicKey(wallet_data.address);

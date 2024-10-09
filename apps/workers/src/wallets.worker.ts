@@ -5,8 +5,8 @@ import type {
   WalletsService,
   WalletsStreamsProvider,
 } from "@repo/domain";
-import { type Queue, Worker } from "bullmq";
-import type { CoinJobsQueue, WalletJobsQueue } from "./index.js";
+import { Worker } from "bullmq";
+import type { WalletJobsQueue } from "./index.js";
 
 export const setupWalletsWorker = (
   wallets_service: WalletsService<
@@ -26,7 +26,7 @@ export const setupWalletsWorker = (
       const payload = job.data;
       switch (payload.jobName) {
         case "updateBlockchainWallets": {
-          const page = 1;
+          let page = 1;
           let is_last_page = false;
 
           while (!is_last_page) {
@@ -42,6 +42,7 @@ export const setupWalletsWorker = (
             }
 
             if (wallets.length < 20) is_last_page = true;
+            page++;
           }
 
           break;

@@ -123,8 +123,8 @@ export class BitcoinProvider implements WalletsProvider {
 
   async getTransactionHistory(
     wallet_data: Wallet,
-    from_date: Date,
-    to_date: Date,
+    _from_date: Date,
+    _to_date: Date,
     loop_cursor: string | undefined,
   ): Promise<{ transactions: Transaction[]; cursor: string | undefined }> {
     await new Promise((resolve) => setTimeout(resolve, 250));
@@ -155,13 +155,13 @@ export class BitcoinProvider implements WalletsProvider {
     from_date: Date,
   ): Promise<Transaction[]> {
     const transactions: Transaction[] = [];
+    const limit = 25;
+    let last_seen_txid = "";
 
-    let has_next_page = false;
-
-    do {
+    while (true) {
       await new Promise((resolve) => setTimeout(resolve, 250));
       const response = await fetch(
-        `https://blockchain.info/rawaddr/${wallet_data.address}`,
+        `${this.api_url}/address/${wallet_data.address}/txs/chain/${last_seen_txid}`,
       ).then((res) => res.json());
 
       const parsedResponse = txInfoType(response);
@@ -175,14 +175,14 @@ export class BitcoinProvider implements WalletsProvider {
         ),
       );
       // Si despues del filtrado siguen siendo 25 transacciones, entonces tengo que buscar mas atrás
-      if (mapped_transactions.length === 25) {
-        has_next_page = true;
+      if (mapped_transactions.length === limit) {
+        last_seen_txid = parsedResponse[parsedResponse.length - 1].txid;
       } else {
-        has_next_page = false;
+        break;
       }
 
       transactions.push(...mapped_transactions);
-    } while (has_next_page === true);
+    }
 
     return transactions.filter((tx) => tx.block_timestamp >= from_date);
   }

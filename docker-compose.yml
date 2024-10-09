@@ -1,29 +1,58 @@
 services:
   workers:
-    build:
-      context: .
-      dockerfile: apps/workers/Dockerfile
-    env_file:
-      - apps/workers/.env
+    image: ${WORKERS_IMAGE}
     deploy:
       replicas: 3
       mode: replicated
+    environment:
+      POSTGRES_URL: postgresql://${PG_USER}:${PG_PASSWORD}@postgres:5432/${PG_DB}
+      COINGECKO_API_KEY: ${COINGECKO_API_KEY}
+      QUICKNODE_SOLANA_RPC: ${QUICKNODE_SOLANA_RPC}
+      NODE_ENV: ${NODE_ENV}
+      BASE_URL: ${BASE_URL}
+      MORALIS_API_KEY: ${MORALIS_API_KEY}
+      REDIS_URL: redis
     networks:
       - app-network
+    depends_on:
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
 
-  wyt-api:
-    build:
-      context: .
-      dockerfile: apps/web-api/Dockerfile
+  web-api:
+    image: ${WEB-API_IMAGE}
     ports:
       - "3000:3000"
-    env_file:
-      - apps/web-api/.env
+    environment:
+      POSTGRES_URL: postgresql://${PG_USER}:${PG_PASSWORD}@postgres:5432/${PG_DB}
+      COINGECKO_API_KEY: ${COINGECKO_API_KEY}
+      QUICKNODE_SOLANA_RPC: ${QUICKNODE_SOLANA_RPC}
+      NODE_ENV: ${NODE_ENV}
+      BASE_URL: ${BASE_URL}
+      MORALIS_API_KEY: ${MORALIS_API_KEY}
+      REDIS_URL: redis
+    networks:
+      - app-network
+    depends_on:
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
+
+  postgres:
+    image: postgres:16.4
+    environment:
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_DB: ${PG_DB}
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - app-network
 
   redis:
-    image: redis:latest
+    image: redis:7.4.1-alpine
     networks:
       - app-network
 

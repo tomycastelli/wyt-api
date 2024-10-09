@@ -1,4 +1,4 @@
-import { Queue, Worker } from "bullmq";
+import { Queue } from "bullmq";
 import "dotenv/config";
 import {
   CoinGecko,
@@ -9,7 +9,6 @@ import {
 import {
   type BlockchainsName,
   CoinsService,
-  type SavedCoin,
   type SavedWallet,
   type Transaction,
   WalletsService,

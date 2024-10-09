@@ -1,17 +1,14 @@
-import {
-  type BlockchainsName,
-  type CoinedTransaction,
-  type CoinedWallet,
-  type SavedWallet,
-  type Transaction,
-  type Transfer,
-  type Wallet,
-  type WalletCoin,
-  type WalletsRepository,
-  blockchains,
+import type {
+  BlockchainsName,
+  CoinedTransaction,
+  CoinedWallet,
+  SavedWallet,
+  Transaction,
+  Transfer,
+  WalletCoin,
+  WalletsRepository,
 } from "@repo/domain";
 import {
-  type ExtractTablesWithRelations,
   and,
   asc,
   desc,
@@ -24,12 +21,7 @@ import {
   or,
   sql,
 } from "drizzle-orm";
-import type { PgTransaction } from "drizzle-orm/pg-core";
-import {
-  type PostgresJsDatabase,
-  type PostgresJsQueryResultHKT,
-  drizzle,
-} from "drizzle-orm/postgres-js";
+import { type PostgresJsDatabase, drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { eqLower } from "../utils.js";
 import * as schema from "./schema.js";
@@ -269,7 +261,13 @@ export class WalletsPostgres implements WalletsRepository {
       }));
 
       return {
-        ...saved_wallet,
+        id: saved_wallet.id,
+        address: saved_wallet.address,
+        alias: saved_wallet.alias,
+        backfill_status: saved_wallet.backfill_status,
+        blockchain: saved_wallet.blockchain,
+        first_transfer_date: saved_wallet.first_transfer_date,
+        last_update: saved_wallet.last_update,
         native_value: BigInt(saved_wallet.native_value),
         coins: [...wallet_coins, ...wallet_nfts],
       };
@@ -665,56 +663,5 @@ export class WalletsPostgres implements WalletsRepository {
           eq(schema.wallets.blockchain, wallet_data.blockchain),
         ),
       );
-  }
-
-  // Helpers
-  private async getCoinIdOfTransfer(
-    transfer_data: Transfer,
-    blockchain: BlockchainsName,
-    tx: PgTransaction<
-      PostgresJsQueryResultHKT,
-      typeof schema,
-      ExtractTablesWithRelations<typeof schema>
-    >,
-  ): Promise<number> {
-    if (transfer_data.type === "native") {
-      const [coin] = await tx
-        .select({ id: schema.coins.id })
-        .from(schema.coins)
-        .where(and(eq(schema.coins.name, blockchains[blockchain].coin)))
-        .limit(1);
-      return coin!.id;
-    }
-    if (transfer_data.type === "token") {
-      /** Asumo que si es token, ya esta guardada en la DB */
-      const [coin] = await tx
-        .select({ id: schema.contracts.coin_id })
-        .from(schema.contracts)
-        .where(
-          and(
-            eq(schema.contracts.blockchain, blockchain),
-            eqLower(
-              schema.contracts.contract_address,
-              transfer_data.coin_address!,
-            ),
-          ),
-        )
-        .limit(1);
-      return coin!.id;
-    }
-    // Es de tipo nft
-    const [nft] = await tx
-      .select({ id: schema.nfts.id })
-      .from(schema.nfts)
-      .where(
-        and(
-          eq(schema.nfts.blockchain, blockchain),
-          eqLower(schema.nfts.contract_address, transfer_data.coin_address!),
-          eq(schema.nfts.token_id, transfer_data.token_id!),
-        ),
-      )
-      .limit(1);
-
-    return nft!.id;
   }
 }

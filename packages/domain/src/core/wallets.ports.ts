@@ -1,4 +1,4 @@
-import { type BlockchainsName, blockchains } from "./vars.js";
+import type { BlockchainsName } from "./vars.js";
 import type {
   CoinedTransaction,
   CoinedWallet,

@@ -40,8 +40,6 @@ export const setupBackfillWorker = (
           10,
         );
 
-        console.log("Sending chunks: ", chunks);
-
         const name = "backfill_chunk";
         await chunks_queue.addBulk(
           chunks.map((c) => ({
@@ -55,7 +53,6 @@ export const setupBackfillWorker = (
           })),
         );
       } else {
-        console.log("Sending unique chunk");
         await chunks_queue.add("backfill_unique_chunk", {
           wallet: job.data.wallet,
           from_date: new Date().toISOString(),
