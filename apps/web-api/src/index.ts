@@ -12,12 +12,12 @@ import { requestId } from "hono/request-id";
 import { trimTrailingSlash } from "hono/trailing-slash";
 import { getPath } from "hono/utils/url";
 import "dotenv/config";
+import { bearerAuth } from "hono/bearer-auth";
 import { compress } from "hono/compress";
 import type { BlankEnv, BlankSchema } from "hono/types";
 import { setup_coins_routes } from "./coins/routes.js";
 import { logger } from "./logger.js";
 import { setup_wallets_routes } from "./wallets/routes.js";
-import { bearerAuth } from "hono/bearer-auth";
 
 // Deserialización de BigInts
 declare global {

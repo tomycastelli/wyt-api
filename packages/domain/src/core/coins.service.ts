@@ -71,16 +71,18 @@ export class CoinsService<
       }
     }
 
-    const newCoins = await this.coinsProvider.getCoinsByAddresses(
-      not_found,
-      blockchain,
-    );
+    if (not_found.length > 0) {
+      const newCoins = await this.coinsProvider.getCoinsByAddress(
+        not_found,
+        blockchain,
+      );
 
-    const new_saved_coins = await this.coinsRepository.saveCoins(newCoins);
+      const new_saved_coins = await this.coinsRepository.saveCoins(newCoins);
 
-    saved_coins.push(
-      ...new_saved_coins.map((saved_coin) => ({ saved_coin, is_new: false })),
-    );
+      saved_coins.push(
+        ...new_saved_coins.map((saved_coin) => ({ saved_coin, is_new: false })),
+      );
+    }
 
     return saved_coins;
   }
@@ -253,6 +255,8 @@ export class CoinsService<
   }
 
   /** Actualiza todos los datos relacionados a las [Coin]s */
+  /// !! Revisar esto que no se si estaría andando bien.
+  /// De todas formas: me parece que implementar web scraping sea lo mas óptimo para tener los datos actualizados
   public async updateCoinsByMarketcap(
     frequency: "hourly" | "daily",
     refresh_rate: number,
@@ -305,7 +309,6 @@ export class CoinsService<
 
     // Candelas
     for (const coin of coins) {
-      // Vamos a darle un espaciado a las requests
       await this.saveCandles(coin.id, frequency, refresh_rate);
     }
 

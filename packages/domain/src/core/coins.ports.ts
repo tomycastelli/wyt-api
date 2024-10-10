@@ -71,7 +71,7 @@ export interface CoinsProvider {
   getLatestCoins(minimum_market_cap: number): Promise<Coin[]>;
 
   /** Consigue una [Coin] por su contract address */
-  getCoinsByAddresses(
+  getCoinsByAddress(
     coin_address: string[],
     blockchain: BlockchainsName,
   ): Promise<Coin[]>;

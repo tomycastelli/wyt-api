@@ -20,9 +20,7 @@ export const setupWalletsWorker = (
   const walletJobsWorker = new Worker<WalletJobsQueue>(
     "walletJobsQueue",
     async (job) => {
-      console.log(
-        `Starting job ${job.name} with ID ${job.id} and ${job.data.data.transactions?.length} transactions`,
-      );
+      console.log(`Starting job ${job.name} with ID ${job.id}`);
       const payload = job.data;
       switch (payload.jobName) {
         case "updateBlockchainWallets": {
