@@ -36,3 +36,8 @@ lerna-debug.log*
 
 # turbo
 .turbo
+
+# ulixee
+ulixee-datastores
+ulixee-tmp
+seccomp_profile.json

@@ -328,7 +328,8 @@ export class CoinsPostgres implements CoinsRepository {
   async saveMarketData(coin_market_data: CoinMarketData[]): Promise<void> {
     await this.db.transaction(async (tx) => {
       for (const market_data of coin_market_data) {
-        tx.update(schema.coins)
+        await tx
+          .update(schema.coins)
           .set({
             ...market_data,
             last_update: new Date(),

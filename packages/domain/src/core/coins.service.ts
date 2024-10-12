@@ -307,32 +307,7 @@ export class CoinsService<
 
     await this.coinsRepository.saveMarketData(market_data);
 
-    // Candelas
-    for (const coin of coins) {
-      await this.saveCandles(coin.id, frequency, refresh_rate);
-    }
-
     return coins;
-  }
-
-  /** Guarda las ultimas [Candle] mas recientes segun la frecuencia y la tasa de refresco (cada cuanto se guarda) */
-  private async saveCandles(
-    coin_id: number,
-    frequency: "hourly" | "daily",
-    refresh_rate: number,
-  ): Promise<void> {
-    const savedCoin = await this.coinsRepository.getCoinById(coin_id);
-    if (!savedCoin) {
-      return;
-    }
-    const candles = await this.coinsProvider.getCandleData(
-      frequency,
-      savedCoin.name,
-      refresh_rate,
-    );
-    await this.coinsRepository.saveCandles(
-      candles.map((c) => ({ coin_id, ...c })),
-    );
   }
 
   public async searchCoinsByName(name_search: string): Promise<SavedCoin[]> {
