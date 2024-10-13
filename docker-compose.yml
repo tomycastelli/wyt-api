@@ -12,6 +12,7 @@ services:
       NODE_ENV: ${NODE_ENV}
       BASE_URL: ${BASE_URL}
       MORALIS_API_KEY: ${MORALIS_API_KEY}
+      MORALIS_STREAMS_SECRET_KEY: ${MORALIS_STREAMS_SECRET_KEY}
       REDIS_URL: redis
     networks:
       - app-network
@@ -22,7 +23,7 @@ services:
         condition: service_started
 
   web-api:
-    image: ${WEB-API_IMAGE}
+    image: ${WEB_API_IMAGE}
     ports:
       - "80:80"
     environment:
@@ -33,6 +34,7 @@ services:
       NODE_ENV: ${NODE_ENV}
       BASE_URL: ${BASE_URL}
       MORALIS_API_KEY: ${MORALIS_API_KEY}
+      MORALIS_STREAMS_SECRET_KEY: ${MORALIS_STREAMS_SECRET_KEY}
       REDIS_URL: redis
       API_TOKEN: ${API_TOKEN}
     networks:

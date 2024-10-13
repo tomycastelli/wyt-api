@@ -27,6 +27,11 @@ export const setup_coins_routes = (
 
   const coins_routes = new Hono();
 
+  coins_routes.post("/jobs/all-coins", async (c) => {
+    const coins = await coins_service.saveAllCoins();
+    return c.json({ total: coins.length, coins });
+  });
+
   coins_routes.get("/details/:coin_name", async (c) => {
     const coin_name = c.req.param("coin_name");
 

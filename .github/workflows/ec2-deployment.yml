@@ -43,7 +43,7 @@ jobs:
 
       - name: Build and push web-api Docker image
         run: |
-          docker build -t ${{ secrets.ECR_REPOSITORY_URI }}:latest -f apps/web/api/Dockerfile .
+          docker build -t ${{ secrets.ECR_REPOSITORY_URI }}:latest -f apps/web-api/Dockerfile .
           docker push ${{ secrets.ECR_REPOSITORY_URI }}:latest
 
       - name: Build and push workers Docker image
@@ -56,7 +56,7 @@ jobs:
 
       - name: Copy .sql file to EC2
         run: |
-          SQL_FILE=$(find packages/adapters/src/repositories/migrations/ -name "*.sql")
+          SQL_FILE=$(find packages/adapters/src/repositories/drizzle/ -name "*.sql")
           scp -i ${{ secrets.EC2_KEY }} $SQL_FILE ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/wyt-api/init.sql
 
       - name: Copy docker-compose.yml to EC2
@@ -67,14 +67,15 @@ jobs:
         run: |
           ssh -i ${{ secrets.EC2_KEY }} ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             cd ~/wyt-api/
-            export WORKERS_IMAGE=${{ secrets.ECR_REPOSITORY_URI }}/workers:latest
-            export WEB_API_IMAGE=${{ secrets.ECR_REPOSITORY_URI }}/web-api:latest
+            export WORKERS_IMAGE=${{ secrets.ECR_REPOSITORY_URI }}:workers-latest
+            export WEB_API_IMAGE=${{ secrets.ECR_REPOSITORY_URI }}:web-api-latest
             export COINGECKO_API_KEY=${{ secrets.COINGECKO_API_KEY }}
             export QUICKNODE_SOLANA_RPC=${{ secrets.QUICKNODE_SOLANA_RPC }}
             export ALCHEMY_SOLANA_RPC=${{ secrets.ALCHEMY_SOLANA_RPC }}
             export NODE_ENV=production
             export BASE_URL=${{ secrets.BASE_URL }}
             export MORALIS_API_KEY=${{ secrets.MORALIS_API_KEY }}
+            export MORALIS_STREAMS_SECRET_KEY=${{ secrets.MORALIS_STREAMS_SECRET_KEY }}
             export API_TOKEN=${{ secrets.API_TOKEN }}
             export PG_USER=${{ secrets.PG_USER }}
             export PG_PASSWORD=${{ secrets.PG_PASSWORD }}

@@ -101,7 +101,7 @@ export class CoinGecko implements CoinsProvider {
   };
 
   // Por ahora cada instancia de CoinGecko va a tener 80 req/min
-  private rate_limiter: RateLimiter = new RateLimiter(80, 60);
+  private rate_limiter: RateLimiter = new RateLimiter(350, 60);
 
   private request_data: RequestInit;
 
@@ -115,78 +115,93 @@ export class CoinGecko implements CoinsProvider {
     };
   }
 
-  async rateLimitedCallApi(url: string): Promise<unknown> {
-    await this.rate_limiter.acquire();
+  async rateLimitedCallApi(url: string): Promise<unknown | null> {
+    const retries = 3;
+    for (let i = 0; i < retries; i++) {
+      try {
+        await this.rate_limiter.acquire();
+        const response = await fetch(url, this.request_data);
+        if (!response.ok) {
+          throw Error(`Invalid request: ${JSON.stringify(response)}`);
+        }
 
-    const response = await fetch(url, this.request_data);
-    if (!response.ok) {
-      throw Error(`Invalid request: ${JSON.stringify(response)}`);
+        const json = await response.json();
+
+        return json;
+      } catch (e) {
+        if (i === retries - i) {
+          return null;
+        }
+      }
     }
-
-    const json = await response.json();
-
-    return json;
   }
 
-  async getAllCoins(minimum_market_cap: number): Promise<Coin[]> {
+  async getAllCoins(): Promise<
+    {
+      id: string;
+      symbol: string;
+      name: string;
+      platforms: Record<string, string>;
+    }[]
+  > {
     const list = await this.rateLimitedCallApi(
       `${this.base_url}/coins/list?include_platform=true`,
     );
 
-    const parsedList = coinsResponseSchema(list);
+    const parsed_list = coinsResponseSchema(list);
 
-    if (parsedList instanceof type.errors) throw parsedList;
+    if (parsed_list instanceof type.errors) throw parsed_list;
 
-    // Se filtran los tokens que esten dentro de las blockchains que nos interesan
-    const filteredList = parsedList.filter(
-      (coin) => base_coins.includes(coin.id as BlockchainCoin),
-      // Object.keys(coin.platforms).some((platform) =>
-      //   EveryBlockainsName.includes(platform as BlockchainsName),
-      // ),
-    );
+    return parsed_list;
+  }
 
+  async getCoinDetails(
+    coin: {
+      id: string;
+      symbol: string;
+      name: string;
+      platforms: Record<string, string>;
+    },
+    minimum_market_cap: number,
+  ): Promise<Coin | null> {
     // Para cada token se consulta el resto de info:
     // 'descripcion', 'image_url', 'market_data'
-    const detailsListPromises = filteredList.map(async (coin) => {
-      const response = await this.rateLimitedCallApi(
-        `${this.base_url}/coins/${coin.id}?localization=false&tickers=false&market_data=true&sparkline=false&community_data=false&developer_data=false`,
-      );
+    const response = await this.rateLimitedCallApi(
+      `${this.base_url}/coins/${coin.id}?localization=false&tickers=false&market_data=true&sparkline=false&community_data=false&developer_data=false`,
+    );
 
-      const parsedCoinDetails = coinDetailsSchema(response);
+    if (!response) {
+      return null;
+    }
 
-      if (parsedCoinDetails instanceof type.errors) throw parsedCoinDetails;
+    const parsedCoinDetails = coinDetailsSchema(response);
 
-      return { ...parsedCoinDetails, ...coin };
-    });
+    if (parsedCoinDetails instanceof type.errors) throw parsedCoinDetails;
 
-    const coinDetails = await Promise.all(detailsListPromises);
-
-    const mappedCoinDetails: Coin[] = coinDetails
-      .filter(
-        (coin) =>
-          coin.description &&
-          coin.image &&
-          coin.market_data &&
-          coin.market_data.current_price?.usd &&
-          coin.market_data.ath?.usd &&
-          coin.market_data.price_change_percentage_24h &&
-          coin.market_data.price_change_24h &&
-          (coin.market_data.market_cap?.usd ?? 0) >= minimum_market_cap,
-      )
-      .map((coin) => ({
+    if (
+      parsedCoinDetails.description &&
+      parsedCoinDetails.image &&
+      parsedCoinDetails.market_data &&
+      parsedCoinDetails.market_data.current_price?.usd &&
+      parsedCoinDetails.market_data.ath?.usd &&
+      parsedCoinDetails.market_data.price_change_percentage_24h &&
+      parsedCoinDetails.market_data.price_change_24h &&
+      (parsedCoinDetails.market_data.market_cap?.usd ?? 0) >= minimum_market_cap
+    ) {
+      return {
         name: coin.id,
         symbol: coin.symbol,
         provider: "coingecko",
-        description: coin.description!.en,
-        ath: coin.market_data!.ath.usd!,
-        image_url: coin.image!.large,
-        market_cap: coin.market_data!.market_cap.usd!,
-        price: coin.market_data!.current_price!.usd!,
+        description: parsedCoinDetails.description!.en,
+        ath: parsedCoinDetails.market_data!.ath.usd!,
+        image_url: parsedCoinDetails.image!.large,
+        market_cap: parsedCoinDetails.market_data!.market_cap.usd!,
+        price: parsedCoinDetails.market_data!.current_price!.usd!,
         price_change_percentage_24h:
-          coin.market_data!.price_change_percentage_24h!,
-        price_change_24h: coin.market_data!.price_change_24h!,
+          parsedCoinDetails.market_data!.price_change_percentage_24h!,
+        price_change_24h: parsedCoinDetails.market_data!.price_change_24h!,
         // Me quedo con solo los contratos que me interesan
-        contracts: Object.entries(coin.detail_platforms)
+        contracts: Object.entries(parsedCoinDetails.detail_platforms)
           .filter(([key]) =>
             EveryBlockainsName.includes(key as BlockchainsName),
           )
@@ -195,9 +210,10 @@ export class CoinGecko implements CoinsProvider {
             contract_address: detail.contract_address!,
             decimal_place: detail.decimal_place!,
           })),
-      }));
+      };
+    }
 
-    return mappedCoinDetails;
+    return null;
   }
 
   async getCandleData(
@@ -220,6 +236,10 @@ export class CoinGecko implements CoinsProvider {
     const candles = await this.rateLimitedCallApi(
       `${this.base_url}/coins/${coin_name}/ohlc?vs_currency=usd&days=${daysToFetch}&precision=18&interval=${frequency}`,
     );
+
+    if (!candles) {
+      return [];
+    }
 
     const parsedCandles = candlesResponseSchema(candles);
 

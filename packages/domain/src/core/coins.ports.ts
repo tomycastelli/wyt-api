@@ -63,9 +63,26 @@ export interface CoinsProvider {
   /** Devuelve el [CoinMarketData] de una Coin en especifico */
   getCoinMarketData(coin_name: string): Promise<CoinMarketData>;
 
-  /** Consigue todas las tokens existentes
-  # Se debe correr de vez en cuando ya es una query grande */
-  getAllCoins(minimum_market_cap: number): Promise<Coin[]>;
+  /** Consigue todas las tokens existentes */
+  getAllCoins(): Promise<
+    {
+      id: string;
+      symbol: string;
+      name: string;
+      platforms: Record<string, string>;
+    }[]
+  >;
+
+  /** Dado el name de una coin, consigue sus detalles */
+  getCoinDetails(
+    coin: {
+      id: string;
+      symbol: string;
+      name: string;
+      platforms: Record<string, string>;
+    },
+    minimum_market_cap: number,
+  ): Promise<Coin | null>;
 
   /** Consigue las ultimas coins añadidas */
   getLatestCoins(minimum_market_cap: number): Promise<Coin[]>;

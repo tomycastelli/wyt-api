@@ -1,7 +1,12 @@
 import Fuse from "fuse.js";
-import type { Candle, SavedCoin, SavedNFT } from "./coins.entities.js";
+import type { Candle, Coin, SavedCoin, SavedNFT } from "./coins.entities.js";
 import type { CoinsProvider, CoinsRepository } from "./coins.ports.js";
-import type { BlockchainsName } from "./vars.js";
+import {
+  base_coins,
+  BlockchainCoin,
+  EveryBlockainsName,
+  type BlockchainsName,
+} from "./vars.js";
 
 /// Logica de negocio para el servicio de Tokens
 // Quiero que haga las siguientes acciones:
@@ -21,7 +26,7 @@ export class CoinsService<
   private coinsRepository: TRepository;
   private coinsProvider: TProvider;
 
-  private global_minimum_market_cap = 10_000;
+  private global_minimum_market_cap = 100_000_000;
 
   constructor(repository: TRepository, provider: TProvider) {
     this.coinsRepository = repository;
@@ -127,13 +132,37 @@ export class CoinsService<
     return savedCoins;
   }
 
-  /** Guardo todas las [Coin]s disponibles */
+  /** Guarda todas las [Coin]s disponibles en el proveedor */
   public async saveAllCoins(): Promise<SavedCoin[]> {
-    // Pido coins con capitalizacion mayor a 100_000 USD
-    const allCoins = await this.coinsProvider.getAllCoins(
-      this.global_minimum_market_cap,
+    const coin_list = await this.coinsProvider.getAllCoins();
+
+    // Todas las [SavedCoin]s
+    const saved_coins_names = await this.coinsRepository
+      .getAllCoins(this.global_minimum_market_cap)
+      .then((coin) => coin.map((c) => c.name));
+
+    // Se filtran los tokens que esten dentro de las blockchains que nos interesan y aparte no estén ya guardadas
+    const filtered_list = coin_list.filter(
+      (coin) =>
+        !saved_coins_names.includes(coin.name) &&
+        (base_coins.includes(coin.id as BlockchainCoin) ||
+          Object.keys(coin.platforms).some((platform) =>
+            EveryBlockainsName.includes(platform as BlockchainsName),
+          )),
     );
-    const savedCoins = await this.coinsRepository.saveCoins(allCoins);
+
+    const coins_to_save: Coin[] = [];
+
+    for (const coin of filtered_list) {
+      console.log("Getting coin details for: ", coin.name);
+      const coin_to_save = await this.coinsProvider.getCoinDetails(
+        coin,
+        this.global_minimum_market_cap,
+      );
+      if (coin_to_save) coins_to_save.push(coin_to_save);
+    }
+
+    const savedCoins = await this.coinsRepository.saveCoins(coins_to_save);
     return savedCoins;
   }
 
@@ -264,33 +293,36 @@ export class CoinsService<
     let minimum_market_cap = 0;
     let maximum_market_cap: undefined | number = undefined;
 
+    const medium_market_cap = 25_000_000;
+
     if (frequency === "daily") {
       if (refresh_rate === 1) {
         // Coins importantes
-        minimum_market_cap = 150_000;
+        minimum_market_cap = this.global_minimum_market_cap;
         maximum_market_cap = undefined;
       } else if (refresh_rate === 2) {
         // Coins no tan importantes
-        minimum_market_cap = 50_000;
-        maximum_market_cap = 150_000;
+        minimum_market_cap = medium_market_cap;
+        maximum_market_cap = this.global_minimum_market_cap;
       } else {
         // No son importantes
         minimum_market_cap = 0;
-        maximum_market_cap = 50_000;
+        maximum_market_cap = medium_market_cap;
       }
     } else {
       // Es horario
       if (refresh_rate === 1) {
-        // Coins super importantes
-        minimum_market_cap = 200_000;
+        // Coins importantes
+        minimum_market_cap = this.global_minimum_market_cap;
         maximum_market_cap = undefined;
       } else if (refresh_rate === 4) {
-        minimum_market_cap = 50_000;
-        maximum_market_cap = 200_000;
+        // Coins no tan importantes
+        minimum_market_cap = medium_market_cap;
+        maximum_market_cap = this.global_minimum_market_cap;
       } else {
         // No son importantes
         minimum_market_cap = 0;
-        maximum_market_cap = 50_000;
+        maximum_market_cap = medium_market_cap;
       }
     }
 
