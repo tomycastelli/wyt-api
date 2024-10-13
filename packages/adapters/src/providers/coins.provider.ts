@@ -1,12 +1,10 @@
 import {
-  type BlockchainCoin,
   type BlockchainsName,
   type Candle,
   type Coin,
   type CoinMarketData,
   type CoinsProvider,
   EveryBlockainsName,
-  base_coins,
 } from "@repo/domain";
 import { type } from "arktype";
 import { RateLimiter } from "./ratelimiter.js";
@@ -128,7 +126,7 @@ export class CoinGecko implements CoinsProvider {
         const json = await response.json();
 
         return json;
-      } catch (e) {
+      } catch (_e) {
         if (i === retries - i) {
           return null;
         }

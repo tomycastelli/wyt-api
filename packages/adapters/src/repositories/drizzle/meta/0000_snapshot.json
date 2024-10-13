@@ -58,12 +58,8 @@
           "name": "candles_coin_id_coins_id_fk",
           "tableFrom": "candles",
           "tableTo": "coins",
-          "columnsFrom": [
-            "coin_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["coin_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -71,11 +67,7 @@
       "compositePrimaryKeys": {
         "candles_coin_id_frequency_timestamp_pk": {
           "name": "candles_coin_id_frequency_timestamp_pk",
-          "columns": [
-            "coin_id",
-            "frequency",
-            "timestamp"
-          ]
+          "columns": ["coin_id", "frequency", "timestamp"]
         }
       },
       "uniqueConstraints": {}
@@ -207,9 +199,7 @@
         "coins_name_unique": {
           "name": "coins_name_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "name"
-          ]
+          "columns": ["name"]
         }
       }
     },
@@ -243,12 +233,8 @@
           "name": "coins_names_coin_id_coins_id_fk",
           "tableFrom": "coins_names",
           "tableTo": "coins",
-          "columnsFrom": [
-            "coin_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["coin_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -256,10 +242,7 @@
       "compositePrimaryKeys": {
         "coins_names_coin_id_provider_pk": {
           "name": "coins_names_coin_id_provider_pk",
-          "columns": [
-            "coin_id",
-            "provider"
-          ]
+          "columns": ["coin_id", "provider"]
         }
       },
       "uniqueConstraints": {}
@@ -300,12 +283,8 @@
           "name": "contracts_coin_id_coins_id_fk",
           "tableFrom": "contracts",
           "tableTo": "coins",
-          "columnsFrom": [
-            "coin_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["coin_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -313,10 +292,7 @@
       "compositePrimaryKeys": {
         "contracts_coin_id_blockchain_pk": {
           "name": "contracts_coin_id_blockchain_pk",
-          "columns": [
-            "coin_id",
-            "blockchain"
-          ]
+          "columns": ["coin_id", "blockchain"]
         }
       },
       "uniqueConstraints": {}
@@ -604,12 +580,8 @@
           "name": "transfers_transaction_id_transactions_id_fk",
           "tableFrom": "transfers",
           "tableTo": "transactions",
-          "columnsFrom": [
-            "transaction_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["transaction_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -617,12 +589,8 @@
           "name": "transfers_coin_id_coins_id_fk",
           "tableFrom": "transfers",
           "tableTo": "coins",
-          "columnsFrom": [
-            "coin_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["coin_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -630,12 +598,8 @@
           "name": "transfers_nft_id_nfts_id_fk",
           "tableFrom": "transfers",
           "tableTo": "nfts",
-          "columnsFrom": [
-            "nft_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["nft_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -672,12 +636,8 @@
           "name": "wallet_coins_wallet_id_wallets_id_fk",
           "tableFrom": "wallet_coins",
           "tableTo": "wallets",
-          "columnsFrom": [
-            "wallet_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["wallet_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -685,12 +645,8 @@
           "name": "wallet_coins_coin_id_coins_id_fk",
           "tableFrom": "wallet_coins",
           "tableTo": "coins",
-          "columnsFrom": [
-            "coin_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["coin_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -698,10 +654,7 @@
       "compositePrimaryKeys": {
         "wallet_coins_wallet_id_coin_id_pk": {
           "name": "wallet_coins_wallet_id_coin_id_pk",
-          "columns": [
-            "wallet_id",
-            "coin_id"
-          ]
+          "columns": ["wallet_id", "coin_id"]
         }
       },
       "uniqueConstraints": {}
@@ -729,12 +682,8 @@
           "name": "wallet_nfts_wallet_id_wallets_id_fk",
           "tableFrom": "wallet_nfts",
           "tableTo": "wallets",
-          "columnsFrom": [
-            "wallet_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["wallet_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -742,12 +691,8 @@
           "name": "wallet_nfts_nft_id_nfts_id_fk",
           "tableFrom": "wallet_nfts",
           "tableTo": "nfts",
-          "columnsFrom": [
-            "nft_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["nft_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -755,10 +700,7 @@
       "compositePrimaryKeys": {
         "wallet_nfts_wallet_id_nft_id_pk": {
           "name": "wallet_nfts_wallet_id_nft_id_pk",
-          "columns": [
-            "wallet_id",
-            "nft_id"
-          ]
+          "columns": ["wallet_id", "nft_id"]
         }
       },
       "uniqueConstraints": {}
@@ -861,10 +803,7 @@
     "public.backfillStatus": {
       "name": "backfillStatus",
       "schema": "public",
-      "values": [
-        "pending",
-        "complete"
-      ]
+      "values": ["pending", "complete"]
     },
     "public.blockchains_enum": {
       "name": "blockchains_enum",
@@ -881,26 +820,17 @@
     "public.frequency": {
       "name": "frequency",
       "schema": "public",
-      "values": [
-        "daily",
-        "hourly"
-      ]
+      "values": ["daily", "hourly"]
     },
     "public.providers_enum": {
       "name": "providers_enum",
       "schema": "public",
-      "values": [
-        "coingecko"
-      ]
+      "values": ["coingecko"]
     },
     "public.transactionType": {
       "name": "transactionType",
       "schema": "public",
-      "values": [
-        "native",
-        "token",
-        "nft"
-      ]
+      "values": ["native", "token", "nft"]
     }
   },
   "schemas": {},

@@ -2,10 +2,10 @@ import Fuse from "fuse.js";
 import type { Candle, Coin, SavedCoin, SavedNFT } from "./coins.entities.js";
 import type { CoinsProvider, CoinsRepository } from "./coins.ports.js";
 import {
-  base_coins,
-  BlockchainCoin,
-  EveryBlockainsName,
+  type BlockchainCoin,
   type BlockchainsName,
+  EveryBlockainsName,
+  base_coins,
 } from "./vars.js";
 
 /// Logica de negocio para el servicio de Tokens
