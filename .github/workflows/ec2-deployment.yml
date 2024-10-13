@@ -27,6 +27,9 @@ jobs:
       - name: Install Turbo CLI
         run: npm install -g turbo
 
+      - name: Setup Biome
+        uses: biomejs/setup-biome@v2
+
       - name: Run Biome Lint
         run: turbo run format-and-lint
 
