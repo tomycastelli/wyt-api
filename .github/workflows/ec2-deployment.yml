@@ -90,5 +90,7 @@ jobs:
             export PG_PASSWORD=${{ secrets.PG_PASSWORD }}
             export PG_DB=${{ secrets.PG_DB }}
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY_URI }}
+            docker image rm ${{ secrets.ECR_REPOSITORY_URI }}:workers-latest
+            docker image rm ${{ secrets.ECR_REPOSITORY_URI }}:web-api-latest
             docker-compose up -d
           EOF
