@@ -34,7 +34,7 @@ jobs:
         run: turbo run format-and-lint
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v3
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -48,12 +48,32 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build and push web-api Docker image
-        run: |
-          docker buildx build --platform linux/arm64/v8 -t ${{ secrets.ECR_REPOSITORY_URI }}:web-api-latest -f apps/web-api/Dockerfile --push .
+        uses: docker/build-push-action@v5
+        file: apps/web-api/Dockerfile
+        platforms:
+          - linux/arm64
+          - linux/amd64
+        tags:
+          - ${{ secrets.ECR_REPOSITORY_URI }}:web-api-latest
+        with:
+          context: .
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Build and push workers Docker image
-        run: |
-          docker buildx build --platform linux/arm64/v8 -t ${{ secrets.ECR_REPOSITORY_URI }}:workers-latest -f apps/workers/Dockerfile --push .
+        uses: docker/build-push-action@v5
+        file: apps/workers/Dockerfile
+        platforms:
+          - linux/arm64
+          - linux/amd64
+        tags:
+          - ${{ secrets.ECR_REPOSITORY_URI }}:workers-latest
+        with:
+          context: .
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Install dependencies for sql generation
         run: pnpm install
