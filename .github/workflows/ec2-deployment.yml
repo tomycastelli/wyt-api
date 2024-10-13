@@ -57,6 +57,9 @@ jobs:
           docker build -t ${{ secrets.ECR_REPOSITORY_URI }}:latest -f apps/workers/Dockerfile .
           docker push ${{ secrets.ECR_REPOSITORY_URI }}:latest
 
+      - name: Install dependencies for sql generation
+        run: pnpm install
+
       - name: Run SQL schema generation
         run: turbo run @repo/adapters#generate
 
