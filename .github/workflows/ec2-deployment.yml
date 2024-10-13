@@ -55,12 +55,12 @@ jobs:
           context: .
           file: apps/web-api/Dockerfile
           push: true
-          tags:
-            - ${{ secrets.ECR_REPOSITORY_URI }}:web-api-latest
-            - ${{ secrets.ECR_REPOSITORY_URI }}:web-api-${{ env.RELEASE_VERSION }}
-          platforms:
-            - linux/arm64
-            - linux/amd64
+          tags: |
+            ${{ secrets.ECR_REPOSITORY_URI }}:web-api-latest
+            ${{ secrets.ECR_REPOSITORY_URI }}:web-api-${{ env.RELEASE_VERSION }}
+          platforms: |
+            linux/arm64
+            linux/amd64
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -70,12 +70,12 @@ jobs:
           context: .
           file: apps/workers/Dockerfile
           push: true
-          tags:
-            - ${{ secrets.ECR_REPOSITORY_URI }}:workers-latest
-            - ${{ secrets.ECR_REPOSITORY_URI }}:workers-${{ env.RELEASE_VERSION }}
-          platforms:
-            - linux/arm64
-            - linux/amd64
+          tags: |
+            ${{ secrets.ECR_REPOSITORY_URI }}:workers-latest
+            ${{ secrets.ECR_REPOSITORY_URI }}:workers-${{ env.RELEASE_VERSION }}
+          platforms: |
+            linux/arm64
+            linux/amd64
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
