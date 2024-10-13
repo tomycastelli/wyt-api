@@ -15,7 +15,6 @@ import { type } from "arktype";
 import { Queue } from "bullmq";
 import { Hono } from "hono";
 import type { BlankEnv, BlankSchema } from "hono/types";
-import type { CoinJobsQueue } from "../index.js";
 
 export const setup_wallets_routes = (
   wallets_service: WalletsService<
@@ -28,13 +27,6 @@ export const setup_wallets_routes = (
   moralis_streams_secret_key: string,
   redis_url: string,
 ): Hono<BlankEnv, BlankSchema, "/"> => {
-  const _coin_jobs_queue = new Queue<CoinJobsQueue>("coinJobsQueue", {
-    connection: {
-      host: redis_url,
-      port: 6379,
-    },
-  });
-
   // BullMQ para procesos de larga duración
   const backfillQueue = new Queue<{
     wallet: SavedWallet;

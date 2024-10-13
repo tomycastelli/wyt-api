@@ -12,11 +12,11 @@
 node_modules/
 
 # builds
-**/dist/
+dist/
 out/
 
 # migrations
-**/migrations/
+migrations/
 
 # env
 .env

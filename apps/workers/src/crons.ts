@@ -34,7 +34,7 @@ export const coin_crons = (coin_jobs_queue: Queue<CoinJobsQueue>): void => {
     // Cada 1 hora
     coin_jobs_queue.add("updating important coins", {
       jobName: "updateCoins",
-      updateCoinsData: { frequency: "hourly", refresh_rate: 1 },
+      updateCoinsData: { importance_level: 1 },
     });
   });
 
@@ -42,7 +42,7 @@ export const coin_crons = (coin_jobs_queue: Queue<CoinJobsQueue>): void => {
     // Cada 4 horas
     coin_jobs_queue.add("updating coins", {
       jobName: "updateCoins",
-      updateCoinsData: { frequency: "hourly", refresh_rate: 4 },
+      updateCoinsData: { importance_level: 2 },
     });
   });
 
@@ -50,31 +50,14 @@ export const coin_crons = (coin_jobs_queue: Queue<CoinJobsQueue>): void => {
     // Cada 12 horas
     coin_jobs_queue.add("updating less importan coins", {
       jobName: "updateCoins",
-      updateCoinsData: { frequency: "hourly", refresh_rate: 12 },
+      updateCoinsData: { importance_level: 3 },
     });
   });
 
-  schedule("35 0 * * *", () => {
-    // Cada 1 dia a las 00:35
-    coin_jobs_queue.add("updating important coins", {
-      jobName: "updateCoins",
-      updateCoinsData: { frequency: "daily", refresh_rate: 1 },
-    });
-  });
-
-  schedule("35 0 */2 * *", () => {
-    // Cada 2 días a las 00:35
-    coin_jobs_queue.add("updating coins", {
-      jobName: "updateCoins",
-      updateCoinsData: { frequency: "daily", refresh_rate: 2 },
-    });
-  });
-
-  schedule("35 0 */4 * *", () => {
-    // Cada 4 días a las 00:35
-    coin_jobs_queue.add("updating less important coins", {
-      jobName: "updateCoins",
-      updateCoinsData: { frequency: "daily", refresh_rate: 4 },
+  schedule("0 0 * * *", () => {
+    // Cada dia
+    coin_jobs_queue.add("fetching latest coins", {
+      jobName: "saveLatestCoins",
     });
   });
 };

@@ -27,8 +27,7 @@ export const setupCoinsWorker = (
         }
         case "updateCoins": {
           await coins_service.updateCoinsByMarketcap(
-            payload.updateCoinsData!.frequency,
-            payload.updateCoinsData!.refresh_rate,
+            payload.updateCoinsData!.importance_level,
           );
           break;
         }

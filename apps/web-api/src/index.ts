@@ -30,14 +30,6 @@ BigInt.prototype.toJSON = function () {
   return Number(this);
 };
 
-export type CoinJobsQueue = {
-  jobName: "saveAllCoins" | "saveLatestCoins" | "updateCoins";
-  updateCoinsData?: {
-    frequency: "daily" | "hourly";
-    refresh_rate: number;
-  };
-};
-
 export const create_app = (
   coins_service: CoinsService<CoinGecko, CoinsPostgres>,
   wallets_service: WalletsService<

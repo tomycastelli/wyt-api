@@ -331,7 +331,12 @@ export class CoinsPostgres implements CoinsRepository {
         await tx
           .update(schema.coins)
           .set({
-            ...market_data,
+            ath: market_data.ath,
+            market_cap: market_data.market_cap,
+            price: market_data.price,
+            price_change_24h: market_data.price_change_24h,
+            price_change_percentage_24h:
+              market_data.price_change_percentage_24h,
             last_update: new Date(),
           })
           .where(eq(schema.coins.name, market_data.name));

@@ -26,7 +26,7 @@ export class CoinsService<
   private coinsRepository: TRepository;
   private coinsProvider: TProvider;
 
-  private global_minimum_market_cap = 100_000_000;
+  private global_minimum_market_cap = 10_000_000;
 
   constructor(repository: TRepository, provider: TProvider) {
     this.coinsRepository = repository;
@@ -127,7 +127,9 @@ export class CoinsService<
 
   /** Guarda las [Coin]s mas recientes */
   public async saveLatestCoins(): Promise<SavedCoin[]> {
-    const latestCoins = await this.coinsProvider.getLatestCoins(100_000);
+    const latestCoins = await this.coinsProvider.getLatestCoins(
+      this.global_minimum_market_cap,
+    );
     const savedCoins = await this.coinsRepository.saveCoins(latestCoins);
     return savedCoins;
   }
@@ -154,7 +156,6 @@ export class CoinsService<
     const coins_to_save: Coin[] = [];
 
     for (const coin of filtered_list) {
-      console.log("Getting coin details for: ", coin.name);
       const coin_to_save = await this.coinsProvider.getCoinDetails(
         coin,
         this.global_minimum_market_cap,
@@ -287,42 +288,29 @@ export class CoinsService<
   /// !! Revisar esto que no se si estaría andando bien.
   /// De todas formas: me parece que implementar web scraping sea lo mas óptimo para tener los datos actualizados
   public async updateCoinsByMarketcap(
-    frequency: "hourly" | "daily",
-    refresh_rate: number,
+    importance_level: 1 | 2 | 3,
   ): Promise<SavedCoin[]> {
     let minimum_market_cap = 0;
     let maximum_market_cap: undefined | number = undefined;
 
-    const medium_market_cap = 25_000_000;
+    const medium_market_cap =
+      this.global_minimum_market_cap / 2 - this.global_minimum_market_cap * 0.1;
 
-    if (frequency === "daily") {
-      if (refresh_rate === 1) {
-        // Coins importantes
+    switch (importance_level) {
+      case 1: {
         minimum_market_cap = this.global_minimum_market_cap;
         maximum_market_cap = undefined;
-      } else if (refresh_rate === 2) {
-        // Coins no tan importantes
-        minimum_market_cap = medium_market_cap;
-        maximum_market_cap = this.global_minimum_market_cap;
-      } else {
-        // No son importantes
-        minimum_market_cap = 0;
-        maximum_market_cap = medium_market_cap;
+        break;
       }
-    } else {
-      // Es horario
-      if (refresh_rate === 1) {
-        // Coins importantes
-        minimum_market_cap = this.global_minimum_market_cap;
-        maximum_market_cap = undefined;
-      } else if (refresh_rate === 4) {
-        // Coins no tan importantes
+      case 2: {
         minimum_market_cap = medium_market_cap;
         maximum_market_cap = this.global_minimum_market_cap;
-      } else {
-        // No son importantes
+        break;
+      }
+      case 3: {
         minimum_market_cap = 0;
         maximum_market_cap = medium_market_cap;
+        break;
       }
     }
 

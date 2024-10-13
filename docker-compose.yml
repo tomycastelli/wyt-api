@@ -47,6 +47,8 @@ services:
 
   postgres:
     image: postgres:16.4
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_USER: ${PG_USER}
       POSTGRES_PASSWORD: ${PG_PASSWORD}

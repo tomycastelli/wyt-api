@@ -36,8 +36,7 @@ BigInt.prototype.toJSON = function () {
 export type CoinJobsQueue = {
   jobName: "saveAllCoins" | "saveLatestCoins" | "updateCoins";
   updateCoinsData?: {
-    frequency: "daily" | "hourly";
-    refresh_rate: number;
+    importance_level: 1 | 2 | 3;
   };
 };
 
