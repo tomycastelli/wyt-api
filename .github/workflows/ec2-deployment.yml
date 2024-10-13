@@ -50,12 +50,12 @@ jobs:
       - name: Build and push web-api Docker image
         run: |
           docker build -t ${{ secrets.ECR_REPOSITORY_URI }}:web-api-latest -f apps/web-api/Dockerfile .
-          docker push ${{ secrets.ECR_REPOSITORY_URI }}:latest
+          docker push ${{ secrets.ECR_REPOSITORY_URI }}:web-api-latest
 
       - name: Build and push workers Docker image
         run: |
           docker build -t ${{ secrets.ECR_REPOSITORY_URI }}:workers-latest -f apps/workers/Dockerfile .
-          docker push ${{ secrets.ECR_REPOSITORY_URI }}:latest
+          docker push ${{ secrets.ECR_REPOSITORY_URI }}:workers-latest
 
       - name: Install dependencies for sql generation
         run: pnpm install
