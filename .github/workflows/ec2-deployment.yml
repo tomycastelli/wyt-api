@@ -49,13 +49,11 @@ jobs:
 
       - name: Build and push web-api Docker image
         run: |
-          docker buildx build --platform linux/arm64/v8 -t ${{ secrets.ECR_REPOSITORY_URI }}:web-api-latest -f apps/web-api/Dockerfile .
-          docker push ${{ secrets.ECR_REPOSITORY_URI }}:web-api-latest
+          docker buildx build --platform linux/arm64/v8 -t ${{ secrets.ECR_REPOSITORY_URI }}:web-api-latest -f apps/web-api/Dockerfile --push .
 
       - name: Build and push workers Docker image
         run: |
-          docker buildx build --platform linux/arm64/v8 -t ${{ secrets.ECR_REPOSITORY_URI }}:workers-latest -f apps/workers/Dockerfile .
-          docker push ${{ secrets.ECR_REPOSITORY_URI }}:workers-latest
+          docker buildx build --platform linux/arm64/v8 -t ${{ secrets.ECR_REPOSITORY_URI }}:workers-latest -f apps/workers/Dockerfile --push .
 
       - name: Install dependencies for sql generation
         run: pnpm install
