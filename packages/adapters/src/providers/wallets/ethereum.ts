@@ -286,7 +286,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
           { indexed: true, name: "to", type: "address" },
           { indexed: true, name: "tokenId", type: "uint256" },
         ],
-        name: "transfer",
+        name: "Transfer",
         type: "event",
       },
     ];
@@ -515,7 +515,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
 
   getBlockchainName(chain: EvmChain): BlockchainsName | undefined {
     for (const [name, evmChain] of Object.entries(this.blockchain_mapper)) {
-      if (evmChain === chain) {
+      if (evmChain.equals(chain)) {
         return name as BlockchainsName;
       }
     }
