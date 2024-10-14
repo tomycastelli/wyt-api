@@ -6,7 +6,6 @@ import type {
   WalletsProviderAdapters,
 } from "@repo/adapters";
 import {
-  type BlockchainsName,
   EveryBlockainsName,
   type SavedWallet,
   type WalletsService,
@@ -25,23 +24,12 @@ export const setup_wallets_routes = (
     CoinsPostgres
   >,
   base_url: string,
-  moralis_streams_secret_key: string,
   redis_url: string,
 ): Hono<BlankEnv, BlankSchema, "/"> => {
   // BullMQ para procesos de larga duración
   const backfillQueue = new Queue<{
     wallet: SavedWallet;
   }>("backfillQueue", {
-    connection: {
-      host: redis_url,
-      port: 6379,
-    },
-  });
-
-  const transactionsStreamQueue = new Queue<{
-    body: any;
-    blockchain: BlockchainsName;
-  }>("transactionsStreamQueue", {
     connection: {
       host: redis_url,
       port: 6379,
@@ -76,38 +64,6 @@ export const setup_wallets_routes = (
       });
 
       return c.json(wallet_data.valued_wallet);
-    },
-  );
-
-  wallets_routes.post(
-    "/streams/:blockchain",
-    arktypeValidator(
-      "param",
-      type({
-        blockchain: ["===", ...EveryBlockainsName],
-      }),
-    ),
-    async (c) => {
-      const { blockchain } = c.req.valid("param");
-
-      const body = await c.req.json();
-      const headers = c.req.header();
-
-      // Verifico y proceso la transacción enviada
-      const is_valid = wallets_service.validateWebhookTransaction(
-        body,
-        moralis_streams_secret_key,
-        headers,
-      );
-
-      if (!is_valid) return c.text("Unauthorized webhook", 401);
-
-      await transactionsStreamQueue.add("transactionsStream", {
-        body,
-        blockchain,
-      });
-
-      return c.text("Webhook recibido");
     },
   );
 

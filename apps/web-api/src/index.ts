@@ -5,14 +5,22 @@ import {
   WalletsPostgres,
   WalletsProviderAdapters,
 } from "@repo/adapters";
-import { CoinsService, WalletsService, blockchains } from "@repo/domain";
+import {
+  type BlockchainsName,
+  CoinsService,
+  EveryBlockainsName,
+  WalletsService,
+  blockchains,
+} from "@repo/domain";
 import { type Context, Hono } from "hono";
 import { prettyJSON } from "hono/pretty-json";
 import { requestId } from "hono/request-id";
 import { trimTrailingSlash } from "hono/trailing-slash";
 import { getPath } from "hono/utils/url";
 import "dotenv/config";
+import { arktypeValidator } from "@hono/arktype-validator";
 import { type } from "arktype";
+import { Queue } from "bullmq";
 import { bearerAuth } from "hono/bearer-auth";
 import { compress } from "hono/compress";
 import type { BlankEnv, BlankSchema } from "hono/types";
@@ -114,6 +122,23 @@ export const create_app = (
     });
   });
 
+  const transactionsStreamQueue = new Queue<{
+    body: any;
+    blockchain: BlockchainsName;
+  }>("transactionsStreamQueue", {
+    connection: {
+      host: redis_url,
+      port: 6379,
+    },
+  });
+
+  const coins_routes = setup_coins_routes(coins_service);
+  const wallets_routes = setup_wallets_routes(
+    wallets_service,
+    base_url,
+    redis_url,
+  );
+
   app.get("/", (c) => {
     return c.text("Wallets y Tokens API running");
   });
@@ -122,12 +147,36 @@ export const create_app = (
     return c.json({ blockchains });
   });
 
-  const coins_routes = setup_coins_routes(coins_service);
-  const wallets_routes = setup_wallets_routes(
-    wallets_service,
-    base_url,
-    moralis_streams_secret_key,
-    redis_url,
+  app.post(
+    "/streams/:blockchain",
+    arktypeValidator(
+      "param",
+      type({
+        blockchain: ["===", ...EveryBlockainsName],
+      }),
+    ),
+    async (c) => {
+      const { blockchain } = c.req.valid("param");
+
+      const body = await c.req.json();
+      const headers = c.req.header();
+
+      // Verifico y proceso la transacción enviada
+      const is_valid = wallets_service.validateWebhookTransaction(
+        body,
+        moralis_streams_secret_key,
+        headers,
+      );
+
+      if (!is_valid) return c.text("Unauthorized webhook", 401);
+
+      await transactionsStreamQueue.add("transactionsStream", {
+        body,
+        blockchain,
+      });
+
+      return c.text("Webhook recibido");
+    },
   );
 
   app.use(
@@ -141,8 +190,7 @@ export const create_app = (
   app.use(
     "/wallets/*",
     bearerAuth({
-      verifyToken: async (token, c) => {
-        if (c.req.path.startsWith("/wallets/streams/")) return true;
+      verifyToken: async (token) => {
         return token === api_token;
       },
     }),
