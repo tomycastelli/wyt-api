@@ -108,19 +108,26 @@ jobs:
           name: sql-schema
           path: packages/adapters/src/repositories/drizzle/
 
-      - name: Add EC2 host key to known hosts
+      - name: Setup SSH
         run: |
+          # Add EC2 to known hosts
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
-      - name: Copy files to EC2
-        run: |
-          # Decode the base64 encoded private key and save it to a temporary file
-          echo "${{ secrets.EC2_KEY_BASE64 }}" | base64 --decode > /tmp/ec2_key
+          # Decode the base64 encoded private key using openssl and save it to a temporary file
+          echo "${{ secrets.EC2_KEY_BASE64 }}" | openssl enc -d -base64 -out /tmp/ec2_key
           chmod 600 /tmp/ec2_key
 
+          # Verify the key format
+          if ! grep -q "BEGIN RSA PRIVATE KEY" /tmp/ec2_key && ! grep -q "BEGIN OPENSSH PRIVATE KEY" /tmp/ec2_key; then
+            echo "Invalid private key format"
+            exit 1
+          fi
+
+      - name: Copy files to EC2
+        run: |
           # Find the generated SQL file
           SQL_FILE=$(find packages/adapters/src/repositories/drizzle/ -name "*.sql")
           echo "SQL_FILE: $SQL_FILE"
@@ -133,7 +140,7 @@ jobs:
 
       - name: Run docker-compose on EC2
         run: |
-          ssh -i ${{ secrets.EC2_KEY }} ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+          ssh -i /tmp/ec2_key ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             cd ~/wyt-api/
             export WORKERS_IMAGE=${{ secrets.ECR_REPOSITORY_URI }}:workers-latest
             export WEB_API_IMAGE=${{ secrets.ECR_REPOSITORY_URI }}:web-api-latest
