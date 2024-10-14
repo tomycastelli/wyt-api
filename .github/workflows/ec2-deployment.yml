@@ -88,14 +88,21 @@ jobs:
       - name: Run SQL schema generation
         run: turbo run @repo/adapters#generate
 
-      - name: Copy .sql file to EC2
+      - name: Copy files to EC2
         run: |
-          SQL_FILE=$(find packages/adapters/src/repositories/drizzle/ -name "*.sql")
-          scp -i ${{ secrets.EC2_KEY }} $SQL_FILE ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/wyt-api/init.sql
+          # Decode the base64 encoded private key and save it to a temporary file
+          echo "${{ secrets.EC2_KEY_BASE64 }}" | base64 --decode > /tmp/ec2_key.pem
+          chmod 600 /tmp/ec2_key.pem
 
-      - name: Copy docker-compose.yml to EC2
-        run: |
-          scp -i ${{ secrets.EC2_KEY }} docker-compose.yml ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/wyt-api/
+          # Find the generated SQL file
+          SQL_FILE=$(find packages/adapters/src/repositories/drizzle/ -name "*.sql")
+          echo "SQL_FILE: $SQL_FILE"
+
+          # Copy the SQL file to the EC2 instance
+          scp -i /tmp/ec2_key.pem $SQL_FILE ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/wyt-api/init.sql
+
+          # Copy the docker-compose.yml file to the EC2 instance
+          scp -i /tmp/ec2_key.pem docker-compose.yml ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/wyt-api
 
       - name: Run docker-compose on EC2
         run: |
