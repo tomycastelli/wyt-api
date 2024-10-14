@@ -130,9 +130,6 @@ export const create_app = (
     redis_url,
   );
 
-  app.route("/coins", coins_routes);
-  app.route("/wallets", wallets_routes);
-
   app.use(
     "/coins/*",
     bearerAuth({
@@ -144,11 +141,15 @@ export const create_app = (
   app.use(
     "/wallets/*",
     bearerAuth({
-      verifyToken: async (token) => {
+      verifyToken: async (token, c) => {
+        if (c.req.path.startsWith("/streams/")) return true;
         return token === api_token;
       },
     }),
   );
+
+  app.route("/coins", coins_routes);
+  app.route("/wallets", wallets_routes);
 
   return app;
 };
