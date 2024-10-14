@@ -142,7 +142,7 @@ export const create_app = (
     "/wallets/*",
     bearerAuth({
       verifyToken: async (token, c) => {
-        if (c.req.path.startsWith("/streams/")) return true;
+        if (c.req.path.startsWith("/wallets/streams/")) return true;
         return token === api_token;
       },
     }),
