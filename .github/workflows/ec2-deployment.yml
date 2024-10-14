@@ -6,11 +6,8 @@ on:
       - "v*.*.*"
 
 jobs:
-  build-and-push:
+  setup-and-build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        app: [web-api, workers]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -38,12 +35,35 @@ jobs:
       - name: Run Biome Lint
         run: turbo run format-and-lint
 
-
-      - name: Install dependencies for sql generation
+      - name: Install dependencies for SQL generation
         run: pnpm install
 
-      - name: Build projects for sql generation
+      - name: Build projects for SQL generation
         run: turbo run build
+
+      - name: Run SQL schema generation
+        run: turbo run @repo/adapters#generate
+
+      - name: Upload SQL schema artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: sql-schema
+          path: packages/adapters/src/repositories/drizzle/*.sql
+
+  build-and-push:
+    runs-on: ubuntu-latest
+    needs: setup-and-build
+    strategy:
+      matrix:
+        app: [web-api, workers]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Set tag env
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -76,15 +96,18 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-    needs: build-and-push
+    needs: [setup-and-build, build-and-push]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 2
 
-      - name: Run SQL schema generation
-        run: turbo run @repo/adapters#generate
+      - name: Download SQL schema artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: sql-schema
+          path: packages/adapters/src/repositories/drizzle/
 
       - name: Add EC2 host key to known hosts
         run: |
@@ -94,18 +117,18 @@ jobs:
       - name: Copy files to EC2
         run: |
           # Decode the base64 encoded private key and save it to a temporary file
-          echo "${{ secrets.EC2_KEY_BASE64 }}" | base64 --decode > /tmp/ec2_key
-          chmod 600 /tmp/ec2_key
+          echo "${{ secrets.EC2_KEY_BASE64 }}" | base64 --decode > /tmp/ec2_key.pem
+          chmod 600 /tmp/ec2_key.pem
 
           # Find the generated SQL file
           SQL_FILE=$(find packages/adapters/src/repositories/drizzle/ -name "*.sql")
           echo "SQL_FILE: $SQL_FILE"
 
           # Copy the SQL file to the EC2 instance
-          scp -i /tmp/ec2_key $SQL_FILE ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/wyt-api/init.sql
+          scp -i /tmp/ec2_key.pem $SQL_FILE ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/wyt-api/init.sql
 
           # Copy the docker-compose.yml file to the EC2 instance
-          scp -i /tmp/ec2_key docker-compose.yml ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/wyt-api
+          scp -i /tmp/ec2_key.pem docker-compose.yml ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/wyt-api
 
       - name: Run docker-compose on EC2
         run: |
