@@ -148,9 +148,9 @@ export class CoinsService<
       (coin) =>
         !saved_coins_names.includes(coin.name) &&
         (base_coins.includes(coin.id as BlockchainCoin) ||
-      Object.keys(coin.platforms).some((platform) =>
-        EveryBlockainsName.includes(platform as BlockchainsName),
-      )),
+          Object.keys(coin.platforms).some((platform) =>
+            EveryBlockainsName.includes(platform as BlockchainsName),
+          )),
     );
 
     const coins_to_save: Coin[] = [];
