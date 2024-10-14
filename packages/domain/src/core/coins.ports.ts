@@ -26,6 +26,7 @@ export interface CoinsRepository {
     blockchain: string,
     page_number: number,
     page_size: number,
+    ids: number[] | undefined,
   ): Promise<SavedCoin[]>;
   getCandlesByDateRange(
     frequency: "hourly" | "daily",

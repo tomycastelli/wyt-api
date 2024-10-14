@@ -8,6 +8,7 @@ import {
 import { type } from "arktype";
 import { type Context, Hono } from "hono";
 import type { BlankEnv, BlankSchema } from "hono/types";
+import { second_timestamp, validate_page } from "../index.js";
 
 export const setup_coins_routes = (
   coins_service: CoinsService<CoinGecko, CoinsPostgres>,
@@ -41,44 +42,15 @@ export const setup_coins_routes = (
       return suggestCoins(c, coin_name);
     }
 
-    return c.json(coin);
+    const candles = await coins_service.getCandlesByDate(
+      "daily",
+      coin.id,
+      new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000),
+      new Date(),
+    );
+
+    return c.json({ coin, candles });
   });
-
-  coins_routes.get("/blockchains", async (c) => {
-    return c.json({ blockchains });
-  });
-
-  // Todas las coins por blockchain, paginadas y ordenadas por marketcap
-  coins_routes.get(
-    "/:blockchain",
-    arktypeValidator(
-      "query",
-      type({
-        "page?": type("string").pipe((s) => Number.parseInt(s)),
-        "name_search?": "string",
-      }),
-    ),
-    async (c) => {
-      const blockchain = c.req.param("blockchain");
-      if (!(blockchain in blockchains)) {
-        c.status(404);
-        return c.json({ message: "invalid blockchain", blockchains });
-      }
-      const { page, name_search } = c.req.valid("query");
-
-      const page_size = 30;
-      const savedCoins = await coins_service.getCoinsByBlockchain(
-        blockchain as BlockchainsName,
-        page ?? 1,
-        page_size,
-        name_search,
-      );
-
-      return c.json(savedCoins);
-    },
-  );
-
-  const milisecond_timestamp = type("string").pipe((n) => new Date(Number(n)));
 
   // Todas las candelas de la moneda segun un rango de timestamps en milisegundos
   coins_routes.get(
@@ -89,7 +61,7 @@ export const setup_coins_routes = (
     ),
     arktypeValidator(
       "query",
-      type({ "from?": milisecond_timestamp, "to?": milisecond_timestamp }),
+      type({ "from?": second_timestamp, "to?": second_timestamp }),
     ),
     async (c) => {
       const { candle_type, coin_name } = c.req.valid("param");
@@ -116,6 +88,44 @@ export const setup_coins_routes = (
         to_date,
       );
       return c.json(candles);
+    },
+  );
+
+  // Todas las coins por blockchain, paginadas y ordenadas por marketcap
+  coins_routes.get(
+    "/:blockchain",
+    arktypeValidator(
+      "query",
+      type({
+        "page?": type("string").pipe((s) => Number.parseInt(s)),
+        "ids?": type("string[]").pipe((strs) =>
+          strs.map((s) => Number.parseInt(s)),
+        ),
+        "name_search?": "string",
+      }),
+    ),
+    async (c) => {
+      const blockchain = c.req.param("blockchain");
+      if (!(blockchain in blockchains)) {
+        c.status(404);
+        return c.json({ message: "invalid blockchain", blockchains });
+      }
+      const { page, name_search, ids } = c.req.valid("query");
+
+      if (page) {
+        validate_page(page, c);
+      }
+
+      const page_size = 30;
+      const savedCoins = await coins_service.getCoinsByBlockchain(
+        blockchain as BlockchainsName,
+        page ?? 1,
+        page_size,
+        ids,
+        name_search,
+      );
+
+      return c.json(savedCoins);
     },
   );
 

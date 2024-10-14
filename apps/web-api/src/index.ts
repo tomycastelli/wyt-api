@@ -5,13 +5,14 @@ import {
   WalletsPostgres,
   WalletsProviderAdapters,
 } from "@repo/adapters";
-import { CoinsService, WalletsService } from "@repo/domain";
-import { Hono } from "hono";
+import { CoinsService, WalletsService, blockchains } from "@repo/domain";
+import { type Context, Hono } from "hono";
 import { prettyJSON } from "hono/pretty-json";
 import { requestId } from "hono/request-id";
 import { trimTrailingSlash } from "hono/trailing-slash";
 import { getPath } from "hono/utils/url";
 import "dotenv/config";
+import { type } from "arktype";
 import { bearerAuth } from "hono/bearer-auth";
 import { compress } from "hono/compress";
 import type { BlankEnv, BlankSchema } from "hono/types";
@@ -29,6 +30,17 @@ declare global {
 BigInt.prototype.toJSON = function () {
   return Number(this);
 };
+
+export const validate_page = (page: number, c: Context) => {
+  if (page < 1) {
+    return c.json({ error: `invalid page (${page} is less than 1)` });
+  }
+};
+
+// Parsea una string de unix timestamp en segundos a una Date
+export const second_timestamp = type("string").pipe(
+  (n) => new Date(Number(n) * 1000),
+);
 
 export const create_app = (
   coins_service: CoinsService<CoinGecko, CoinsPostgres>,
@@ -103,7 +115,11 @@ export const create_app = (
   });
 
   app.get("/", (c) => {
-    return c.text("Hello Hono!");
+    return c.text("Wallets y Tokens API running");
+  });
+
+  app.get("/blockchains", async (c) => {
+    return c.json({ blockchains });
   });
 
   const coins_routes = setup_coins_routes(coins_service);

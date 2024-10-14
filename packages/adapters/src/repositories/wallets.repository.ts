@@ -16,7 +16,7 @@ import {
   gte,
   inArray,
   isNull,
-  lte,
+  lt,
   notInArray,
   or,
   sql,
@@ -464,6 +464,8 @@ export class WalletsPostgres implements WalletsRepository {
   async getTransactions(
     wallet_address: string,
     transactions_page: number,
+    from_date: Date | undefined,
+    to_date: Date | undefined,
   ): Promise<Transaction[]> {
     const page_size = 10;
     // Busco las transfers en donde esté la Wallet involucrada
@@ -471,15 +473,23 @@ export class WalletsPostgres implements WalletsRepository {
       .selectDistinct({ transactionId: schema.transfers.transaction_id })
       .from(schema.transfers)
       .where(
-        or(
-          eqLower(
-            schema.transfers.from_address,
-            sql.placeholder("walletAddress"),
+        and(
+          or(
+            eqLower(
+              schema.transfers.from_address,
+              sql.placeholder("walletAddress"),
+            ),
+            eqLower(
+              schema.transfers.to_address,
+              sql.placeholder("walletAddress"),
+            ),
           ),
-          eqLower(
-            schema.transfers.to_address,
-            sql.placeholder("walletAddress"),
-          ),
+          from_date
+            ? gte(schema.transactions.block_timestamp, from_date)
+            : undefined,
+          to_date
+            ? lt(schema.transactions.block_timestamp, to_date)
+            : undefined,
         ),
       )
       .orderBy(desc(schema.transfers.transaction_id))
@@ -583,7 +593,7 @@ export class WalletsPostgres implements WalletsRepository {
           ),
           // En el rango dado
           gte(schema.transactions.block_timestamp, from_date),
-          lte(schema.transactions.block_timestamp, to_date),
+          lt(schema.transactions.block_timestamp, to_date),
           // Que no sean NFT
           isNull(schema.transfers.nft_id),
         ),

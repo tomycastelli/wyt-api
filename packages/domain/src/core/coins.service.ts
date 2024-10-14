@@ -1,5 +1,5 @@
 import Fuse from "fuse.js";
-import type { Candle, Coin, SavedCoin, SavedNFT } from "./coins.entities.js";
+import type { Candle, SavedCoin, SavedNFT } from "./coins.entities.js";
 import type { CoinsProvider, CoinsRepository } from "./coins.ports.js";
 import {
   type BlockchainCoin,
@@ -110,12 +110,14 @@ export class CoinsService<
     blockchain: string,
     page_number: number,
     page_size: number,
+    ids: number[] | undefined,
     name_search: string | undefined,
   ): Promise<SavedCoin[]> {
     const coinsData = await this.coinsRepository.getCoinsByBlockchain(
       blockchain,
       page_number,
       page_size,
+      ids,
     );
     if (name_search) {
       const coinsFuse = new Fuse(coinsData, { keys: ["name"] });
@@ -153,18 +155,26 @@ export class CoinsService<
           )),
     );
 
-    const coins_to_save: Coin[] = [];
+    const saved_coins: SavedCoin[] = [];
 
     for (const coin of filtered_list) {
       const coin_to_save = await this.coinsProvider.getCoinDetails(
         coin,
         this.global_minimum_market_cap,
       );
-      if (coin_to_save) coins_to_save.push(coin_to_save);
+      if (coin_to_save) {
+        try {
+          const [saved_coin] = await this.coinsRepository.saveCoins([
+            coin_to_save,
+          ]);
+          saved_coins.push(saved_coin);
+        } catch (e) {
+          console.error(e);
+        }
+      }
     }
 
-    const savedCoins = await this.coinsRepository.saveCoins(coins_to_save);
-    return savedCoins;
+    return saved_coins;
   }
 
   /** Devuelve todas las [Candle]s guardadas segun el rango. */

@@ -31,7 +31,6 @@ import type {
   ValuedTransfer,
   ValuedWallet,
   ValuedWalletCoin,
-  ValuedWalletWithTransactions,
   Wallet,
 } from "./wallets.entities.js";
 
@@ -145,37 +144,26 @@ export class WalletsService<
     }
   }
 
-  /** Consigue una [ValuedWalletWithTransactions] ya guardada en la DB */
-  public async getWalletWithTransactions(
+  public async getTransactionsByWallet(
     address: string,
     blockchain: BlockchainsName,
-    transactions_page: number,
-  ): Promise<ValuedWalletWithTransactions | null> {
-    // Consigo la [Wallet]
-    const saved_wallet = await this.walletsRepository.getWallet(
-      address,
-      blockchain,
-    );
-    if (!saved_wallet) return null;
-
-    const { valued_wallet } = await this.getValuedWallet(saved_wallet);
-
+    page: number,
+    from_date: Date | undefined,
+    to_date: Date | undefined,
+  ): Promise<ValuedTransaction[]> {
     // Consigo las [Transaction]s
     const transaction_data = await this.walletsRepository.getTransactions(
-      saved_wallet.address,
-      transactions_page,
+      address,
+      page,
+      from_date,
+      to_date,
     );
     const { valued_transactions } = await this.getValuedTransactions(
       transaction_data,
       blockchain,
     );
 
-    return {
-      id: saved_wallet.id,
-      ...valued_wallet,
-      last_update: saved_wallet.last_update,
-      transactions: valued_transactions,
-    };
+    return valued_transactions;
   }
 
   public async getWallet(
@@ -190,6 +178,22 @@ export class WalletsService<
     if (!saved_wallet) return undefined;
 
     return saved_wallet;
+  }
+
+  public async getValuedWalletData(
+    address: string,
+    blockchain: BlockchainsName,
+  ): Promise<ValuedWallet | undefined> {
+    // Consigo la [Wallet]
+    const saved_wallet = await this.walletsRepository.getWallet(
+      address,
+      blockchain,
+    );
+    if (!saved_wallet) return undefined;
+
+    const { valued_wallet } = await this.getValuedWallet(saved_wallet);
+
+    return valued_wallet;
   }
 
   public async getValuedWalletsByBlockchain(

@@ -8,7 +8,7 @@ import {
   type SavedNFT,
   blockchains,
 } from "@repo/domain";
-import { and, desc, eq, gte, inArray, lte, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lt, or, sql } from "drizzle-orm";
 import { type PostgresJsDatabase, drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { eqLower } from "../utils.js";
@@ -246,7 +246,7 @@ export class CoinsPostgres implements CoinsRepository {
           eq(schema.candles.coin_id, coin_id),
           eq(schema.candles.frequency, frequency),
           gte(schema.candles.timestamp, from_date),
-          lte(schema.candles.timestamp, to_date),
+          lt(schema.candles.timestamp, to_date),
         ),
       );
 
@@ -276,6 +276,7 @@ export class CoinsPostgres implements CoinsRepository {
     blockchain: BlockchainsName,
     page_number: number,
     page_size: number,
+    ids: number[] | undefined,
   ): Promise<SavedCoin[]> {
     const base_coin = blockchains[blockchain];
     const coinsData = await this.db
@@ -283,9 +284,12 @@ export class CoinsPostgres implements CoinsRepository {
       .from(schema.coins)
       .leftJoin(schema.contracts, eq(schema.coins.id, schema.contracts.coin_id))
       .where(
-        or(
-          eq(schema.contracts.blockchain, blockchain),
-          base_coin ? eq(schema.coins.name, base_coin.coin) : undefined,
+        and(
+          or(
+            eq(schema.contracts.blockchain, blockchain),
+            base_coin ? eq(schema.coins.name, base_coin.coin) : undefined,
+          ),
+          ids ? inArray(schema.coins.id, ids) : undefined,
         ),
       )
       .orderBy(desc(schema.coins.market_cap))

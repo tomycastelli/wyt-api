@@ -96,10 +96,14 @@ export interface WalletsRepository {
     ids?: number[],
   ): Promise<SavedWallet[]>;
 
-  /** Consigue las [Transaction]s de una [Wallet] de manera paginada */
+  /** Consigue las [Transaction]s de una [Wallet] de manera paginada y descendente  \
+  Acepta un rango de fechas opcional
+  */
   getTransactions(
     wallet_address: string,
     transactions_page: number,
+    from_date: Date | undefined,
+    to_date: Date | undefined,
   ): Promise<Transaction[]>;
 
   /** Consigue las [Transaction]s de una [Wallet] en un rango de tiempo */

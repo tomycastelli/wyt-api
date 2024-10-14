@@ -15,6 +15,7 @@ import { type } from "arktype";
 import { Queue } from "bullmq";
 import { Hono } from "hono";
 import type { BlankEnv, BlankSchema } from "hono/types";
+import { second_timestamp, validate_page } from "../index.js";
 
 export const setup_wallets_routes = (
   wallets_service: WalletsService<
@@ -156,6 +157,10 @@ export const setup_wallets_routes = (
       const { blockchain } = c.req.valid("param");
       const { page, ids } = c.req.valid("query");
 
+      if (page) {
+        validate_page(page, c);
+      }
+
       const wallets = await wallets_service.getValuedWalletsByBlockchain(
         blockchain,
         page ?? 1,
@@ -163,6 +168,43 @@ export const setup_wallets_routes = (
       );
 
       return c.json(wallets);
+    },
+  );
+
+  wallets_routes.get(
+    "/transactions/:blockchain/:address",
+    arktypeValidator(
+      "param",
+      type({
+        blockchain: ["===", ...EveryBlockainsName],
+        address: type("string"),
+      }),
+    ),
+    arktypeValidator(
+      "query",
+      type({
+        "page?": type("string").pipe((s) => Number.parseInt(s)),
+        "from?": second_timestamp,
+        "to?": second_timestamp,
+      }),
+    ),
+    async (c) => {
+      const { blockchain, address } = c.req.valid("param");
+      const { page, from, to } = c.req.valid("query");
+
+      if (page) {
+        validate_page(page, c);
+      }
+
+      const transactions = await wallets_service.getTransactionsByWallet(
+        address,
+        blockchain,
+        page ?? 1,
+        from,
+        to,
+      );
+
+      return c.json(transactions);
     },
   );
 
@@ -179,30 +221,48 @@ export const setup_wallets_routes = (
       "query",
       type({
         "page?": type("string").pipe((s) => Number.parseInt(s)),
+        "transactions?": type("'true'|'false'").pipe((s) => s === "true"),
         "graph?": "'day'|'week'|'month'|'year'",
       }),
     ),
     async (c) => {
       const { blockchain, address } = c.req.valid("param");
-      const { page, graph } = c.req.valid("query");
+      const { page, graph, transactions } = c.req.valid("query");
 
-      const wallet_with_tx = await wallets_service.getWalletWithTransactions(
+      if (page) {
+        validate_page(page, c);
+      }
+
+      const wallet_with_tx = await wallets_service.getValuedWalletData(
         address,
         blockchain,
-        page ?? 1,
       );
 
       if (!wallet_with_tx) return c.notFound();
+
+      const return_object: { [key: string]: any } = wallet_with_tx;
 
       if (graph) {
         const wallet_graph = await wallets_service.getWalletValueChangeGraph(
           wallet_with_tx,
           graph,
         );
-        return c.json({ ...wallet_with_tx, wallet_graph });
+        return_object.graph = wallet_graph;
       }
 
-      return c.json(wallet_with_tx);
+      if (transactions === true) {
+        const transaction_data = await wallets_service.getTransactionsByWallet(
+          address,
+          blockchain,
+          page ?? 1,
+          undefined,
+          undefined,
+        );
+
+        return_object.transactions = transaction_data;
+      }
+
+      return c.json(return_object);
     },
   );
 
