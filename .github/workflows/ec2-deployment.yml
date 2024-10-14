@@ -88,6 +88,11 @@ jobs:
       - name: Run SQL schema generation
         run: turbo run @repo/adapters#generate
 
+      - name: Add EC2 host key to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
       - name: Copy files to EC2
         run: |
           # Decode the base64 encoded private key and save it to a temporary file
