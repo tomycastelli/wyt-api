@@ -6,14 +6,17 @@ on:
       - "v*.*.*"
 
 jobs:
-  build-and-deploy:
+  build-and-push:
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        app: [web-api, workers]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 2
+
       - name: Set tag env
         run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
 
@@ -49,35 +52,29 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build and push web-api Docker image
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: apps/web-api/Dockerfile
+          file: apps/${{ matrix.app }}/Dockerfile
           push: true
           tags: |
-            ${{ secrets.ECR_REPOSITORY_URI }}:web-api-latest
-            ${{ secrets.ECR_REPOSITORY_URI }}:web-api-${{ env.RELEASE_VERSION }}
+            ${{ secrets.ECR_REPOSITORY_URI }}:${{ matrix.app }}-latest
+            ${{ secrets.ECR_REPOSITORY_URI }}:${{ matrix.app }}-${{ env.RELEASE_VERSION }}
           platforms: |
             linux/arm64
             linux/amd64
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build and push workers Docker image
-        uses: docker/build-push-action@v5
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
-          context: .
-          file: apps/workers/Dockerfile
-          push: true
-          tags: |
-            ${{ secrets.ECR_REPOSITORY_URI }}:workers-latest
-            ${{ secrets.ECR_REPOSITORY_URI }}:workers-${{ env.RELEASE_VERSION }}
-          platforms: |
-            linux/arm64
-            linux/amd64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          fetch-depth: 2
 
       - name: Install dependencies for sql generation
         run: pnpm install
@@ -96,18 +93,18 @@ jobs:
       - name: Copy files to EC2
         run: |
           # Decode the base64 encoded private key and save it to a temporary file
-          echo "${{ secrets.EC2_KEY_BASE64 }}" | base64 --decode > /tmp/ec2_key.pem
-          chmod 600 /tmp/ec2_key.pem
+          echo "${{ secrets.EC2_KEY_BASE64 }}" | base64 --decode > /tmp/ec2_key
+          chmod 600 /tmp/ec2_key
 
           # Find the generated SQL file
           SQL_FILE=$(find packages/adapters/src/repositories/drizzle/ -name "*.sql")
           echo "SQL_FILE: $SQL_FILE"
 
           # Copy the SQL file to the EC2 instance
-          scp -i /tmp/ec2_key.pem $SQL_FILE ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/wyt-api/init.sql
+          scp -i /tmp/ec2_key $SQL_FILE ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/wyt-api/init.sql
 
           # Copy the docker-compose.yml file to the EC2 instance
-          scp -i /tmp/ec2_key.pem docker-compose.yml ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/wyt-api
+          scp -i /tmp/ec2_key docker-compose.yml ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/wyt-api
 
       - name: Run docker-compose on EC2
         run: |
