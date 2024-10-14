@@ -45,7 +45,7 @@ jobs:
         run: turbo run @repo/adapters#generate
 
       - name: Upload SQL schema artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: sql-schema
           path: packages/adapters/src/repositories/drizzle/*.sql
@@ -103,7 +103,7 @@ jobs:
           fetch-depth: 2
 
       - name: Download SQL schema artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: sql-schema
           path: packages/adapters/src/repositories/drizzle/
@@ -111,7 +111,9 @@ jobs:
       - name: Add EC2 host key to known hosts
         run: |
           mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
 
       - name: Copy files to EC2
         run: |
@@ -124,10 +126,10 @@ jobs:
           echo "SQL_FILE: $SQL_FILE"
 
           # Copy the SQL file to the EC2 instance
-          scp -i /tmp/ec2_key $SQL_FILE ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/wyt-api/init.sql
+          scp -vvv -i /tmp/ec2_key $SQL_FILE ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/wyt-api/init.sql
 
           # Copy the docker-compose.yml file to the EC2 instance
-          scp -i /tmp/ec2_key docker-compose.yml ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/wyt-api
+          scp -vvv -i /tmp/ec2_key docker-compose.yml ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/wyt-api
 
       - name: Run docker-compose on EC2
         run: |
@@ -146,8 +148,8 @@ jobs:
             export PG_USER=${{ secrets.PG_USER }}
             export PG_PASSWORD=${{ secrets.PG_PASSWORD }}
             export PG_DB=${{ secrets.PG_DB }}
+            docker-compose rm -sf web-api workers
+            docker image rm ${{ secrets.ECR_REPOSITORY_URI }}:workers-latest ${{ secrets.ECR_REPOSITORY_URI }}:web-api-latest
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY_URI }}
-            docker image rm ${{ secrets.ECR_REPOSITORY_URI }}:workers-latest
-            docker image rm ${{ secrets.ECR_REPOSITORY_URI }}:web-api-latest
             docker-compose up -d
           EOF

@@ -4,6 +4,7 @@ import type { CoinsProvider, CoinsRepository } from "./coins.ports.js";
 import {
   type BlockchainCoin,
   type BlockchainsName,
+  EveryBlockainsName,
   base_coins,
 } from "./vars.js";
 
@@ -146,10 +147,10 @@ export class CoinsService<
     const filtered_list = coin_list.filter(
       (coin) =>
         !saved_coins_names.includes(coin.name) &&
-        base_coins.includes(coin.id as BlockchainCoin),
-      // Object.keys(coin.platforms).some((platform) =>
-      //   EveryBlockainsName.includes(platform as BlockchainsName),
-      // )),
+        (base_coins.includes(coin.id as BlockchainCoin) ||
+      Object.keys(coin.platforms).some((platform) =>
+        EveryBlockainsName.includes(platform as BlockchainsName),
+      )),
     );
 
     const coins_to_save: Coin[] = [];
