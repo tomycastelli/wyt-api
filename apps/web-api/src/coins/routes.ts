@@ -53,7 +53,10 @@ export const setup_coins_routes = (
     "/:blockchain",
     arktypeValidator(
       "query",
-      type({ "page?": "number", "name_search?": "string" }),
+      type({
+        "page?": type("string").pipe((s) => Number.parseInt(s)),
+        "name_search?": "string",
+      }),
     ),
     async (c) => {
       const blockchain = c.req.param("blockchain");

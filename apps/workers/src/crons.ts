@@ -30,7 +30,7 @@ export const wallet_crons = (
 
 export const coin_crons = (coin_jobs_queue: Queue<CoinJobsQueue>): void => {
   // Actualización de [Coin]s
-  schedule("0 * * * *", () => {
+  schedule("*/5 * * * *", () => {
     // Cada 1 hora
     coin_jobs_queue.add("updating important coins", {
       jobName: "updateCoins",

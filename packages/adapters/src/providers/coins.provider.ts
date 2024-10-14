@@ -434,12 +434,13 @@ export class CoinGecko implements CoinsProvider {
       }
     } else {
       // Reparto en chunks de 250 coin names y hago la query
+      const chunk_size = 250;
       let index_cursor = 0;
       let is_last_page = false;
       while (!is_last_page) {
         const coins_to_fetch = coin_names.slice(
           index_cursor,
-          index_cursor + 250,
+          index_cursor + chunk_size,
         );
 
         const marketData = await this.rateLimitedCallApi(
@@ -450,12 +451,12 @@ export class CoinGecko implements CoinsProvider {
 
         if (parsedMarketData instanceof type.errors) throw parsedMarketData;
 
-        if (parsedMarketData.length < 250) {
+        if (parsedMarketData.length < chunk_size) {
           // Termino el loop con esta iteracion
           is_last_page = true;
         }
 
-        index_cursor += 250;
+        index_cursor += chunk_size;
 
         const mappedMarketData: CoinMarketData[] = parsedMarketData.map(
           (md) => ({

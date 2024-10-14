@@ -116,7 +116,7 @@ export const setup_wallets_routes = (
       "param",
       type({
         blockchain: ["===", ...EveryBlockainsName],
-        address: type("string"),
+        address: "string",
       }),
     ),
     async (c) => {
@@ -146,8 +146,10 @@ export const setup_wallets_routes = (
     arktypeValidator(
       "query",
       type({
-        "page?": "number.integer > 0",
-        "ids?": "number.integer[]",
+        "page?": type("string").pipe((s) => Number.parseInt(s)),
+        "ids?": type("string[]").pipe((strs) =>
+          strs.map((s) => Number.parseInt(s)),
+        ),
       }),
     ),
     async (c) => {
@@ -176,7 +178,7 @@ export const setup_wallets_routes = (
     arktypeValidator(
       "query",
       type({
-        "page?": "number.integer > 0",
+        "page?": type("string").pipe((s) => Number.parseInt(s)),
         "graph?": "'day'|'week'|'month'|'year'",
       }),
     ),
