@@ -52,11 +52,11 @@ const coinDetailsSchema = type({
 
 const marketDataListSchema = type({
   id: "string",
-  current_price: "number",
-  market_cap: "number",
-  price_change_percentage_24h: "number",
-  price_change_24h: "number",
-  ath: "number",
+  current_price: "number|null",
+  market_cap: "number|null",
+  price_change_percentage_24h: "number|null",
+  price_change_24h: "number|null",
+  ath: "number|null",
   "+": "delete",
 });
 
@@ -418,13 +418,23 @@ export class CoinGecko implements CoinsProvider {
             is_last_page = true;
           }
 
-          const mappedMarketData: CoinMarketData[] = parsedMarketData.map(
-            (md) => ({
+          const mappedMarketData: CoinMarketData[] = parsedMarketData
+            .filter(
+              (md) =>
+                md.price_change_24h &&
+                md.market_cap &&
+                md.ath &&
+                md.current_price &&
+                md.price_change_percentage_24h,
+            )
+            .map((md) => ({
               name: md.id,
-              price: md.current_price,
-              ...md,
-            }),
-          );
+              price: md.current_price!,
+              ath: md.ath!,
+              market_cap: md.market_cap!,
+              price_change_24h: md.price_change_24h!,
+              price_change_percentage_24h: md.price_change_percentage_24h!,
+            }));
 
           page++;
 
@@ -457,13 +467,23 @@ export class CoinGecko implements CoinsProvider {
 
         index_cursor += chunk_size;
 
-        const mappedMarketData: CoinMarketData[] = parsedMarketData.map(
-          (md) => ({
+        const mappedMarketData: CoinMarketData[] = parsedMarketData
+          .filter(
+            (md) =>
+              md.price_change_24h &&
+              md.market_cap &&
+              md.ath &&
+              md.current_price &&
+              md.price_change_percentage_24h,
+          )
+          .map((md) => ({
             name: md.id,
-            price: md.current_price,
-            ...md,
-          }),
-        );
+            price: md.current_price!,
+            ath: md.ath!,
+            market_cap: md.market_cap!,
+            price_change_24h: md.price_change_24h!,
+            price_change_percentage_24h: md.price_change_percentage_24h!,
+          }));
 
         market_data_array.push(...mappedMarketData);
       }

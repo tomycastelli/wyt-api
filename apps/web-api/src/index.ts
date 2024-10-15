@@ -95,8 +95,8 @@ export const create_app = (
 
     const request_id = c.get("requestId");
 
-    logger.log("info", { request_id, path, method });
-    console.log("info", { request_id, path, method });
+    logger.log("info", { request_id, path, method, timestamp: new Date() });
+    console.log("info", { request_id, path, method, timestamp: new Date() });
 
     const start = Date.now();
 

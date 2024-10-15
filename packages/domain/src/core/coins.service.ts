@@ -148,7 +148,7 @@ export class CoinsService<
     // Se filtran los tokens que esten dentro de las blockchains que nos interesan y aparte no estén ya guardadas
     const blockchain_coins = coin_list.filter(
       (coin) =>
-        !saved_coins_names.includes(coin.name) &&
+        !saved_coins_names.includes(coin.id) &&
         (base_coins.includes(coin.id as BlockchainCoin) ||
           Object.keys(coin.platforms).some((platform) =>
             EveryBlockainsName.includes(platform as BlockchainsName),
