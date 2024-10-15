@@ -272,7 +272,7 @@ export const transactions = pgTable(
       .notNull()
       .$type<BlockchainsName>()
       .notNull(),
-    block_timestamp: timestamp("timestamp", {
+    block_timestamp: timestamp("block_timestamp", {
       mode: "date",
       withTimezone: false,
     }).notNull(),
@@ -302,6 +302,14 @@ export const transfers = pgTable(
         onUpdate: "cascade",
       })
       .notNull(),
+    blockchain: blockchainsEnum("blockchain")
+      .notNull()
+      .$type<BlockchainsName>()
+      .notNull(),
+    block_timestamp: timestamp("block_timestamp", {
+      mode: "date",
+      withTimezone: false,
+    }).notNull(),
     type: transactionTypeEnum("type").notNull(),
     coin_id: integer("coin_id").references(() => coins.id, {
       onDelete: "cascade",

@@ -161,8 +161,6 @@ export const create_app = (
       const body = await c.req.json();
       const headers = c.req.header();
 
-      console.log("Stream body: ", body);
-
       // Verifico y proceso la transacción enviada
       const is_valid = wallets_service.validateWebhookTransaction(
         body,

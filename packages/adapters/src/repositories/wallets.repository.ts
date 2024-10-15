@@ -291,6 +291,8 @@ export class WalletsPostgres implements WalletsRepository {
         await tx.insert(schema.transfers).values(
           transaction.transfers.map((tr) => ({
             transaction_id: id.id,
+            blockchain: transaction.blockchain,
+            block_timestamp: transaction.block_timestamp,
             ...tr,
             coin_id: tr.type !== "nft" ? tr.coin.id : null,
             nft_id: tr.type === "nft" ? tr.coin.id : null,
@@ -340,6 +342,8 @@ export class WalletsPostgres implements WalletsRepository {
         // Inserto la [Transfer]
         await tx.insert(schema.transfers).values({
           ...transfer,
+          blockchain: transaction_data.blockchain,
+          block_timestamp: transaction_data.block_timestamp,
           transaction_id: transaction_id.id,
           coin_id: transfer.coin.id,
           value: transfer.value,
