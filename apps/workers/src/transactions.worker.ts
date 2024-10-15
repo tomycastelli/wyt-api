@@ -40,8 +40,11 @@ export const setupTransactionsWorker = (
     },
   );
 
-  transactionsStreamWorker.on("ready", () => {
+  transactionsStreamWorker.on("ready", async () => {
     console.log("transactionsStreamWorker is ready!");
+    console.log("Retreiving failed webhooks...");
+    const result = await wallets_service.handleFailedWebhooks();
+    console.log(`Handled ${result.webhooks_handled} failed webhooks`);
   });
 
   transactionsStreamWorker.on("completed", (job) => {

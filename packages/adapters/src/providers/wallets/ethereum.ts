@@ -511,6 +511,34 @@ export class EthereumProvider implements WalletsStreamsProvider {
     });
   }
 
+  async getFailedWebhooks(): Promise<
+    { body: any; blockchain: BlockchainsName }[]
+  > {
+    const streams = await this.getAllStreams();
+    const failed_webhooks: { body: any; blockchain: BlockchainsName }[] = [];
+
+    let loop_cursor: string | undefined = undefined;
+
+    do {
+      const data = await Moralis.Streams.getHistory({
+        limit: 100,
+        cursor: loop_cursor,
+      });
+
+      loop_cursor = data.pagination.cursor;
+
+      const webhooks_to_insert: { body: any; blockchain: BlockchainsName }[] =
+        data.result.map((r) => ({
+          blockchain: streams.find((s) => s.id === r.streamId)!.blockchain,
+          body: r.payload,
+        }));
+
+      failed_webhooks.push(...webhooks_to_insert);
+    } while (loop_cursor);
+
+    return failed_webhooks;
+  }
+
   // Helpers
 
   getBlockchainName(chain: EvmChain): BlockchainsName | undefined {

@@ -158,6 +158,12 @@ export class WalletsProviderAdapters implements WalletsStreamsProvider {
     return this.ethereumProvider.getAllStreams();
   }
 
+  async getFailedWebhooks(): Promise<
+    { body: any; blockchain: BlockchainsName }[]
+  > {
+    return this.ethereumProvider.getFailedWebhooks();
+  }
+
   validateWebhookTransaction(
     body: any,
     secret_key: string,

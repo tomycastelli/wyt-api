@@ -57,6 +57,9 @@ export interface WalletsStreamsProvider extends WalletsProvider {
   /** Busca las addresses relacionadas a un [Stream] */
   getAddresesByStream(stream_id: string): Promise<string[]>;
 
+  /** Get failed webhooks */
+  getFailedWebhooks(): Promise<{ body: any; blockchain: BlockchainsName }[]>;
+
   /** Verifica y parsea un webhook y devuelve las [Transaction]s
   Devuelve undefined si no es un webhook que nos interese, por ej txs no confirmadas */
   parseWebhookTransaction(

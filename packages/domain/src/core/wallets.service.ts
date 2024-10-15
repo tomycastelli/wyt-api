@@ -313,6 +313,7 @@ export class WalletsService<
     body: any,
     blockchain: BlockchainsName,
   ): Promise<{ new_coins: SavedCoin[] } | null> {
+    console.log("Received body to handle: ", body);
     // Si no es ethereum, no se soportan todavia streams
     const ecosystem = blockchains[blockchain].ecosystem;
     if (ecosystem !== "ethereum") return null;
@@ -321,6 +322,8 @@ export class WalletsService<
       body,
       blockchain,
     );
+
+    console.log("This is the parsed transaction data: ", transaction_data);
 
     if (!transaction_data) {
       return null;
@@ -338,6 +341,28 @@ export class WalletsService<
     }
 
     return { new_coins };
+  }
+
+  public async handleFailedWebhooks(): Promise<{
+    new_coins: SavedCoin[];
+    webhooks_handled: number;
+  }> {
+    const new_coins: SavedCoin[] = [];
+    let webhooks_handled = 0;
+    const failed_webhooks = await this.walletsProvider.getFailedWebhooks();
+
+    for (const webhook of failed_webhooks) {
+      const result = await this.handleWebhookTransaction(
+        webhook.body,
+        webhook.blockchain,
+      );
+      if (result) {
+        webhooks_handled++;
+        new_coins.push(...result.new_coins);
+      }
+    }
+
+    return { new_coins, webhooks_handled };
   }
 
   /** Actualiza los token holdings de la [Wallet] y consigue nuevas transacciones vinculadas.
