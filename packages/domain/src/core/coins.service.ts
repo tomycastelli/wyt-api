@@ -303,8 +303,7 @@ export class CoinsService<
     let minimum_market_cap = 0;
     let maximum_market_cap: undefined | number = undefined;
 
-    const medium_market_cap =
-      this.global_minimum_market_cap / 2 - this.global_minimum_market_cap * 0.1;
+    const medium_market_cap = this.global_minimum_market_cap * 0.4;
 
     switch (importance_level) {
       case 1: {

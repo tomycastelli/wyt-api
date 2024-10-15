@@ -26,7 +26,7 @@ const ethWebhookTransactionType = type({
   },
   txs: type({
     hash: "string",
-    gas: "string",
+    receiptGasUsed: "string",
     gasPrice: "string",
     fromAddress: "string",
     toAddress: "string",
@@ -491,7 +491,8 @@ export class EthereumProvider implements WalletsStreamsProvider {
           ),
           // Asumo que nunca dara undefined porque no me voy a crear un webhook con una chain que no este dentro de las soportadas
           blockchain,
-          fee: BigInt(BigInt(transaction.gas) * BigInt(transaction.gasPrice)),
+          fee:
+            BigInt(transaction.receiptGasUsed) * BigInt(transaction.gasPrice),
           from_address: transaction.fromAddress,
           to_address: transaction.toAddress,
           hash: transaction.hash,
