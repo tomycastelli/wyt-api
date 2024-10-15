@@ -157,7 +157,6 @@ export class CoinGecko implements CoinsProvider {
     coin: {
       id: string;
       symbol: string;
-      name: string;
       platforms: Record<string, string>;
     },
     minimum_market_cap: number,

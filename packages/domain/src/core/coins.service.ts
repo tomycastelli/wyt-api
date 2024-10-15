@@ -146,13 +146,27 @@ export class CoinsService<
       .then((coin) => coin.map((c) => c.name));
 
     // Se filtran los tokens que esten dentro de las blockchains que nos interesan y aparte no estén ya guardadas
-    const filtered_list = coin_list.filter(
+    const blockchain_coins = coin_list.filter(
       (coin) =>
         !saved_coins_names.includes(coin.name) &&
         (base_coins.includes(coin.id as BlockchainCoin) ||
           Object.keys(coin.platforms).some((platform) =>
             EveryBlockainsName.includes(platform as BlockchainsName),
           )),
+    );
+
+    if (blockchain_coins.length === 0) return [];
+
+    // Consigo su market_cap de a baches
+    const filtered_market_caps = await this.coinsProvider.getAllCoinMarketData(
+      blockchain_coins.map((f) => f.id),
+    );
+
+    // Filtrado último
+    const filtered_list = blockchain_coins.filter(
+      (bc) =>
+        filtered_market_caps.find((fmc) => fmc.name === bc.id)?.market_cap ??
+        0 >= this.global_minimum_market_cap,
     );
 
     const saved_coins: SavedCoin[] = [];

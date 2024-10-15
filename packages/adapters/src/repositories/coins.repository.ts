@@ -32,7 +32,13 @@ export class CoinsPostgres implements CoinsRepository {
       // Actualizo los datos asociados a la coin si ya existe su nombre
       const savedCoins = await tx
         .insert(schema.coins)
-        .values(coins.map((c) => ({ ...c, last_update: new Date() })))
+        .values(
+          coins.map((c) => ({
+            ...c,
+            symbol: c.symbol.toLowerCase(),
+            last_update: new Date(),
+          })),
+        )
         .onConflictDoUpdate({
           target: [schema.coins.name],
           set: {
