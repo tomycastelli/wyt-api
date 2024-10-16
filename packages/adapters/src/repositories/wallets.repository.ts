@@ -315,8 +315,11 @@ export class WalletsPostgres implements WalletsRepository {
         .onConflictDoNothing()
         .returning({ id: schema.transactions.id });
 
-      // Si ya existe, por lo que hubo conflicto, tiro error
-      if (!transaction_id) throw Error("La transacción ya existe");
+      // Si ya existe, por lo que hubo conflicto, no hago nada
+      if (!transaction_id) {
+        console.warn(`La transacción: ${transaction_data} ya existe`);
+        return;
+      }
 
       // Si es from_wallet, le tengo que restar el fee
       if (transaction_data.from_address && transaction_data.fee !== 0n) {

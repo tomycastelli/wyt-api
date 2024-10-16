@@ -33,7 +33,7 @@ const ethWebhookTransactionType = type({
     value: "string",
     "+": "delete",
   }).array(),
-  erc20Transfers: type({
+  "erc20Transfers?": type({
     transactionHash: "string",
     contract: "string",
     from: "string",
@@ -42,7 +42,7 @@ const ethWebhookTransactionType = type({
     possibleSpam: "boolean",
     "+": "delete",
   }).array(),
-  nftTransfers: type({
+  "nftTransfers?": type({
     transactionHash: "string",
     contract: "string",
     from: "string",
@@ -428,6 +428,8 @@ export class EthereumProvider implements WalletsStreamsProvider {
   ): Transaction[] | undefined {
     const parsed_webhook_transaction = ethWebhookTransactionType(body);
 
+    console.log("parsed webhook tx: ", parsed_webhook_transaction);
+
     if (parsed_webhook_transaction instanceof type.errors)
       throw parsed_webhook_transaction;
 
@@ -451,37 +453,41 @@ export class EthereumProvider implements WalletsStreamsProvider {
           });
         }
 
-        for (const erc20Transfer of parsed_webhook_transaction.erc20Transfers.filter(
-          (e) => e.possibleSpam === false,
-        )) {
-          // Si pertence a esta transacción
-          if (erc20Transfer.transactionHash === transaction.hash) {
-            transfers.push({
-              type: "token",
-              coin_address: erc20Transfer.contract,
-              from_address: erc20Transfer.from,
-              to_address: erc20Transfer.to,
-              value: BigInt(erc20Transfer.value),
-              token_id: null,
-            });
+        if (parsed_webhook_transaction.erc20Transfers) {
+          for (const erc20Transfer of parsed_webhook_transaction.erc20Transfers.filter(
+            (e) => e.possibleSpam === false,
+          )) {
+            // Si pertence a esta transacción
+            if (erc20Transfer.transactionHash === transaction.hash) {
+              transfers.push({
+                type: "token",
+                coin_address: erc20Transfer.contract,
+                from_address: erc20Transfer.from,
+                to_address: erc20Transfer.to,
+                value: BigInt(erc20Transfer.value),
+                token_id: null,
+              });
+            }
           }
         }
 
-        for (const nftTransfer of parsed_webhook_transaction.nftTransfers.filter(
-          (e) => e.possibleSpam === false,
-        )) {
-          if (
-            nftTransfer.transactionHash === transaction.hash &&
-            Number(nftTransfer.tokenId) < 1e9
-          ) {
-            transfers.push({
-              type: "nft",
-              coin_address: nftTransfer.contract,
-              from_address: nftTransfer.from,
-              to_address: nftTransfer.to,
-              value: 0n,
-              token_id: Number(nftTransfer.tokenId),
-            });
+        if (parsed_webhook_transaction.nftTransfers) {
+          for (const nftTransfer of parsed_webhook_transaction.nftTransfers.filter(
+            (e) => e.possibleSpam === false,
+          )) {
+            if (
+              nftTransfer.transactionHash === transaction.hash &&
+              Number(nftTransfer.tokenId) < 1e9
+            ) {
+              transfers.push({
+                type: "nft",
+                coin_address: nftTransfer.contract,
+                from_address: nftTransfer.from,
+                to_address: nftTransfer.to,
+                value: 0n,
+                token_id: Number(nftTransfer.tokenId),
+              });
+            }
           }
         }
 
@@ -489,7 +495,6 @@ export class EthereumProvider implements WalletsStreamsProvider {
           block_timestamp: new Date(
             Number(parsed_webhook_transaction.block.timestamp) * 1000,
           ),
-          // Asumo que nunca dara undefined porque no me voy a crear un webhook con una chain que no este dentro de las soportadas
           blockchain,
           fee:
             BigInt(transaction.receiptGasUsed) * BigInt(transaction.gasPrice),
@@ -516,6 +521,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
     { body: any; blockchain: BlockchainsName }[]
   > {
     const streams = await this.getAllStreams();
+    console.log("Streams available: ", streams);
     const failed_webhooks: { body: any; blockchain: BlockchainsName }[] = [];
 
     let loop_cursor: string | undefined = undefined;

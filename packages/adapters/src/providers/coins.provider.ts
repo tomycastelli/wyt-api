@@ -409,6 +409,13 @@ export class CoinGecko implements CoinsProvider {
             `${this.base_url}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&price_change_percentage=24h&locale=en&precision=18&category=${category}&page=${page}`,
           );
 
+          if (!marketData) {
+            console.error(
+              `Failed to fetch CoinGecko data from: ${this.base_url}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&price_change_percentage=24h&locale=en&precision=18&category=${category}&page=${page}`,
+            );
+            return [];
+          }
+
           const parsedMarketData = marketDataListSchema.array()(marketData);
 
           if (parsedMarketData instanceof type.errors) throw parsedMarketData;
