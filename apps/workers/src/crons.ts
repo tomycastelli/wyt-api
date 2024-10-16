@@ -1,3 +1,4 @@
+import { EveryBlockainsName } from "@repo/domain";
 import type { Queue } from "bullmq";
 import { schedule } from "node-cron";
 import type { CoinJobsQueue, WalletJobsQueue } from "./index.js";
@@ -5,27 +6,23 @@ import type { CoinJobsQueue, WalletJobsQueue } from "./index.js";
 export const wallet_crons = (
   wallet_jobs_queue: Queue<WalletJobsQueue>,
 ): void => {
-  schedule("0 * * * *", () => {
-    // Cada 1 hora
-    wallet_jobs_queue.add("updating solana wallets", {
-      jobName: "updateBlockchainWallets",
-      data: {
-        blockchain: "solana",
-      },
-    });
-  });
-
-  schedule("0 * * * *", () => {
-    // Cada 1 hora
-    wallet_jobs_queue.add("updating bitcoin wallets", {
-      jobName: "updateBlockchainWallets",
-      data: {
-        blockchain: "bitcoin",
-      },
-    });
+  schedule("5 * * * *", () => {
+    // Cada 1 hora al minuto 5
+    wallet_jobs_queue.addBulk(
+      EveryBlockainsName.map((blockchain) => ({
+        name: `updating ${blockchain} wallets`,
+        data: {
+          jobName: "updateBlockchainWallets",
+          data: {
+            blockchain,
+          },
+        },
+      })),
+    );
   });
 
   // El ecosistema ethereum se debería actualizar con los streams
+  // Por ahora usaremos crons
 };
 
 export const coin_crons = (coin_jobs_queue: Queue<CoinJobsQueue>): void => {

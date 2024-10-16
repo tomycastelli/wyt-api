@@ -63,7 +63,7 @@ export class WalletsService<
   public async addWallet(
     address: string,
     blockchain: BlockchainsName,
-    stream_webhook_url: string,
+    _stream_webhook_url: string,
   ): Promise<{
     valued_wallet: ValuedSavedWallet;
     new_coins: SavedCoin[];
@@ -90,11 +90,11 @@ export class WalletsService<
     const { id, last_update } =
       await this.walletsRepository.saveWallet(valued_wallet);
 
-    // La añado al Stream
-    await this.addWalletToStream(
-      { ...wallet_data, id, last_update },
-      stream_webhook_url,
-    );
+    // // La añado al Stream
+    // await this.addWalletToStream(
+    //   { ...wallet_data, id, last_update },
+    //   stream_webhook_url,
+    // );
 
     return {
       valued_wallet: {
@@ -322,8 +322,6 @@ export class WalletsService<
       body,
       blockchain,
     );
-
-    console.log("This is the parsed transaction data: ", transaction_data);
 
     if (!transaction_data) {
       return null;

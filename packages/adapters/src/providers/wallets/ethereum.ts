@@ -428,8 +428,6 @@ export class EthereumProvider implements WalletsStreamsProvider {
   ): Transaction[] | undefined {
     const parsed_webhook_transaction = ethWebhookTransactionType(body);
 
-    console.log("parsed webhook tx: ", parsed_webhook_transaction);
-
     if (parsed_webhook_transaction instanceof type.errors)
       throw parsed_webhook_transaction;
 
