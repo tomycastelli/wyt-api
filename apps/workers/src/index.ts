@@ -1,4 +1,4 @@
-import { Queue } from "bullmq";
+import { Queue, type QueueOptions } from "bullmq";
 import "dotenv/config";
 import {
   CoinGecko,
@@ -84,36 +84,41 @@ const wallets_service = new WalletsService(
 );
 
 // Queues
+const queue_options: QueueOptions = {
+  connection: {
+    host: REDIS_URL,
+    port: 6379,
+  },
+  defaultJobOptions: {
+    removeOnComplete: {
+      age: 3600,
+      count: 1000,
+    },
+    removeOnFail: {
+      age: 3600,
+      count: 1000,
+    },
+  },
+};
 
 new Queue<{
   wallet: SavedWallet;
-}>("backfillQueue", {
-  connection: {
-    host: REDIS_URL,
-    port: 6379,
-  },
-});
+}>("backfillQueue", queue_options);
 
-const coin_jobs_queue = new Queue<CoinJobsQueue>("coinJobsQueue", {
-  connection: {
-    host: REDIS_URL,
-    port: 6379,
-  },
-});
+const coin_jobs_queue = new Queue<CoinJobsQueue>(
+  "coinJobsQueue",
+  queue_options,
+);
 
-const wallet_jobs_queue = new Queue<WalletJobsQueue>("walletJobsQueue", {
-  connection: {
-    host: REDIS_URL,
-    port: 6379,
-  },
-});
+const wallet_jobs_queue = new Queue<WalletJobsQueue>(
+  "walletJobsQueue",
+  queue_options,
+);
 
-const chunks_queue = new Queue<BackfillChunkQueue>("backfillChunkQueue", {
-  connection: {
-    host: REDIS_URL,
-    port: 6379,
-  },
-});
+const chunks_queue = new Queue<BackfillChunkQueue>(
+  "backfillChunkQueue",
+  queue_options,
+);
 
 setupBackfillWorker(wallets_service, chunks_queue, REDIS_URL);
 
