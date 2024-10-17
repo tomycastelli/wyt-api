@@ -31,7 +31,7 @@ export class WalletsPostgres implements WalletsRepository {
 
   constructor(connection_string: string) {
     const queryClient = postgres(connection_string, {
-      max: 80,
+      max: 10,
       idle_timeout: 30_000,
       connect_timeout: 2_000,
     });
@@ -680,5 +680,57 @@ export class WalletsPostgres implements WalletsRepository {
           eq(schema.wallets.blockchain, wallet_data.blockchain),
         ),
       );
+  }
+
+  async getPendingWallets(): Promise<SavedWallet[]> {
+    const pending_wallets = await this.db.query.wallets.findMany({
+      where: (wallets, { eq }) => eq(wallets.backfill_status, "pending"),
+      with: {
+        walletCoins: {
+          with: {
+            coin: {
+              with: {
+                contracts: true,
+              },
+            },
+          },
+        },
+        walletNFTs: {
+          with: {
+            nft: true,
+          },
+        },
+      },
+    });
+
+    const saved_wallets: SavedWallet[] = [];
+    for (const saved_wallet of pending_wallets) {
+      const wallet_coins: WalletCoin[] = saved_wallet.walletCoins.map((wc) => ({
+        coin_address: wc.coin.contracts.find(
+          (c) => c.blockchain === saved_wallet.blockchain,
+        )!.contract_address,
+        value: BigInt(wc.value),
+      }));
+
+      const wallet_nfts: WalletCoin[] = saved_wallet.walletNFTs.map((wn) => ({
+        coin_address: wn.nft.contract_address,
+        token_id: wn.nft.token_id,
+        value: 0n,
+      }));
+
+      saved_wallets.push({
+        id: saved_wallet.id,
+        address: saved_wallet.address,
+        alias: saved_wallet.alias,
+        backfill_status: saved_wallet.backfill_status,
+        last_update: saved_wallet.last_update,
+        blockchain: saved_wallet.blockchain,
+        first_transfer_date: saved_wallet.first_transfer_date,
+        native_value: BigInt(saved_wallet.native_value),
+        coins: [...wallet_coins, ...wallet_nfts],
+      });
+    }
+
+    return saved_wallets;
   }
 }

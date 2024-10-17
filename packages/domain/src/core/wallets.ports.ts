@@ -91,6 +91,9 @@ export interface WalletsRepository {
     blockchain: BlockchainsName,
   ): Promise<SavedWallet | undefined>;
 
+  /** Consigue las [Wallet]s cuyo historial no esta completo */
+  getPendingWallets(): Promise<SavedWallet[]>;
+
   /** Consigue una lista de [Wallet]s segun la blockchain con un filtrado por ids opcional. \
   Tamaño de página: **20** */
   getWalletsByBlockchain(

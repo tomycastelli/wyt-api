@@ -37,14 +37,14 @@ const largeDecimalNumber = customType<{ data: number }>({
 
 const decimalNumber = customType<{ data: number }>({
   dataType() {
-    return "numeric(28, 18)";
+    return "numeric(32, 22)";
   },
   fromDriver(value) {
     return Number(value);
   },
   toDriver(value) {
     const roundedValue = Number(
-      Number(value.toString().slice(0, 28)).toFixed(18),
+      Number(value.toString().slice(0, 32)).toFixed(22),
     );
 
     return roundedValue;
@@ -69,17 +69,19 @@ const smallDecimalNumber = customType<{ data: number }>({
 
 const blockchainValue = customType<{ data: bigint }>({
   dataType() {
-    return "numeric(28, 0)";
+    return "numeric(32, 0)";
   },
   fromDriver(value) {
     return BigInt(Number(value));
   },
   toDriver(value) {
-    const roundedValue = Number(
-      Number(value.toString().slice(0, 28)).toFixed(0),
-    );
+    const valueStr = value.toString();
 
-    return roundedValue;
+    if (valueStr.length > 32) {
+      throw new Error("Value exceeds the precision limit of numeric(32, 0)");
+    }
+
+    return valueStr;
   },
 });
 

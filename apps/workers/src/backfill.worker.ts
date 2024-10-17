@@ -70,8 +70,40 @@ export const setupBackfillWorker = (
     },
   );
 
-  backfillWorker.on("ready", () => {
+  backfillWorker.on("ready", async () => {
     console.log("backfillWorker is ready!");
+    const pending_wallets = await wallets_service.getPendingWallets();
+    console.log(
+      `Found ${pending_wallets.length} pending wallets. Backfill starting...`,
+    );
+    for (const wallet of pending_wallets) {
+      const ecosystem = blockchains[wallet.blockchain].ecosystem;
+
+      if (ecosystem === "ethereum") {
+        // Consigo los chunks
+        const chunks = await wallets_service.getHistoryTimeChunks(wallet, 10);
+
+        const name = "backfill_chunk";
+        await chunks_queue.addBulk(
+          chunks.map((c) => ({
+            name,
+            data: {
+              from_date: c.from_date.toISOString(),
+              to_date: c.to_date.toISOString(),
+              wallet: wallet,
+              total_chunks: 10,
+            },
+          })),
+        );
+      } else {
+        await chunks_queue.add("backfill_unique_chunk", {
+          wallet: wallet,
+          from_date: new Date().toISOString(),
+          to_date: new Date().toISOString(),
+          total_chunks: 1,
+        });
+      }
+    }
   });
 
   backfillWorker.on("completed", (job) => {

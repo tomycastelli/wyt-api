@@ -4,12 +4,15 @@ services:
     deploy:
       replicas: 3
       mode: replicated
+      resources:
+        limits:
+          memory: 512M
     environment:
-      POSTGRES_URL: postgresql://${PG_USER}:${PG_PASSWORD}@postgres:5432/${PG_DB}
+      POSTGRES_URL: ${PG_URL}
       COINGECKO_API_KEY: ${COINGECKO_API_KEY}
       QUICKNODE_SOLANA_RPC: ${QUICKNODE_SOLANA_RPC}
       ALCHEMY_SOLANA_RPC: ${ALCHEMY_SOLANA_RPC}
-      NODE_ENV: ${NODE_ENV}
+      NODE_ENV: production
       BASE_URL: ${BASE_URL}
       MORALIS_API_KEY: ${MORALIS_API_KEY}
       MORALIS_STREAMS_SECRET_KEY: ${MORALIS_STREAMS_SECRET_KEY}
@@ -17,21 +20,19 @@ services:
     networks:
       - app-network
     depends_on:
-      postgres:
-        condition: service_started
       redis:
         condition: service_started
 
   web-api:
     image: ${WEB_API_IMAGE}
     ports:
-      - "80:80"
+      - "443:443"
     environment:
-      POSTGRES_URL: postgresql://${PG_USER}:${PG_PASSWORD}@postgres:5432/${PG_DB}
+      POSTGRES_URL: ${PG_URL}
       COINGECKO_API_KEY: ${COINGECKO_API_KEY}
       QUICKNODE_SOLANA_RPC: ${QUICKNODE_SOLANA_RPC}
       ALCHEMY_SOLANA_RPC: ${ALCHEMY_SOLANA_RPC}
-      NODE_ENV: ${NODE_ENV}
+      NODE_ENV: production
       BASE_URL: ${BASE_URL}
       MORALIS_API_KEY: ${MORALIS_API_KEY}
       MORALIS_STREAMS_SECRET_KEY: ${MORALIS_STREAMS_SECRET_KEY}
@@ -40,29 +41,29 @@ services:
     networks:
       - app-network
     depends_on:
-      postgres:
-        condition: service_started
       redis:
         condition: service_started
-
-  postgres:
-    image: postgres:16.4
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: ${PG_USER}
-      POSTGRES_PASSWORD: ${PG_PASSWORD}
-      POSTGRES_DB: ${PG_DB}
-    volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-      - ./db-data:/var/lib/postgresql/data
-    networks:
-      - app-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
 
   redis:
     image: redis:7.4.1-alpine
     networks:
       - app-network
+    command:
+      [
+        "redis-server",
+        "--maxmemory",
+        "512mb",
+        "--maxmemory-policy",
+        "allkeys-lru",
+      ]
+    deploy:
+      resources:
+        limits:
+          memory: 512M
 
 networks:
   app-network:

@@ -154,14 +154,11 @@ jobs:
             export COINGECKO_API_KEY=${{ secrets.COINGECKO_API_KEY }}
             export QUICKNODE_SOLANA_RPC=${{ secrets.QUICKNODE_SOLANA_RPC }}
             export ALCHEMY_SOLANA_RPC=${{ secrets.ALCHEMY_SOLANA_RPC }}
-            export NODE_ENV=production
             export BASE_URL=${{ secrets.BASE_URL }}
             export MORALIS_API_KEY=${{ secrets.MORALIS_API_KEY }}
             export MORALIS_STREAMS_SECRET_KEY=${{ secrets.MORALIS_STREAMS_SECRET_KEY }}
             export API_TOKEN=${{ secrets.API_TOKEN }}
-            export PG_USER=${{ secrets.PG_USER }}
-            export PG_PASSWORD=${{ secrets.PG_PASSWORD }}
-            export PG_DB=${{ secrets.PG_DB }}
+            export PG_URL=${{ secrets.PG_URL }}
             docker-compose rm -sf web-api workers
             docker image rm ${{ secrets.ECR_REPOSITORY_URI }}:workers-latest ${{ secrets.ECR_REPOSITORY_URI }}:web-api-latest
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY_URI }}
