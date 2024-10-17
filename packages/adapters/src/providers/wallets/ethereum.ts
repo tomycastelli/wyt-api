@@ -79,8 +79,8 @@ export class EthereumProvider implements WalletsStreamsProvider {
     });
   }
 
-  // Por ahora cada instancia de CoinGecko va a tener 800 req/seq
-  private rate_limiter: RateLimiter = new RateLimiter(800, 1);
+  // Por ahora cada instancia de Moralis va a tener 200 req/seq
+  private rate_limiter: RateLimiter = new RateLimiter(200, 1);
 
   async getWallet(
     address: string,
