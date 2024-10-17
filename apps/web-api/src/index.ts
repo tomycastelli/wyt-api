@@ -20,7 +20,7 @@ import { getPath } from "hono/utils/url";
 import "dotenv/config";
 import { arktypeValidator } from "@hono/arktype-validator";
 import { type } from "arktype";
-import { Queue, QueueOptions } from "bullmq";
+import { Queue } from "bullmq";
 import { bearerAuth } from "hono/bearer-auth";
 import { compress } from "hono/compress";
 import type { BlankEnv, BlankSchema } from "hono/types";
