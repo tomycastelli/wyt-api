@@ -5,6 +5,7 @@ import type {
   SavedWallet,
   Transaction,
   Transfer,
+  Wallet,
   WalletCoin,
   WalletsRepository,
 } from "@repo/domain";
@@ -31,7 +32,7 @@ export class WalletsPostgres implements WalletsRepository {
 
   constructor(connection_string: string) {
     const queryClient = postgres(connection_string, {
-      max: 10,
+      max: 5,
       idle_timeout: 30_000,
       connect_timeout: 2_000,
     });
@@ -766,5 +767,32 @@ export class WalletsPostgres implements WalletsRepository {
     }
 
     return saved_wallets;
+  }
+
+  async getLatestTransactionDate(wallet_data: Wallet): Promise<Date | null> {
+    const latest_transaction = await this.db
+      .select()
+      .from(schema.transactions)
+      .leftJoin(
+        schema.transfers,
+        eq(schema.transfers.transaction_id, schema.transactions.id),
+      )
+      .where(
+        and(
+          eq(schema.transactions.blockchain, wallet_data.blockchain),
+          or(
+            eqLower(schema.transactions.from_address, wallet_data.address),
+            eqLower(schema.transactions.to_address, wallet_data.address),
+            eqLower(schema.transfers.from_address, wallet_data.address),
+            eqLower(schema.transfers.to_address, wallet_data.address),
+          ),
+        ),
+      )
+      .orderBy(desc(schema.transactions.block_timestamp))
+      .limit(1);
+
+    if (latest_transaction.length === 0) return null;
+
+    return latest_transaction[0]!.transactions.block_timestamp;
   }
 }

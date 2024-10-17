@@ -402,8 +402,24 @@ export class WalletsService<
     return { new_coins: [...new_wallet_coins, ...new_tx_coins] };
   }
 
-  public async getPendingWallets(): Promise<SavedWallet[]> {
-    return this.walletsRepository.getPendingWallets();
+  public async getPendingWallets(): Promise<
+    { saved_wallet: SavedWallet; last_transaction_date: Date | null }[]
+  > {
+    const pending_wallets_data =
+      await this.walletsRepository.getPendingWallets();
+    const pending_wallets: {
+      saved_wallet: SavedWallet;
+      last_transaction_date: Date | null;
+    }[] = [];
+
+    for (const saved_wallet of pending_wallets_data) {
+      const last_transaction_date =
+        await this.walletsRepository.getLatestTransactionDate(saved_wallet);
+
+      pending_wallets.push({ saved_wallet, last_transaction_date });
+    }
+
+    return pending_wallets;
   }
 
   /// Helper functions:

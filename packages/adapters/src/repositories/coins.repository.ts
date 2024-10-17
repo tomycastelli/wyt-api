@@ -19,7 +19,7 @@ export class CoinsPostgres implements CoinsRepository {
 
   constructor(connection_string: string) {
     const queryClient = postgres(connection_string, {
-      max: 5,
+      max: 3,
       idle_timeout: 30_000,
       connect_timeout: 2_000,
     });
