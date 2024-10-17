@@ -90,11 +90,11 @@ export class WalletsService<
     const { id, last_update } =
       await this.walletsRepository.saveWallet(valued_wallet);
 
-    // La añado al Stream
-    await this.addWalletToStream(
-      { ...wallet_data, id, last_update },
-      stream_webhook_url,
-    );
+    // // La añado al Stream
+    // await this.addWalletToStream(
+    //   { ...wallet_data, id, last_update },
+    //   stream_webhook_url,
+    // );
 
     return {
       valued_wallet: {

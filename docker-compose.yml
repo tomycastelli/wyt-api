@@ -1,6 +1,7 @@
 services:
   workers:
     image: ${WORKERS_IMAGE}
+    restart: unless-stopped
     deploy:
       replicas: 3
       mode: replicated
@@ -25,6 +26,7 @@ services:
 
   web-api:
     image: ${WEB_API_IMAGE}
+    restart: unless-stopped
     ports:
       - "80:80"
     environment:
@@ -50,6 +52,7 @@ services:
 
   redis:
     image: redis:7.4.1-alpine
+    restart: unless-stopped
     networks:
       - app-network
     command:

@@ -6,8 +6,8 @@ import type { CoinJobsQueue, WalletJobsQueue } from "./index.js";
 export const wallet_crons = (
   wallet_jobs_queue: Queue<WalletJobsQueue>,
 ): void => {
-  schedule("5 * * * *", () => {
-    // Cada 1 hora al minuto 5
+  schedule("*/30 * * * *", () => {
+    // Cada media hora
     wallet_jobs_queue.addBulk(
       EveryBlockainsName.map((blockchain) => ({
         name: `updating ${blockchain} wallets`,
@@ -20,9 +20,6 @@ export const wallet_crons = (
       })),
     );
   });
-
-  // El ecosistema ethereum se debería actualizar con los streams
-  // Por ahora usaremos crons
 };
 
 export const coin_crons = (coin_jobs_queue: Queue<CoinJobsQueue>): void => {
