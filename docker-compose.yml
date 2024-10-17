@@ -55,7 +55,14 @@ services:
     restart: unless-stopped
     networks:
       - app-network
-    command: ["redis-server", "--maxmemory", "1024mb"]
+    command:
+      [
+        "redis-server",
+        "--maxmemory",
+        "1024mb",
+        "--maxmemory-policy",
+        "noeviction",
+      ]
     deploy:
       resources:
         limits:

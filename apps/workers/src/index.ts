@@ -90,13 +90,10 @@ const queue_options: QueueOptions = {
     port: 6379,
   },
   defaultJobOptions: {
-    removeOnComplete: {
-      age: 3600,
-      count: 100,
-    },
+    removeOnComplete: true,
     removeOnFail: {
       age: 3600,
-      count: 100,
+      count: 50,
     },
   },
 };

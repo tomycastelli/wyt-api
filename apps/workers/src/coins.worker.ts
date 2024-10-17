@@ -38,7 +38,11 @@ export const setupCoinsWorker = (
         host: redis_url,
         port: 6379,
       },
-      concurrency: 10,
+      concurrency: 200,
+      limiter: {
+        max: 200,
+        duration: 1000,
+      },
     },
   );
 

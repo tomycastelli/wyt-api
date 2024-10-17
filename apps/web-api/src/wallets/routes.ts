@@ -34,6 +34,13 @@ export const setup_wallets_routes = (
       host: redis_url,
       port: 6379,
     },
+    defaultJobOptions: {
+      removeOnComplete: true,
+      removeOnFail: {
+        age: 3600,
+        count: 50,
+      },
+    },
   });
 
   const wallets_routes = new Hono();
