@@ -8,7 +8,11 @@ import {
   blockchains,
 } from "@repo/domain";
 import { type Queue, QueueEvents, Worker } from "bullmq";
-import type { BackfillChunkQueue, WalletJobsQueue } from "./index.js";
+import {
+  type BackfillChunkQueue,
+  JOB_CONCURRENCY,
+  type WalletJobsQueue,
+} from "./index.js";
 
 const CHUNK_AMOUNT = 30;
 
@@ -68,9 +72,9 @@ export const setupBackfillWorker = (
         host: redis_url,
         port: 6379,
       },
-      concurrency: 200,
+      concurrency: JOB_CONCURRENCY,
       limiter: {
-        max: 200,
+        max: JOB_CONCURRENCY,
         duration: 1000,
       },
     },
@@ -184,9 +188,9 @@ export const setupBackfillChunkWorker = (
         host: redis_url,
         port: 6379,
       },
-      concurrency: 200,
+      concurrency: JOB_CONCURRENCY,
       limiter: {
-        max: 200,
+        max: JOB_CONCURRENCY,
         duration: 1000,
       },
       lockDuration: 600_000,

@@ -4,7 +4,7 @@ import type {
   CoinsService,
 } from "@repo/domain";
 import { Worker } from "bullmq";
-import type { CoinJobsQueue } from "./index.js";
+import { type CoinJobsQueue, JOB_CONCURRENCY } from "./index.js";
 
 export const setupCoinsWorker = (
   coins_service: CoinsService<CoinsProvider, CoinsRepository>,
@@ -38,9 +38,9 @@ export const setupCoinsWorker = (
         host: redis_url,
         port: 6379,
       },
-      concurrency: 200,
+      concurrency: JOB_CONCURRENCY,
       limiter: {
-        max: 200,
+        max: JOB_CONCURRENCY,
         duration: 1000,
       },
     },
