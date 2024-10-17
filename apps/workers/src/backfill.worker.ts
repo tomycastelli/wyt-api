@@ -10,6 +10,8 @@ import {
 import { type Queue, QueueEvents, Worker } from "bullmq";
 import type { BackfillChunkQueue, WalletJobsQueue } from "./index.js";
 
+const CHUNK_AMOUNT = 30;
+
 export const setupBackfillWorker = (
   wallets_service: WalletsService<
     WalletsStreamsProvider,
@@ -37,7 +39,7 @@ export const setupBackfillWorker = (
         // Consigo los chunks
         const chunks = await wallets_service.getHistoryTimeChunks(
           job.data.wallet,
-          30,
+          CHUNK_AMOUNT,
         );
 
         const name = "backfill_chunk";
@@ -48,7 +50,7 @@ export const setupBackfillWorker = (
               from_date: c.from_date.toISOString(),
               to_date: c.to_date.toISOString(),
               wallet: job.data.wallet,
-              total_chunks: 30,
+              total_chunks: CHUNK_AMOUNT,
             },
           })),
         );
@@ -85,7 +87,10 @@ export const setupBackfillWorker = (
 
       if (ecosystem === "ethereum") {
         // Consigo los chunks
-        const chunks = await wallets_service.getHistoryTimeChunks(wallet, 10);
+        const chunks = await wallets_service.getHistoryTimeChunks(
+          wallet,
+          CHUNK_AMOUNT,
+        );
 
         const name = "backfill_chunk";
         await chunks_queue.addBulk(
@@ -95,7 +100,7 @@ export const setupBackfillWorker = (
               from_date: c.from_date.toISOString(),
               to_date: c.to_date.toISOString(),
               wallet: wallet,
-              total_chunks: 10,
+              total_chunks: CHUNK_AMOUNT,
             },
           })),
         );
