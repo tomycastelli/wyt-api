@@ -79,8 +79,8 @@ export class EthereumProvider implements WalletsStreamsProvider {
     });
   }
 
-  // Por ahora cada instancia de Moralis va a tener 400 req cada 10 segundos
-  private rate_limiter: RateLimiter = new RateLimiter(400, 10);
+  // Por ahora cada job de Moralis va a tener 5 req cada 10 segundos
+  private rate_limiter: RateLimiter = new RateLimiter(5, 10);
 
   async getWallet(
     address: string,
