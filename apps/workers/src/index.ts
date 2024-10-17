@@ -33,7 +33,7 @@ BigInt.prototype.toJSON = function () {
   return Number(this);
 };
 
-export const JOB_CONCURRENCY = 150;
+export const JOB_CONCURRENCY = 50;
 
 export type CoinJobsQueue = {
   jobName: "saveAllCoins" | "saveLatestCoins" | "updateCoins";
