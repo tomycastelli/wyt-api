@@ -63,7 +63,7 @@ export class WalletsService<
   public async addWallet(
     address: string,
     blockchain: BlockchainsName,
-    stream_webhook_url: string,
+    _stream_webhook_url: string,
   ): Promise<{
     valued_wallet: ValuedSavedWallet;
     new_coins: SavedCoin[];
