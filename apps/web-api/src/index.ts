@@ -132,10 +132,7 @@ export const create_app = (
     },
     defaultJobOptions: {
       removeOnComplete: true,
-      removeOnFail: {
-        age: 3600,
-        count: 50,
-      },
+      removeOnFail: true,
     },
   });
 

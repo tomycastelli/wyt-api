@@ -91,10 +91,7 @@ const queue_options: QueueOptions = {
   },
   defaultJobOptions: {
     removeOnComplete: true,
-    removeOnFail: {
-      age: 3600,
-      count: 50,
-    },
+    removeOnFail: true,
   },
 };
 

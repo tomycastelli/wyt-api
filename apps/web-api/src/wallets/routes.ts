@@ -36,10 +36,7 @@ export const setup_wallets_routes = (
     },
     defaultJobOptions: {
       removeOnComplete: true,
-      removeOnFail: {
-        age: 3600,
-        count: 50,
-      },
+      removeOnFail: true,
     },
   });
 
