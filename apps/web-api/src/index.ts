@@ -251,7 +251,7 @@ const app = create_app(
   API_TOKEN,
 );
 
-const port = process.env.NODE_ENV === "production" ? 443 : 80;
+const port = 80;
 console.log(`Server is running on port ${port}`);
 
 serve({
