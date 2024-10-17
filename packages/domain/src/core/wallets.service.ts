@@ -313,7 +313,6 @@ export class WalletsService<
     body: any,
     blockchain: BlockchainsName,
   ): Promise<{ new_coins: SavedCoin[] } | null> {
-    console.log("Received body to handle: ", body);
     // Si no es ethereum, no se soportan todavia streams
     const ecosystem = blockchains[blockchain].ecosystem;
     if (ecosystem !== "ethereum") return null;
