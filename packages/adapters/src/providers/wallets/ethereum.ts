@@ -16,6 +16,7 @@ import {
 import { type } from "arktype";
 import Moralis from "moralis";
 import { sha3 } from "web3-utils";
+import { RateLimiter } from "../ratelimiter.js";
 
 const ethWebhookTransactionType = type({
   confirmed: "boolean",
@@ -78,6 +79,9 @@ export class EthereumProvider implements WalletsStreamsProvider {
     });
   }
 
+  // Por ahora cada instancia de CoinGecko va a tener 800 req/seq
+  private rate_limiter: RateLimiter = new RateLimiter(800, 1);
+
   async getWallet(
     address: string,
     blockchain: BlockchainsName,
@@ -93,6 +97,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
       native_value: 0n,
     };
 
+    await this.rate_limiter.acquire();
     // Busco las coins que tiene
     let balances_data =
       await Moralis.EvmApi.wallets.getWalletTokenBalancesPrice({
@@ -122,6 +127,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
     } while (balances_data.hasNext());
 
     // Busco las nft que tiene
+    await this.rate_limiter.acquire();
     let nfts_data = await Moralis.EvmApi.nft.getWalletNFTs({
       chain: this.blockchain_mapper[blockchain],
       address,
@@ -148,6 +154,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
       }
     } while (nfts_data.hasNext());
     // Veo si tiene alias (ens domain en Ethereum)
+    await this.rate_limiter.acquire();
     const ens_domain = await Moralis.EvmApi.resolve.resolveAddress({ address });
     if (ens_domain) {
       wallet_data.alias = ens_domain.result.name;
@@ -157,6 +164,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
   }
 
   async getRecentTransactions(wallet_data: Wallet): Promise<Transaction[]> {
+    await this.rate_limiter.acquire();
     const recent_transactions = await Moralis.EvmApi.wallets.getWalletHistory({
       chain: this.blockchain_mapper[wallet_data.blockchain],
       address: wallet_data.address,
@@ -181,6 +189,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
     let loop_cursor: string | undefined = undefined;
 
     do {
+      await this.rate_limiter.acquire();
       const new_transactions = await Moralis.EvmApi.wallets.getWalletHistory({
         chain: this.blockchain_mapper[wallet_data.blockchain],
         address: wallet_data.address,
@@ -206,6 +215,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
   }
 
   async getTransactionCount(saved_wallet: SavedWallet): Promise<number> {
+    await this.rate_limiter.acquire();
     const data = await Moralis.EvmApi.wallets.getWalletStats({
       chain: this.blockchain_mapper[saved_wallet.blockchain],
       address: saved_wallet.address,
@@ -217,6 +227,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
   async getWalletTimes(
     wallet_data: Wallet,
   ): Promise<{ first_transaction: Date; last_transaction: Date }> {
+    await this.rate_limiter.acquire();
     const first_transaction_made =
       await Moralis.EvmApi.wallets.getWalletHistory({
         chain: this.blockchain_mapper[wallet_data.blockchain],
@@ -252,6 +263,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
     to_date: Date,
     loop_cursor: string | undefined,
   ): Promise<{ transactions: Transaction[]; cursor: string | undefined }> {
+    await this.rate_limiter.acquire();
     const transaction_history = await Moralis.EvmApi.wallets.getWalletHistory({
       chain: this.blockchain_mapper[wallet_data.blockchain],
       address: wallet_data.address,

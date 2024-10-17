@@ -59,14 +59,14 @@ services:
       [
         "redis-server",
         "--maxmemory",
-        "1024mb",
+        "2048mb",
         "--maxmemory-policy",
         "noeviction",
       ]
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 2G
 
 networks:
   app-network:

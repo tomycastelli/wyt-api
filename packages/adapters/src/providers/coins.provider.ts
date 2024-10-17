@@ -98,8 +98,8 @@ export class CoinGecko implements CoinsProvider {
     solana: "solana",
   };
 
-  // Por ahora cada instancia de CoinGecko va a tener 80 req/min
-  private rate_limiter: RateLimiter = new RateLimiter(350, 60);
+  // Por ahora cada instancia de CoinGecko va a tener 150 req/min
+  private rate_limiter: RateLimiter = new RateLimiter(150, 60);
 
   private request_data: RequestInit;
 
