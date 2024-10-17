@@ -327,6 +327,19 @@ export class WalletsPostgres implements WalletsRepository {
     transaction_data: CoinedTransaction,
   ): Promise<void> {
     await this.db.transaction(async (tx) => {
+      // Busco los hashes ya existentes
+      const existing_transaction = await tx
+        .select()
+        .from(schema.transactions)
+        .where(
+          and(
+            eq(schema.transactions.hash, transaction_data.hash),
+            eq(schema.transactions.blockchain, transaction_data.blockchain),
+          ),
+        );
+
+      if (existing_transaction.length > 0) return;
+
       const updated_wallet_ids: number[] = [];
       // Aparte de guardar la [Transaction],
       // tengo que cambiar el estado de la o las [Wallet]s relacionadas en cada [Transfer] hecha
