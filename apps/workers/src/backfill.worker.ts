@@ -37,7 +37,7 @@ export const setupBackfillWorker = (
         // Consigo los chunks
         const chunks = await wallets_service.getHistoryTimeChunks(
           job.data.wallet,
-          10,
+          100,
         );
 
         const name = "backfill_chunk";
@@ -48,7 +48,7 @@ export const setupBackfillWorker = (
               from_date: c.from_date.toISOString(),
               to_date: c.to_date.toISOString(),
               wallet: job.data.wallet,
-              total_chunks: 10,
+              total_chunks: 100,
             },
           })),
         );

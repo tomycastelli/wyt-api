@@ -278,7 +278,28 @@ export class WalletsPostgres implements WalletsRepository {
 
   async saveTransactions(transactions: CoinedTransaction[]): Promise<void> {
     await this.db.transaction(async (tx) => {
+      // Busco los hashes ya existentes
+      const existing_hashes = await tx
+        .select()
+        .from(schema.transactions)
+        .where(
+          inArray(
+            schema.transactions.hash,
+            transactions.map((t) => t.hash),
+          ),
+        );
+
       for (const transaction of transactions) {
+        // Si ya existe en el repositorio, no lo inserto
+        if (
+          existing_hashes.find(
+            (eh) =>
+              eh.hash === transaction.hash &&
+              eh.blockchain === transaction.blockchain,
+          )
+        )
+          return;
+
         const [id] = await tx
           .insert(schema.transactions)
           .values({ ...transaction, fee: transaction.fee })
