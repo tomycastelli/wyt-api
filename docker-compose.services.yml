@@ -35,9 +35,6 @@ services:
       MORALIS_STREAMS_SECRET_KEY: ${MORALIS_STREAMS_SECRET_KEY}
       REDIS_URL: ${REDIS_URL}
       API_TOKEN: ${API_TOKEN}
-    depends_on:
-      redis:
-        condition: service_started
     deploy:
       resources:
         limits:
