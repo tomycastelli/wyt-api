@@ -1,0 +1,44 @@
+services:
+  workers:
+    image: ${WORKERS_IMAGE}
+    restart: unless-stopped
+    deploy:
+      replicas: 3
+      mode: replicated
+      resources:
+        limits:
+          memory: 256M
+    environment:
+      POSTGRES_URL: ${PG_URL}
+      COINGECKO_API_KEY: ${COINGECKO_API_KEY}
+      QUICKNODE_SOLANA_RPC: ${QUICKNODE_SOLANA_RPC}
+      ALCHEMY_SOLANA_RPC: ${ALCHEMY_SOLANA_RPC}
+      NODE_ENV: production
+      BASE_URL: ${BASE_URL}
+      MORALIS_API_KEY: ${MORALIS_API_KEY}
+      MORALIS_STREAMS_SECRET_KEY: ${MORALIS_STREAMS_SECRET_KEY}
+      REDIS_URL: ${REDIS_URL}
+
+  web-api:
+    image: ${WEB_API_IMAGE}
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    environment:
+      POSTGRES_URL: ${PG_URL}
+      COINGECKO_API_KEY: ${COINGECKO_API_KEY}
+      QUICKNODE_SOLANA_RPC: ${QUICKNODE_SOLANA_RPC}
+      ALCHEMY_SOLANA_RPC: ${ALCHEMY_SOLANA_RPC}
+      NODE_ENV: production
+      BASE_URL: ${BASE_URL}
+      MORALIS_API_KEY: ${MORALIS_API_KEY}
+      MORALIS_STREAMS_SECRET_KEY: ${MORALIS_STREAMS_SECRET_KEY}
+      REDIS_URL: ${REDIS_URL}
+      API_TOKEN: ${API_TOKEN}
+    depends_on:
+      redis:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          memory: 256M

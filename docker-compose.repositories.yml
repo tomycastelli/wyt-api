@@ -1,0 +1,36 @@
+services:
+  redis:
+    image: redis:7.4.1-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command:
+      [
+        "redis-server",
+        "--maxmemory",
+        "2048mb",
+        "--maxmemory-policy",
+        "noeviction",
+      ]
+    deploy:
+      resources:
+        limits:
+          memory: 2.5G
+
+  postgres:
+    image: postgres:16.4-alpine3.19
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_DB: ${PG_DB}
+    volumes:
+      - ./custom-postgresql.conf:/etc/postgresql/postgresql.conf
+      - ./db-data:/var/lib/postgresql/data
+    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+    deploy:
+      resources:
+        limits:
+          memory: 2.5G
