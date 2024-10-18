@@ -132,6 +132,9 @@ export const setupBackfillWorker = (
   );
 
   backfillWorker.on("ready", async () => {
+    chunks_queue.clean(0, 1000, "active");
+    chunks_queue.clean(0, 1000, "delayed");
+    chunks_queue.clean(0, 1000, "wait");
     console.log("backfillWorker is ready!");
     const pending_wallets = await wallets_service.getPendingWallets();
 
