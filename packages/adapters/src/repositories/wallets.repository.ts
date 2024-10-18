@@ -684,40 +684,41 @@ export class WalletsPostgres implements WalletsRepository {
     address: string,
     blockchain: BlockchainsName,
   ): Promise<void> {
-    // Busco la transacción mas vieja
-    const [first_transaction] = await this.db
-      .select()
-      .from(schema.transactions)
-      .leftJoin(
-        schema.transfers,
-        eq(schema.transfers.transaction_id, schema.transactions.id),
-      )
-      .where(
-        and(
-          eq(schema.transactions.blockchain, blockchain),
-          or(
-            eqLower(schema.transfers.from_address, address),
-            eqLower(schema.transfers.to_address, address),
-            eqLower(schema.transactions.from_address, address),
-            eqLower(schema.transactions.to_address, address),
+    return await this.db.transaction(async (tx) => {
+      const [first_transaction] = await tx
+        .select()
+        .from(schema.transactions)
+        .leftJoin(
+          schema.transfers,
+          eq(schema.transfers.transaction_id, schema.transactions.id),
+        )
+        .where(
+          and(
+            eq(schema.transactions.blockchain, blockchain),
+            or(
+              eqLower(schema.transfers.from_address, address),
+              eqLower(schema.transfers.to_address, address),
+              eqLower(schema.transactions.from_address, address),
+              eqLower(schema.transactions.to_address, address),
+            ),
           ),
-        ),
-      )
-      .orderBy(asc(schema.transactions.block_timestamp))
-      .limit(1);
+        )
+        .orderBy(asc(schema.transactions.block_timestamp))
+        .limit(1);
 
-    await this.db
-      .update(schema.wallets)
-      .set({
-        backfill_status: "complete",
-        first_transfer_date: first_transaction?.transactions.block_timestamp,
-      })
-      .where(
-        and(
-          eqLower(schema.wallets.address, address),
-          eq(schema.wallets.blockchain, blockchain),
-        ),
-      );
+      await tx
+        .update(schema.wallets)
+        .set({
+          backfill_status: "complete",
+          first_transfer_date: first_transaction?.transactions.block_timestamp,
+        })
+        .where(
+          and(
+            eqLower(schema.wallets.address, address),
+            eq(schema.wallets.blockchain, blockchain),
+          ),
+        );
+    });
   }
 
   async getPendingWallets(): Promise<SavedWallet[]> {

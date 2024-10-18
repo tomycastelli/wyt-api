@@ -111,7 +111,11 @@ export const setupBackfillWorker = (
     console.log(
       `Staring the finish of backfill process for wallet: ${wallet.blockchain}:${wallet.address}`,
     );
-    await wallets_service.finishBackfill(wallet.address, wallet.blockchain);
+    try {
+      await wallets_service.finishBackfill(wallet.address, wallet.blockchain);
+    } catch (e) {
+      console.error(e);
+    }
     console.log(
       `Backfill process completed for wallet: ${wallet.blockchain}:${wallet.address}`,
     );

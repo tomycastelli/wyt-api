@@ -285,7 +285,7 @@ export class WalletsService<
     blockchain: BlockchainsName,
   ): Promise<void> {
     // Si llego hasta acá sin tirar error, actualizo su status
-    await this.walletsRepository.updateWalletBackfillStatus(
+    return await this.walletsRepository.updateWalletBackfillStatus(
       address,
       blockchain,
     );
