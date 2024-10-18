@@ -3,7 +3,7 @@ services:
     image: ${WORKERS_IMAGE}
     restart: unless-stopped
     deploy:
-      replicas: 3
+      replicas: 2
       mode: replicated
       resources:
         limits:
