@@ -102,7 +102,6 @@ export const valuedWalletWithTransactions = valuedWalletType.merge({
 
 export const valueChangeGraph = type({
   timestamp: "Date",
-  value: "bigint",
   value_usd: "number",
 }).array();
 

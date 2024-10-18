@@ -115,7 +115,7 @@ jobs:
       - name: Copy files to EC2
         run: |
           # Copy the docker-compose.yml file to the EC2 instance
-          scp -vvv -i /tmp/ec2_key docker-compose.yml ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/wyt-api
+          scp -i /tmp/ec2_key docker-compose.services.yml ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/wyt-api/docker-compose.yml
 
       - name: Run docker-compose on EC2
         run: |
@@ -131,6 +131,7 @@ jobs:
             export MORALIS_STREAMS_SECRET_KEY=${{ secrets.MORALIS_STREAMS_SECRET_KEY }}
             export API_TOKEN=${{ secrets.API_TOKEN }}
             export PG_URL=${{ secrets.PG_URL }}
+            export REDIS_URL=${{ secrets.REDIS_URL }}
             docker-compose rm -sf web-api workers
             docker image rm ${{ secrets.ECR_REPOSITORY_URI }}:workers-latest ${{ secrets.ECR_REPOSITORY_URI }}:web-api-latest
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY_URI }}

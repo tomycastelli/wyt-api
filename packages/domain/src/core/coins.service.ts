@@ -5,6 +5,7 @@ import {
   type BlockchainCoin,
   type BlockchainsName,
   base_coins,
+  generateFilledDateRange,
 } from "./vars.js";
 
 /// Logica de negocio para el servicio de Tokens
@@ -197,23 +198,11 @@ export class CoinsService<
     from_date: Date,
     to_date: Date,
   ): Promise<Candle[]> {
-    if (to_date > new Date())
-      throw Error(`To date is bigger than now!. to_date: ${to_date}`);
-
-    const expected_timestamps: number[] = [];
-    const current_date = new Date(from_date);
-
-    if (frequency === "daily") {
-      while (current_date <= to_date) {
-        expected_timestamps.push(new Date(current_date).getTime());
-        current_date.setDate(current_date.getDate() + 1);
-      }
-    } else if (frequency === "hourly") {
-      while (current_date <= to_date) {
-        expected_timestamps.push(new Date(current_date).getTime());
-        current_date.setHours(current_date.getHours() + 1);
-      }
-    }
+    const expected_timestamps = generateFilledDateRange(
+      from_date,
+      to_date,
+      frequency,
+    );
 
     // Las busco en el repo
     const candles = await this.coinsRepository.getCandlesByDateRange(

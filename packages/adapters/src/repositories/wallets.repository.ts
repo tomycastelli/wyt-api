@@ -32,7 +32,7 @@ export class WalletsPostgres implements WalletsRepository {
 
   constructor(connection_string: string) {
     const queryClient = postgres(connection_string, {
-      max: 5,
+      max: 15,
       idle_timeout: 30_000,
       connect_timeout: 2_000,
     });
@@ -769,7 +769,10 @@ export class WalletsPostgres implements WalletsRepository {
     return saved_wallets;
   }
 
-  async getLatestTransactionDate(wallet_data: Wallet): Promise<Date | null> {
+  async getLatestTransactionDate(
+    wallet_data: Wallet,
+    order: "DESC" | "ASC",
+  ): Promise<Date | null> {
     const latest_transaction = await this.db
       .select()
       .from(schema.transactions)
@@ -788,7 +791,11 @@ export class WalletsPostgres implements WalletsRepository {
           ),
         ),
       )
-      .orderBy(desc(schema.transactions.block_timestamp))
+      .orderBy(
+        order === "DESC"
+          ? desc(schema.transactions.block_timestamp)
+          : asc(schema.transactions.block_timestamp),
+      )
       .limit(1);
 
     if (latest_transaction.length === 0) return null;

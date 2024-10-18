@@ -119,8 +119,11 @@ export interface WalletsRepository {
     to_date: Date,
   ): Promise<Transaction[]>;
 
-  /** Consigue la última [Transaction] insertada */
-  getLatestTransactionDate(wallet_data: Wallet): Promise<Date | null>;
+  /** Consigue la [Transaction] mas reciente o mas vieja insertada. Segun el order pasado */
+  getLatestTransactionDate(
+    wallet_data: Wallet,
+    order: "DESC" | "ASC",
+  ): Promise<Date | null>;
 
   /** Guarda una lista de [Transaction]s sin afectar el estado de la [Wallet].
   _Pensado para hacer backfill inicial del historial o actualizar redes sin transacciones detalladas_ */

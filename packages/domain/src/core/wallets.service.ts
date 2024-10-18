@@ -19,7 +19,11 @@
 import type { SavedCoin, SavedNFT } from "./coins.entities.js";
 import type { CoinsProvider, CoinsRepository } from "./coins.ports.js";
 import type { CoinsService } from "./coins.service.js";
-import { type BlockchainsName, blockchains } from "./vars.js";
+import {
+  type BlockchainsName,
+  blockchains,
+  generateFilledDateRange,
+} from "./vars.js";
 import type {
   CoinedTransaction,
   CoinedTransfer,
@@ -402,22 +406,8 @@ export class WalletsService<
     return { new_coins: [...new_wallet_coins, ...new_tx_coins] };
   }
 
-  public async getPendingWallets(): Promise<
-    { saved_wallet: SavedWallet; last_transaction_date: Date | null }[]
-  > {
-    const pending_wallets_data =
-      await this.walletsRepository.getPendingWallets();
-    const pending_wallets: {
-      saved_wallet: SavedWallet;
-      last_transaction_date: Date | null;
-    }[] = [];
-
-    for (const saved_wallet of pending_wallets_data) {
-      const last_transaction_date =
-        await this.walletsRepository.getLatestTransactionDate(saved_wallet);
-
-      pending_wallets.push({ saved_wallet, last_transaction_date });
-    }
+  public async getPendingWallets(): Promise<SavedWallet[]> {
+    const pending_wallets = await this.walletsRepository.getPendingWallets();
 
     return pending_wallets;
   }
@@ -745,25 +735,9 @@ export class WalletsService<
       current_date,
     );
 
-    const current_usd_balance = valued_wallet.total_value_usd;
-    const current_native_balance = valued_wallet.native_value;
-
-    const value_change_graph: ValueChangeGraph = [
-      {
-        timestamp: new Date(),
-        value: current_native_balance,
-        value_usd: current_usd_balance,
-      },
-    ];
-
-    // Si no hay transacciones devuelvo el valor de ahora y listo
-    if (transactions.length === 0)
-      return { data: value_change_graph, missing_prices: [] };
-
-    // Veo como fue el saldo neto de los valores de cada [Coin] desde ahora hasta el 'from_date'
-    // El map es:
-    // coin_id: { time_key: value }
-    const values_map: Map<number, Map<number, bigint>> = new Map();
+    // Veo como fue el saldo neto de los valores de las [Coin]s involucradas en [Transaction]s desde ahora hasta el 'from_date'
+    /** Map => coin_id: { time_key: value } */
+    const net_changes_map: Map<number, Map<number, bigint>> = new Map();
 
     // Hago un map de coin_id: decimal_places para mas tarde
     const decimal_places_map: Map<number, number> = new Map();
@@ -790,7 +764,9 @@ export class WalletsService<
         transaction.from_address?.toLowerCase() ===
         valued_wallet.address.toLowerCase()
       ) {
-        const native_coin_map = values_map.get(valued_wallet.native_coin.id);
+        const native_coin_map = net_changes_map.get(
+          valued_wallet.native_coin.id,
+        );
         if (native_coin_map) {
           const current_value = native_coin_map.get(transaction_time_key) ?? 0n;
           native_coin_map.set(
@@ -801,7 +777,7 @@ export class WalletsService<
           const native_coin_value = new Map<number, bigint>([
             [transaction_time_key, -transaction.fee],
           ]);
-          values_map.set(valued_wallet.native_coin.id, native_coin_value);
+          net_changes_map.set(valued_wallet.native_coin.id, native_coin_value);
         }
       }
 
@@ -826,7 +802,7 @@ export class WalletsService<
             );
           }
 
-          const coin_map = values_map.get(saved_coin.id);
+          const coin_map = net_changes_map.get(saved_coin.id);
 
           // Si es to, suma. Si es from, resta
           const transfer_value =
@@ -841,7 +817,7 @@ export class WalletsService<
             const coin_value = new Map<number, bigint>([
               [transaction_time_key, transfer_value],
             ]);
-            values_map.set(saved_coin.id, coin_value);
+            net_changes_map.set(saved_coin.id, coin_value);
           }
         }
       }
@@ -849,81 +825,112 @@ export class WalletsService<
 
     const missing_prices: { timestamp: Date; coin_id: number }[] = [];
 
-    const balance_change_graph: ValueChangeGraph = [];
-    // Listo los mapeos.
-    // Ahora por cada coin, consigo su lista de timestamps (que son las keys del map), pido las candelas y calculo el value_usd
-    for (const [coin_id, time_value_map] of values_map) {
-      const is_native_coin = coin_id === valued_wallet.native_coin.id;
-      const timestamps: Date[] = [];
-      for (const num of time_value_map.keys()) {
-        timestamps.push(new Date(num));
-      }
+    const _current_usd_balance = valued_wallet.total_value_usd;
 
-      const candles = await this.coinsService.getCandlesByDateList(
+    /** coin_id: value */
+    const current_coin_values: Map<number, bigint> = new Map(
+      valued_wallet.coins.map((c) => [c.coin.id, c.value]),
+    );
+    // Añado el native value como uno más
+    current_coin_values.set(
+      valued_wallet.native_coin.id,
+      valued_wallet.native_value,
+    );
+
+    const coins_graphs: {
+      timestamp: number;
+      value: bigint;
+      value_usd: number;
+      coin_id: number;
+    }[] = [];
+    // Listo los mapeos.
+    // Voy a generar ahora una lista del tipo [ValueChangeGraph] con el balance de cada [Coin] en todo el rango de dias.
+    // Vamos de mas reciente a mas viejo. Si no hubo movimientos ese dia, agarro el balance del anterior (el dia o hora mas adelante)
+    const full_date_range = generateFilledDateRange(
+      this.subtractTime(current_date, time_range),
+      current_date,
+      granularity,
+    ).sort((a, b) => b - a);
+
+    // Ahora por cada coin, consigo su lista de timestamps (que son las keys del map), pido las candelas y calculo el value_usd
+    for (const [coin_id, time_value_map] of net_changes_map) {
+      const this_coin_graph: {
+        timestamp: number;
+        value: bigint;
+        value_usd: number;
+      }[] = [];
+      const full_range_candles = await this.coinsService.getCandlesByDateList(
         granularity,
         coin_id,
-        timestamps,
+        full_date_range.map((d) => new Date(d)),
       );
 
-      const decimal_places = decimal_places_map.get(coin_id)!;
-
-      // Pongo todos los valores conseguidos en la lista, despues hago agregación de fechas
-      for (const timestamp of timestamps) {
-        const value = time_value_map.get(
-          this.getTimeKey(timestamp, granularity),
-        )!;
-
-        const price = candles.find(
-          (c) => c.timestamp.getTime() === timestamp.getTime(),
+      // Voy por cada timestamp y hago el grafico para esa coin
+      for (const timestamp of full_date_range) {
+        const price_this_day = full_range_candles.find(
+          (c) => c.timestamp === new Date(timestamp),
         )?.close;
-
-        // Puede pasar que no esten las candles para esa [Coin]
-        if (!price) {
-          missing_prices.push({ timestamp, coin_id });
+        if (!price_this_day) {
+          missing_prices.push({ timestamp: new Date(timestamp), coin_id });
+          // No calculo para ese día
           continue;
         }
 
-        const value_usd = price * (Number(value) / 10 ** decimal_places);
+        const value_change_this_day = time_value_map.get(timestamp);
+        const current_value = current_coin_values.get(coin_id);
 
-        balance_change_graph.push({
-          timestamp,
-          value_usd,
-          value: is_native_coin ? value : 0n,
-        });
-      }
-    }
+        if (value_change_this_day) {
+          // Actualizo el balance
+          // Si no hay current_value es porque actualmente el balance es 0 pero hubo transacciones con esa coin
+          const new_balance = current_value
+            ? current_value - value_change_this_day
+            : -value_change_this_day;
+          // Actualizo en el map de balances para el loop
+          current_coin_values.set(coin_id, new_balance);
 
-    // Agrupo el grafico por fechas y listo
-    const grouped_graph: ValueChangeGraph = balance_change_graph
-      .reduce((acc, item) => {
-        const time_object = acc.find(
-          (a) => a.timestamp.getTime() === item.timestamp.getTime(),
-        );
-
-        if (time_object) {
-          time_object.value += item.value;
-          time_object.value_usd += item.value_usd;
+          this_coin_graph.push({
+            timestamp,
+            value: new_balance,
+            value_usd: Number(new_balance) * price_this_day,
+          });
         } else {
-          acc.push(item);
+          if (!current_value)
+            throw Error(
+              `current_value not present but neither value_change_this_day. Transations: ${coined_transactions}. Current state: ${current_coin_values}`,
+            );
+          // Uso el balance en su estado actual por con el precio del día de hoy
+          this_coin_graph.push({
+            timestamp,
+            value: current_value,
+            value_usd: Number(current_value) * price_this_day,
+          });
         }
+      }
 
-        return acc;
-      }, [] as ValueChangeGraph)
-      // Ordeno descendente por fecha
-      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-
-    for (const balance of grouped_graph) {
-      // Agarro el último valor añadido y le resto el balance de ese momento
-      const last_added_value =
-        value_change_graph[value_change_graph.length - 1]!;
-      value_change_graph.push({
-        timestamp: balance.timestamp,
-        value: last_added_value.value - balance.value,
-        value_usd: last_added_value.value_usd - balance.value_usd,
-      });
+      // Pusheo al grafico unificado de todas las [Coin]s
+      coins_graphs.push(...this_coin_graph.map((c) => ({ ...c, coin_id })));
     }
 
-    return { data: value_change_graph, missing_prices };
+    // Ahora que tengo eso, agrupo por fecha sumando sus valores en usd de cada [Coin]
+    const final_graph = coins_graphs.reduce((acc, item) => {
+      const acc_date = acc.find(
+        (a) => a.timestamp.getTime() === item.timestamp,
+      );
+      if (!acc_date) {
+        acc.push({
+          timestamp: new Date(item.timestamp),
+          value_usd: item.value_usd,
+        });
+      } else {
+        acc_date.value_usd += item.value_usd;
+      }
+
+      return acc;
+    }, [] as ValueChangeGraph);
+
+    console.log("Grafico por [Coin]: ", coins_graphs);
+
+    return { data: final_graph, missing_prices };
   }
 
   // /** Genera un gráfico a través del tiempo del valor de una [Coin] en una [Wallet]  */

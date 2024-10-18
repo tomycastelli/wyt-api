@@ -87,37 +87,30 @@ export const setupBackfillWorker = (
       `Found ${pending_wallets.length} pending wallets. Backfill starting...`,
     );
     for (const wallet of pending_wallets) {
-      const ecosystem = blockchains[wallet.saved_wallet.blockchain].ecosystem;
+      const ecosystem = blockchains[wallet.blockchain].ecosystem;
 
       if (ecosystem === "ethereum") {
         // Consigo los chunks
         const chunks = await wallets_service.getHistoryTimeChunks(
-          wallet.saved_wallet,
+          wallet,
           CHUNK_AMOUNT,
         );
 
-        // Limito a solo los chunks cuyo final esté despues de la última transacción cargada
-        const limited_chunks = wallet.last_transaction_date
-          ? chunks.filter(
-              (chunk) => chunk.to_date >= wallet.last_transaction_date!,
-            )
-          : chunks;
-
         const name = "backfill_chunk";
         await chunks_queue.addBulk(
-          limited_chunks.map((c) => ({
+          chunks.map((c) => ({
             name,
             data: {
               from_date: c.from_date.toISOString(),
               to_date: c.to_date.toISOString(),
-              wallet: wallet.saved_wallet,
+              wallet: wallet,
               total_chunks: CHUNK_AMOUNT,
             },
           })),
         );
       } else {
         await chunks_queue.add("backfill_unique_chunk", {
-          wallet: wallet.saved_wallet,
+          wallet: wallet,
           from_date: new Date().toISOString(),
           to_date: new Date().toISOString(),
           total_chunks: 1,

@@ -42,3 +42,29 @@ export type BlockchainCoin =
   (typeof blockchains)[keyof typeof blockchains]["coin"];
 
 export const providers = ["coingecko"];
+
+export const generateFilledDateRange = (
+  from_date: Date,
+  to_date: Date,
+  frequency: "hourly" | "daily",
+): number[] => {
+  if (to_date > new Date())
+    throw Error(`To date is bigger than now!. to_date: ${to_date}`);
+
+  const timestamps: number[] = [];
+  const current_date = new Date(from_date);
+
+  if (frequency === "daily") {
+    while (current_date <= to_date) {
+      timestamps.push(new Date(current_date).getTime());
+      current_date.setDate(current_date.getDate() + 1);
+    }
+  } else if (frequency === "hourly") {
+    while (current_date <= to_date) {
+      timestamps.push(new Date(current_date).getTime());
+      current_date.setHours(current_date.getHours() + 1);
+    }
+  }
+
+  return timestamps;
+};

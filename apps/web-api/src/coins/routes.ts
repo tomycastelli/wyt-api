@@ -73,11 +73,11 @@ export const setup_coins_routes = (
         return suggestCoins(c, coin_name);
       }
 
-      // Si no pasan la fecha, busco los ultimos 30 dias o 24 horas
+      // Si no pasan la fecha, busco los ultimos 7 dias o 24 horas
       const from_date = from
         ? from
         : candle_type === "daily"
-          ? new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000)
+          ? new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000)
           : new Date(new Date().getTime() - 24 * 60 * 60 * 1000);
       const to_date = to ? to : new Date();
 
