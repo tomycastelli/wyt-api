@@ -7,10 +7,12 @@ import {
   type WalletsStreamsProvider,
   blockchains,
 } from "@repo/domain";
-import { type Queue, Worker } from "bullmq";
-import { type BackfillChunkQueue, JOB_CONCURRENCY } from "./index.js";
-
-const CHUNK_AMOUNT = 10;
+import { type Queue, type QueueEvents, Worker } from "bullmq";
+import {
+  type BackfillChunkQueue,
+  CHUNK_AMOUNT,
+  JOB_CONCURRENCY,
+} from "./index.js";
 
 export const setupBackfillWorker = (
   wallets_service: WalletsService<
@@ -20,50 +22,100 @@ export const setupBackfillWorker = (
     CoinsRepository
   >,
   chunks_queue: Queue<BackfillChunkQueue>,
+  queue_events: QueueEvents,
   redis_url: string,
 ): Worker<{
   wallet: SavedWallet;
 }> => {
+  const add_chunks = async (wallet: SavedWallet): Promise<void> => {
+    const ecosystem = blockchains[wallet.blockchain].ecosystem;
+
+    if (ecosystem === "ethereum") {
+      // Consigo los chunks
+      const chunks = await wallets_service.getHistoryTimeChunks(
+        wallet,
+        CHUNK_AMOUNT,
+      );
+
+      const name = "backfill_chunk";
+      const job_ids = await chunks_queue
+        .addBulk(
+          chunks.map((c) => ({
+            name,
+            data: {
+              from_date: c.from_date.toISOString(),
+              to_date: c.to_date.toISOString(),
+              address: wallet.address,
+              blockchain: wallet.blockchain,
+              total_chunks: CHUNK_AMOUNT,
+            },
+            opts: {
+              // Con prioridad 1 ya van a ir detras del resto de trabajos
+              priority: 1,
+            },
+          })),
+        )
+        .then((added_jobs) => added_jobs.map((job) => job.id));
+
+      await new Promise<void>((resolve, reject) => {
+        let completed_count = 0;
+
+        const checkCompletion = (job_id: string) => {
+          if (job_ids.includes(job_id)) {
+            completed_count++;
+            console.log("Completion: ", completed_count);
+            if (completed_count === job_ids.length) {
+              resolve();
+            }
+          }
+        };
+
+        queue_events.on("completed", ({ jobId }) => {
+          checkCompletion(jobId);
+        });
+
+        queue_events.on("failed", (data) => {
+          reject(new Error(`Job ${data.jobId} failed: ${data.failedReason}`));
+        });
+      });
+    } else {
+      const job = await chunks_queue.add(
+        "backfill_unique_chunk",
+        {
+          address: wallet.address,
+          blockchain: wallet.blockchain,
+          from_date: new Date().toISOString(),
+          to_date: new Date().toISOString(),
+          total_chunks: 1,
+        },
+        {
+          priority: 1,
+        },
+      );
+
+      await job.waitUntilFinished(queue_events);
+      if (await job.isFailed()) {
+        throw Error(`Job ${job.id} failed: ${job.failedReason}`);
+      }
+    }
+
+    // Termino el proceso
+    await wallets_service.finishBackfill(wallet.address, wallet.blockchain);
+    console.log(
+      `Backfill process completed for wallet: ${wallet.blockchain}:${wallet.address}`,
+    );
+  };
+
   const backfillWorker = new Worker<{
     wallet: SavedWallet;
   }>(
     "backfillQueue",
     async (job) => {
       console.log(
-        `Starting backfill ${job.name} with ID ${job.id} and wallet: ${job.data.wallet.address}`,
+        `Starting backfill for wallet: ${job.data.wallet.blockchain}:${job.data.wallet.address}`,
       );
 
-      const ecosystem = blockchains[job.data.wallet.blockchain].ecosystem;
-
-      if (ecosystem === "ethereum") {
-        // Consigo los chunks
-        const chunks = await wallets_service.getHistoryTimeChunks(
-          job.data.wallet,
-          CHUNK_AMOUNT,
-        );
-
-        const name = "backfill_chunk";
-        await chunks_queue.addBulk(
-          chunks.map((c) => ({
-            name,
-            data: {
-              address: job.data.wallet.address,
-              blockchain: job.data.wallet.blockchain,
-              from_date: c.from_date.toISOString(),
-              to_date: c.to_date.toISOString(),
-              total_chunks: CHUNK_AMOUNT,
-            },
-          })),
-        );
-      } else {
-        await chunks_queue.add("backfill_unique_chunk", {
-          address: job.data.wallet.address,
-          blockchain: job.data.wallet.blockchain,
-          from_date: new Date().toISOString(),
-          to_date: new Date().toISOString(),
-          total_chunks: 1,
-        });
-      }
+      await add_chunks(job.data.wallet);
     },
     {
       connection: {
@@ -82,40 +134,13 @@ export const setupBackfillWorker = (
   backfillWorker.on("ready", async () => {
     console.log("backfillWorker is ready!");
     const pending_wallets = await wallets_service.getPendingWallets();
-    console.log(
-      `Found ${pending_wallets.length} pending wallets. Backfill starting...`,
-    );
-    for (const wallet of pending_wallets) {
-      const ecosystem = blockchains[wallet.blockchain].ecosystem;
 
-      if (ecosystem === "ethereum") {
-        // Consigo los chunks
-        const chunks = await wallets_service.getHistoryTimeChunks(
-          wallet,
-          CHUNK_AMOUNT,
-        );
-
-        const name = "backfill_chunk";
-        await chunks_queue.addBulk(
-          chunks.map((c) => ({
-            name,
-            data: {
-              from_date: c.from_date.toISOString(),
-              to_date: c.to_date.toISOString(),
-              address: wallet.address,
-              blockchain: wallet.blockchain,
-              total_chunks: CHUNK_AMOUNT,
-            },
-          })),
-        );
-      } else {
-        await chunks_queue.add("backfill_unique_chunk", {
-          address: wallet.address,
-          blockchain: wallet.blockchain,
-          from_date: new Date().toISOString(),
-          to_date: new Date().toISOString(),
-          total_chunks: 1,
-        });
+    if (pending_wallets.length > 0) {
+      console.log(
+        `Found ${pending_wallets.length} pending wallets. Backfill starting...`,
+      );
+      for (const wallet of pending_wallets) {
+        await add_chunks(wallet);
       }
     }
   });
@@ -140,7 +165,7 @@ export const setupBackfillChunkWorker = (
     CoinsProvider,
     CoinsRepository
   >,
-  chunks_queue: Queue<BackfillChunkQueue>,
+  _chunks_queue: Queue<BackfillChunkQueue>,
   redis_url: string,
 ): Worker<BackfillChunkQueue> => {
   const backfillChunkWorker = new Worker<BackfillChunkQueue>(
@@ -187,9 +212,6 @@ export const setupBackfillChunkWorker = (
       },
       concurrency: JOB_CONCURRENCY,
       maxStalledCount: 5,
-      removeOnComplete: {
-        count: CHUNK_AMOUNT,
-      },
       limiter: {
         max: JOB_CONCURRENCY,
         duration: 1000,
@@ -203,22 +225,9 @@ export const setupBackfillChunkWorker = (
 
   backfillChunkWorker.on("completed", async (job) => {
     const { address, blockchain } = job.data;
-
-    const jobs = await chunks_queue.getJobs(["completed"]);
-    const chunk_jobs = jobs.filter(
-      (j) => j.data.address === address && j.data.blockchain === blockchain,
+    console.log(
+      `Finished chunk ${job.id} for wallet: ${blockchain}:${address}`,
     );
-
-    console.log("Jobs completed: ", chunk_jobs.length);
-
-    if (chunk_jobs.length >= job.data.total_chunks) {
-      // Ya termino el último chunk
-      // Termino el proceso
-      await wallets_service.finishBackfill(address, blockchain);
-      console.log(
-        `Backfill process completed for wallet: ${blockchain}:${address}`,
-      );
-    }
   });
 
   backfillChunkWorker.on("failed", (job, err) => {

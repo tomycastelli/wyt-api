@@ -1,4 +1,4 @@
-import { Queue, type QueueOptions } from "bullmq";
+import { Queue, QueueEvents, type QueueOptions } from "bullmq";
 import "dotenv/config";
 import {
   CoinGecko,
@@ -117,12 +117,19 @@ const wallet_jobs_queue = new Queue<WalletJobsQueue>(
   queue_options,
 );
 
-const chunks_queue = new Queue<BackfillChunkQueue>(
-  "backfillChunkQueue",
-  queue_options,
-);
+export const CHUNK_AMOUNT = 10;
 
-setupBackfillWorker(wallets_service, chunks_queue, REDIS_URL);
+const chunks_queue = new Queue<BackfillChunkQueue>("backfillChunkQueue", {
+  defaultJobOptions: {
+    removeOnComplete: Math.ceil(CHUNK_AMOUNT * 1.2),
+    ...queue_options.defaultJobOptions,
+  },
+  ...queue_options,
+});
+
+const queue_events = new QueueEvents("backfillChunkQueue");
+
+setupBackfillWorker(wallets_service, chunks_queue, queue_events, REDIS_URL);
 
 setupBackfillChunkWorker(wallets_service, chunks_queue, REDIS_URL);
 
