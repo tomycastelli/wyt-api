@@ -79,9 +79,9 @@ jobs:
           push: true
           tags: |
             ${{ secrets.ECR_REPOSITORY_URI }}:${{ matrix.app }}-latest
-            ${{ secrets.ECR_REPOSITORY_URI }}:${{ matrix.app }}-${{ env.RELEASE_VERSION }}
           platforms: |
             linux/arm64
+            linux/amd64
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
