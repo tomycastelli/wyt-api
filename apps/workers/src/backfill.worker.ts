@@ -63,7 +63,9 @@ export const setupBackfillWorker = (
         const checkCompletion = (job_id: string) => {
           if (job_ids.includes(job_id)) {
             completed_count++;
-            console.log("Completion: ", completed_count);
+            console.log(
+              `Completion: ${completed_count} out of ${job_ids.length}`,
+            );
             if (completed_count === job_ids.length) {
               resolve();
             }
