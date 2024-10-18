@@ -67,6 +67,12 @@ export const setupBackfillWorker = (
               `Completion: ${completed_count} out of ${job_ids.length}`,
             );
             if (completed_count === job_ids.length) {
+              queue_events.off("completed", () => {
+                return;
+              });
+              queue_events.off("failed", () => {
+                return;
+              });
               resolve();
             }
           }
@@ -102,6 +108,9 @@ export const setupBackfillWorker = (
     }
 
     // Termino el proceso
+    console.log(
+      `Staring the finish of backfill process for wallet: ${wallet.blockchain}:${wallet.address}`,
+    );
     await wallets_service.finishBackfill(wallet.address, wallet.blockchain);
     console.log(
       `Backfill process completed for wallet: ${wallet.blockchain}:${wallet.address}`,
