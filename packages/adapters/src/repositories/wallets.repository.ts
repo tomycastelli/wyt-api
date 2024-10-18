@@ -680,7 +680,10 @@ export class WalletsPostgres implements WalletsRepository {
     return mapped_transactions;
   }
 
-  async updateWalletBackfillStatus(wallet_data: SavedWallet): Promise<void> {
+  async updateWalletBackfillStatus(
+    address: string,
+    blockchain: BlockchainsName,
+  ): Promise<void> {
     // Busco la transacción mas vieja
     const [first_transaction] = await this.db
       .select()
@@ -691,12 +694,12 @@ export class WalletsPostgres implements WalletsRepository {
       )
       .where(
         and(
-          eq(schema.transactions.blockchain, wallet_data.blockchain),
+          eq(schema.transactions.blockchain, blockchain),
           or(
-            eqLower(schema.transfers.from_address, wallet_data.address),
-            eqLower(schema.transfers.to_address, wallet_data.address),
-            eqLower(schema.transactions.from_address, wallet_data.address),
-            eqLower(schema.transactions.to_address, wallet_data.address),
+            eqLower(schema.transfers.from_address, address),
+            eqLower(schema.transfers.to_address, address),
+            eqLower(schema.transactions.from_address, address),
+            eqLower(schema.transactions.to_address, address),
           ),
         ),
       )
@@ -711,8 +714,8 @@ export class WalletsPostgres implements WalletsRepository {
       })
       .where(
         and(
-          eqLower(schema.wallets.address, wallet_data.address),
-          eq(schema.wallets.blockchain, wallet_data.blockchain),
+          eqLower(schema.wallets.address, address),
+          eq(schema.wallets.blockchain, blockchain),
         ),
       );
   }

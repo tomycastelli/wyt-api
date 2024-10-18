@@ -162,12 +162,13 @@ export class SolanaProvider implements WalletsProvider {
   }
 
   async getTransactionHistory(
-    wallet_data: Wallet,
+    address: string,
+    _blockchain: BlockchainsName,
     _from_date: Date,
     _to_date: Date,
     loop_cursor: string | undefined,
   ): Promise<{ transactions: Transaction[]; cursor: string | undefined }> {
-    const public_key = new PublicKey(wallet_data.address);
+    const public_key = new PublicKey(address);
 
     const transactions = await this.getConnection().getSignaturesForAddress(
       public_key,

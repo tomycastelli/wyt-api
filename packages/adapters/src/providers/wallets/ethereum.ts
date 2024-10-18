@@ -79,7 +79,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
     });
   }
 
-  private rate_limiter: RateLimiter = new RateLimiter(12, 20);
+  private rate_limiter: RateLimiter = new RateLimiter(10, 20);
 
   async getWallet(
     address: string,
@@ -175,7 +175,8 @@ export class EthereumProvider implements WalletsStreamsProvider {
 
     return this.transactionsFromWalletHistory(
       recent_transactions.result,
-      wallet_data,
+      wallet_data.address,
+      wallet_data.blockchain,
     );
   }
 
@@ -202,7 +203,8 @@ export class EthereumProvider implements WalletsStreamsProvider {
         transactions.push(
           ...this.transactionsFromWalletHistory(
             new_transactions.result,
-            wallet_data,
+            wallet_data.address,
+            wallet_data.blockchain,
           ),
         );
       }
@@ -257,15 +259,16 @@ export class EthereumProvider implements WalletsStreamsProvider {
   }
 
   async getTransactionHistory(
-    wallet_data: Wallet,
+    address: string,
+    blockchain: BlockchainsName,
     from_date: Date,
     to_date: Date,
     loop_cursor: string | undefined,
   ): Promise<{ transactions: Transaction[]; cursor: string | undefined }> {
     await this.rate_limiter.acquire();
     const transaction_history = await Moralis.EvmApi.wallets.getWalletHistory({
-      chain: this.blockchain_mapper[wallet_data.blockchain],
-      address: wallet_data.address,
+      chain: this.blockchain_mapper[blockchain],
+      address,
       order: "DESC",
       includeInternalTransactions: false,
       fromDate: from_date,
@@ -277,7 +280,8 @@ export class EthereumProvider implements WalletsStreamsProvider {
     return {
       transactions: this.transactionsFromWalletHistory(
         transaction_history.result,
-        wallet_data,
+        address,
+        blockchain,
       ),
       cursor: transaction_history.pagination.cursor,
     };
@@ -568,14 +572,15 @@ export class EthereumProvider implements WalletsStreamsProvider {
 
   transactionsFromWalletHistory(
     transaction_history_data: EvmWalletHistoryTransaction[],
-    wallet_data: Wallet,
+    address: string,
+    blockchain: BlockchainsName,
   ): Transaction[] {
     const transactions_data: Transaction[] = transaction_history_data
       .filter(
         (th) =>
           th.possibleSpam === false &&
           // Es relevante en este caso porque es la que paga la fee
-          (th.fromAddress.lowercase === wallet_data.address.toLowerCase() ||
+          (th.fromAddress.lowercase === address.toLowerCase() ||
             // Es relevantre en este caso porque sumo o resto alguna coin o nft
             th.erc20Transfers.length > 0 ||
             th.nativeTransfers.length > 0 ||
@@ -621,8 +626,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
           });
         }
 
-        const decimal_places =
-          blockchains[wallet_data.blockchain].decimal_places;
+        const decimal_places = blockchains[blockchain].decimal_places;
 
         const fee = Number(
           th.transactionFee
@@ -631,7 +635,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
         );
 
         return {
-          blockchain: wallet_data.blockchain,
+          blockchain: blockchain,
           hash: th.hash,
           block_timestamp: new Date(th.blockTimestamp),
           transfers,

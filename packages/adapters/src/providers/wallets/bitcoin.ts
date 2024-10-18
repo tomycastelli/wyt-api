@@ -122,7 +122,8 @@ export class BitcoinProvider implements WalletsProvider {
   }
 
   async getTransactionHistory(
-    wallet_data: Wallet,
+    address: string,
+    _blockchain: BlockchainsName,
     _from_date: Date,
     _to_date: Date,
     loop_cursor: string | undefined,
@@ -130,7 +131,7 @@ export class BitcoinProvider implements WalletsProvider {
     await new Promise((resolve) => setTimeout(resolve, 250));
 
     const response = await fetch(
-      `${this.api_url}/address/${wallet_data.address}/txs/chain/${loop_cursor ? loop_cursor : ""}`,
+      `${this.api_url}/address/${address}/txs/chain/${loop_cursor ? loop_cursor : ""}`,
     ).then((res) => res.json());
 
     const parsedResponse = txInfoType(response);

@@ -46,13 +46,6 @@ export const setupWalletsWorker = (
           break;
         }
         case "saveTransactions": {
-          await wallets_service.saveTransactions(
-            payload.data.transactions!.map((t) => ({
-              ...t,
-              block_timestamp: new Date(t.block_timestamp),
-            })),
-            payload.data.blockchain,
-          );
         }
       }
     },

@@ -259,7 +259,8 @@ export class WalletsService<
 
   /** Consigue el historial de transacciones de una [Wallet] dada una ventana de tiempo */
   public async getTransactionHistory(
-    saved_wallet: SavedWallet,
+    address: string,
+    blockchain: BlockchainsName,
     from_date: Date,
     to_date: Date,
     loop_cursor: string | undefined,
@@ -269,7 +270,8 @@ export class WalletsService<
   }> {
     const { transactions, cursor } =
       await this.walletsProvider.getTransactionHistory(
-        saved_wallet,
+        address,
+        blockchain,
         from_date,
         to_date,
         loop_cursor,
@@ -278,9 +280,15 @@ export class WalletsService<
   }
 
   /** Terminar el backfill con los pasos correspondientes */
-  public async finishBackfill(saved_wallet: SavedWallet): Promise<void> {
+  public async finishBackfill(
+    address: string,
+    blockchain: BlockchainsName,
+  ): Promise<void> {
     // Si llego hasta acá sin tirar error, actualizo su status
-    await this.walletsRepository.updateWalletBackfillStatus(saved_wallet);
+    await this.walletsRepository.updateWalletBackfillStatus(
+      address,
+      blockchain,
+    );
   }
 
   /** Guarda [Transaction]s y devuelve las nuevas */

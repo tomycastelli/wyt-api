@@ -35,7 +35,7 @@ export const setup_wallets_routes = (
       port: 6379,
     },
     defaultJobOptions: {
-      removeOnComplete: 50,
+      removeOnComplete: 30,
       removeOnFail: true,
     },
   });

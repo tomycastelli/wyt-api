@@ -26,7 +26,8 @@ export interface WalletsProvider {
 
   /** Busca el historial de [Transaction]s de una [Wallet] con un cursor para ir paginando */
   getTransactionHistory(
-    wallet_data: Wallet,
+    address: string,
+    blockchain: BlockchainsName,
     from_date: Date,
     to_date: Date,
     loop_cursor: string | undefined,
@@ -130,7 +131,10 @@ export interface WalletsRepository {
   saveTransactions(transactions: CoinedTransaction[]): Promise<void>;
 
   /** Actualiza el backfill status de una [Wallet] a completado */
-  updateWalletBackfillStatus(wallet_data: SavedWallet): Promise<void>;
+  updateWalletBackfillStatus(
+    address: string,
+    blockchain: BlockchainsName,
+  ): Promise<void>;
 
   /** Guarda una [Transaction] y actualiza el estado de la o las [Wallet]s involucradas  */
   saveTransactionAndUpdateWallet(

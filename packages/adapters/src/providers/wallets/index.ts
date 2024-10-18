@@ -68,30 +68,34 @@ export class WalletsProviderAdapters implements WalletsStreamsProvider {
   }
 
   async getTransactionHistory(
-    wallet_data: Wallet,
+    address: string,
+    blockchain: BlockchainsName,
     from_date: Date,
     to_date: Date,
     loop_cursor: string | undefined,
   ): Promise<{ transactions: Transaction[]; cursor: string | undefined }> {
-    const ecosystem = blockchains[wallet_data.blockchain].ecosystem;
+    const ecosystem = blockchains[blockchain].ecosystem;
     switch (ecosystem) {
       case "ethereum":
         return this.ethereumProvider.getTransactionHistory(
-          wallet_data,
+          address,
+          blockchain,
           from_date,
           to_date,
           loop_cursor,
         );
       case "solana":
         return this.solanaProvider.getTransactionHistory(
-          wallet_data,
+          address,
+          blockchain,
           from_date,
           to_date,
           loop_cursor,
         );
       case "bitcoin":
         return this.bitcoinProvider.getTransactionHistory(
-          wallet_data,
+          address,
+          blockchain,
           from_date,
           to_date,
           loop_cursor,

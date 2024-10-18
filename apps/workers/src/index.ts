@@ -33,7 +33,7 @@ BigInt.prototype.toJSON = function () {
   return Number(this);
 };
 
-export const JOB_CONCURRENCY = 20;
+export const JOB_CONCURRENCY = 50;
 
 export type CoinJobsQueue = {
   jobName: "saveAllCoins" | "saveLatestCoins" | "updateCoins";
@@ -51,7 +51,8 @@ export type WalletJobsQueue = {
 };
 
 export type BackfillChunkQueue = {
-  wallet: SavedWallet;
+  address: string;
+  blockchain: BlockchainsName;
   from_date: string;
   to_date: string;
   total_chunks: number;
@@ -92,9 +93,7 @@ const queue_options: QueueOptions = {
     port: 6379,
   },
   defaultJobOptions: {
-    removeOnComplete: {
-      count: 50,
-    },
+    removeOnComplete: true,
     removeOnFail: true,
     attempts: 3,
     backoff: {
@@ -125,12 +124,7 @@ const chunks_queue = new Queue<BackfillChunkQueue>(
 
 setupBackfillWorker(wallets_service, chunks_queue, REDIS_URL);
 
-setupBackfillChunkWorker(
-  wallets_service,
-  wallet_jobs_queue,
-  chunks_queue,
-  REDIS_URL,
-);
+setupBackfillChunkWorker(wallets_service, chunks_queue, REDIS_URL);
 
 setupWalletsWorker(wallets_service, REDIS_URL);
 
