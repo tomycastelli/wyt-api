@@ -79,7 +79,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
     });
   }
 
-  private rate_limiter: RateLimiter = new RateLimiter(5, 10);
+  private rate_limiter: RateLimiter = new RateLimiter(12, 20);
 
   async getWallet(
     address: string,
