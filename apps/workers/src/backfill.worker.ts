@@ -14,7 +14,7 @@ import {
   type WalletJobsQueue,
 } from "./index.js";
 
-const CHUNK_AMOUNT = 30;
+const CHUNK_AMOUNT = 5;
 
 export const setupBackfillWorker = (
   wallets_service: WalletsService<
@@ -72,6 +72,7 @@ export const setupBackfillWorker = (
         host: redis_url,
         port: 6379,
       },
+      maxStalledCount: 5,
       concurrency: JOB_CONCURRENCY,
       limiter: {
         max: JOB_CONCURRENCY,
@@ -189,6 +190,7 @@ export const setupBackfillChunkWorker = (
         port: 6379,
       },
       concurrency: JOB_CONCURRENCY,
+      maxStalledCount: 5,
       limiter: {
         max: JOB_CONCURRENCY,
         duration: 1000,
@@ -207,7 +209,9 @@ export const setupBackfillChunkWorker = (
     const jobs = await chunks_queue.getJobs(["completed"]);
     const chunk_jobs = jobs.filter((j) => j.data.wallet.id === wallet.id);
 
-    if (chunk_jobs.length === job.data.total_chunks) {
+    console.log("Jobs completed: ", chunk_jobs.length);
+
+    if (chunk_jobs.length >= job.data.total_chunks) {
       // Ya termino el último chunk
       // Ahora quiero esperar a que los wallet_jobs que guardan las transacciones hayan terminado
       const queueEvents = new QueueEvents("walletJobsQueue", {

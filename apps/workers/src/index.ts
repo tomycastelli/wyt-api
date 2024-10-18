@@ -33,7 +33,7 @@ BigInt.prototype.toJSON = function () {
   return Number(this);
 };
 
-export const JOB_CONCURRENCY = 50;
+export const JOB_CONCURRENCY = 30;
 
 export type CoinJobsQueue = {
   jobName: "saveAllCoins" | "saveLatestCoins" | "updateCoins";
@@ -92,8 +92,15 @@ const queue_options: QueueOptions = {
     port: 6379,
   },
   defaultJobOptions: {
-    removeOnComplete: true,
+    removeOnComplete: {
+      count: 50,
+    },
     removeOnFail: true,
+    attempts: 3,
+    backoff: {
+      type: "fixed",
+      delay: 5000,
+    },
   },
 };
 

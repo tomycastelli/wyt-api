@@ -131,7 +131,7 @@ export const create_app = (
       port: 6379,
     },
     defaultJobOptions: {
-      removeOnComplete: true,
+      removeOnComplete: 50,
       removeOnFail: true,
     },
   });
