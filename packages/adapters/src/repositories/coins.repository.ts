@@ -11,7 +11,6 @@ import {
 import { and, desc, eq, gte, inArray, lt, or, sql } from "drizzle-orm";
 import { type PostgresJsDatabase, drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { eqLower } from "../utils.js";
 import * as schema from "./schema.js";
 
 export class CoinsPostgres implements CoinsRepository {
@@ -64,6 +63,7 @@ export class CoinsPostgres implements CoinsRepository {
         c.contracts
           ? c.contracts.map((contract) => ({
               ...contract,
+              contract_address: contract.contract_address.toLowerCase(),
               coin_id: savedCoins.find((sv) => sv.name === c.name)!.id,
             }))
           : [],
@@ -157,7 +157,7 @@ export class CoinsPostgres implements CoinsRepository {
       .leftJoin(schema.contracts, eq(schema.contracts.coin_id, schema.coins.id))
       .where(
         and(
-          eqLower(schema.contracts.contract_address, coin_address),
+          eq(schema.contracts.contract_address, coin_address),
           eq(schema.contracts.blockchain, blockchain),
         ),
       )
@@ -200,7 +200,7 @@ export class CoinsPostgres implements CoinsRepository {
         .from(schema.nfts)
         .where(
           and(
-            eqLower(schema.nfts.contract_address, contract_address),
+            eq(schema.nfts.contract_address, contract_address),
             eq(schema.nfts.token_id, token_id),
             eq(schema.nfts.blockchain, blockchain),
           ),
@@ -211,7 +211,11 @@ export class CoinsPostgres implements CoinsRepository {
 
       const [new_nft] = await tx
         .insert(schema.nfts)
-        .values({ contract_address, blockchain, token_id })
+        .values({
+          contract_address: contract_address.toLowerCase(),
+          blockchain,
+          token_id,
+        })
         .returning();
 
       return new_nft!;

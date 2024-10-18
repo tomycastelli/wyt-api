@@ -24,7 +24,6 @@ import {
 } from "drizzle-orm";
 import { type PostgresJsDatabase, drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { eqLower } from "../utils.js";
 import * as schema from "./schema.js";
 
 export class WalletsPostgres implements WalletsRepository {
@@ -45,6 +44,7 @@ export class WalletsPostgres implements WalletsRepository {
         .insert(schema.wallets)
         .values({
           ...coined_wallet,
+          address: coined_wallet.address.toLowerCase(),
           native_value: coined_wallet.native_value,
           last_update: new Date(),
         })
@@ -166,10 +166,7 @@ export class WalletsPostgres implements WalletsRepository {
   ): Promise<SavedWallet | undefined> {
     const saved_wallet = await this.db.query.wallets.findFirst({
       where: (wallets, { eq, and }) =>
-        and(
-          eqLower(wallets.address, address),
-          eq(wallets.blockchain, blockchain),
-        ),
+        and(eq(wallets.address, address), eq(wallets.blockchain, blockchain)),
       with: {
         walletCoins: {
           with: {
@@ -303,7 +300,12 @@ export class WalletsPostgres implements WalletsRepository {
 
         const [id] = await tx
           .insert(schema.transactions)
-          .values({ ...transaction, fee: transaction.fee })
+          .values({
+            ...transaction,
+            from_address: transaction.from_address?.toLowerCase(),
+            to_address: transaction.to_address?.toLowerCase(),
+            fee: transaction.fee,
+          })
           .onConflictDoNothing()
           .returning({ id: schema.transactions.id });
 
@@ -315,7 +317,11 @@ export class WalletsPostgres implements WalletsRepository {
             transaction_id: id.id,
             blockchain: transaction.blockchain,
             block_timestamp: transaction.block_timestamp,
-            ...tr,
+            coin_address: tr.coin_address?.toLowerCase(),
+            from_address: tr.from_address?.toLowerCase(),
+            to_address: tr.to_address?.toLowerCase(),
+            type: tr.type,
+            value: tr.value,
             coin_id: tr.type !== "nft" ? tr.coin.id : null,
             nft_id: tr.type === "nft" ? tr.coin.id : null,
           })),
@@ -346,7 +352,12 @@ export class WalletsPostgres implements WalletsRepository {
       // tengo que cambiar el estado de la o las [Wallet]s relacionadas en cada [Transfer] hecha
       const [transaction_id] = await tx
         .insert(schema.transactions)
-        .values({ ...transaction_data, fee: transaction_data.fee })
+        .values({
+          ...transaction_data,
+          from_address: transaction_data.from_address?.toLowerCase(),
+          to_address: transaction_data.to_address?.toLowerCase(),
+          fee: transaction_data.fee,
+        })
         .onConflictDoNothing()
         .returning({ id: schema.transactions.id });
 
@@ -365,7 +376,7 @@ export class WalletsPostgres implements WalletsRepository {
           })
           .where(
             and(
-              eqLower(schema.wallets.address, transaction_data.from_address),
+              eq(schema.wallets.address, transaction_data.from_address),
               eq(schema.wallets.blockchain, transaction_data.blockchain),
             ),
           )
@@ -380,6 +391,8 @@ export class WalletsPostgres implements WalletsRepository {
         // Inserto la [Transfer]
         await tx.insert(schema.transfers).values({
           ...transfer,
+          from_address: transfer.from_address?.toLowerCase(),
+          to_address: transfer.to_address?.toLowerCase(),
           blockchain: transaction_data.blockchain,
           block_timestamp: transaction_data.block_timestamp,
           transaction_id: transaction_id.id,
@@ -396,7 +409,7 @@ export class WalletsPostgres implements WalletsRepository {
             .from(schema.wallets)
             .where(
               and(
-                eqLower(schema.wallets.address, transfer.from_address),
+                eq(schema.wallets.address, transfer.from_address),
                 eq(schema.wallets.blockchain, transaction_data.blockchain),
               ),
             );
@@ -446,7 +459,7 @@ export class WalletsPostgres implements WalletsRepository {
             .from(schema.wallets)
             .where(
               and(
-                eqLower(schema.wallets.address, transfer.to_address),
+                eq(schema.wallets.address, transfer.to_address),
                 eq(schema.wallets.blockchain, transaction_data.blockchain),
               ),
             );
@@ -517,14 +530,8 @@ export class WalletsPostgres implements WalletsRepository {
       .where(
         and(
           or(
-            eqLower(
-              schema.transfers.from_address,
-              sql.placeholder("walletAddress"),
-            ),
-            eqLower(
-              schema.transfers.to_address,
-              sql.placeholder("walletAddress"),
-            ),
+            eq(schema.transfers.from_address, sql.placeholder("walletAddress")),
+            eq(schema.transfers.to_address, sql.placeholder("walletAddress")),
           ),
           from_date
             ? gte(schema.transactions.block_timestamp, from_date)
@@ -624,14 +631,8 @@ export class WalletsPostgres implements WalletsRepository {
         and(
           // Transfers donde la wallet este involucrada
           or(
-            eqLower(
-              schema.transfers.from_address,
-              sql.placeholder("walletAddress"),
-            ),
-            eqLower(
-              schema.transfers.to_address,
-              sql.placeholder("walletAddress"),
-            ),
+            eq(schema.transfers.from_address, sql.placeholder("walletAddress")),
+            eq(schema.transfers.to_address, sql.placeholder("walletAddress")),
           ),
           // En el rango dado
           gte(schema.transactions.block_timestamp, from_date),
@@ -683,47 +684,20 @@ export class WalletsPostgres implements WalletsRepository {
   async updateWalletBackfillStatus(
     address: string,
     blockchain: BlockchainsName,
+    first_date: Date,
   ): Promise<void> {
-    console.log(
-      `Starting to call the method itself inside the repo: ${blockchain}:${address}`,
-    );
-    await this.db.transaction(async (tx) => {
-      const [first_transaction] = await tx
-        .select()
-        .from(schema.transactions)
-        .leftJoin(
-          schema.transfers,
-          eq(schema.transfers.transaction_id, schema.transactions.id),
-        )
-        .where(
-          and(
-            eq(schema.transactions.blockchain, blockchain),
-            or(
-              eqLower(schema.transfers.from_address, address),
-              eqLower(schema.transfers.to_address, address),
-              eqLower(schema.transactions.from_address, address),
-              eqLower(schema.transactions.to_address, address),
-            ),
-          ),
-        )
-        .orderBy(asc(schema.transactions.block_timestamp))
-        .limit(1);
-
-      console.log("First transaction: ", first_transaction);
-
-      await tx
-        .update(schema.wallets)
-        .set({
-          backfill_status: "complete",
-          first_transfer_date: first_transaction?.transactions.block_timestamp,
-        })
-        .where(
-          and(
-            eqLower(schema.wallets.address, address),
-            eq(schema.wallets.blockchain, blockchain),
-          ),
-        );
-    });
+    await this.db
+      .update(schema.wallets)
+      .set({
+        backfill_status: "complete",
+        first_transfer_date: first_date,
+      })
+      .where(
+        and(
+          eq(schema.wallets.address, address),
+          eq(schema.wallets.blockchain, blockchain),
+        ),
+      );
   }
 
   async getPendingWallets(): Promise<SavedWallet[]> {
@@ -793,10 +767,10 @@ export class WalletsPostgres implements WalletsRepository {
         and(
           eq(schema.transactions.blockchain, wallet_data.blockchain),
           or(
-            eqLower(schema.transactions.from_address, wallet_data.address),
-            eqLower(schema.transactions.to_address, wallet_data.address),
-            eqLower(schema.transfers.from_address, wallet_data.address),
-            eqLower(schema.transfers.to_address, wallet_data.address),
+            eq(schema.transactions.from_address, wallet_data.address),
+            eq(schema.transactions.to_address, wallet_data.address),
+            eq(schema.transfers.from_address, wallet_data.address),
+            eq(schema.transfers.to_address, wallet_data.address),
           ),
         ),
       )

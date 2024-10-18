@@ -28,6 +28,7 @@ export const setupBackfillWorker = (
   wallet: SavedWallet;
 }> => {
   const add_chunks = async (wallet: SavedWallet): Promise<void> => {
+    let first_date: Date = new Date();
     const ecosystem = blockchains[wallet.blockchain].ecosystem;
 
     if (ecosystem === "ethereum") {
@@ -36,6 +37,8 @@ export const setupBackfillWorker = (
         wallet,
         CHUNK_AMOUNT,
       );
+
+      first_date = chunks[0].from_date;
 
       const name = "backfill_chunk";
       const job_ids = await chunks_queue
@@ -101,19 +104,25 @@ export const setupBackfillWorker = (
         },
       );
 
-      await job.waitUntilFinished(queue_events);
-      if (await job.isFailed()) {
+      const result = await job.waitUntilFinished(queue_events);
+      if (await job.isCompleted()) {
+        // El result es el date
+        first_date = result as Date;
+      } else {
         throw Error(`Job ${job.id} failed: ${job.failedReason}`);
       }
     }
 
     // Termino el proceso
-    console.log(
-      `Staring the finish of backfill process for wallet: ${wallet.blockchain}:${wallet.address}`,
+    await wallets_service.finishBackfill(
+      wallet.address,
+      wallet.blockchain,
+      first_date,
     );
-    await wallets_service.finishBackfill(wallet.address, wallet.blockchain);
+
     console.log(
-      `Backfill process completed for wallet: ${wallet.blockchain}:${wallet.address}`,
+      "Finished backfill process with first transfer date: ",
+      first_date,
     );
   };
 
@@ -191,6 +200,7 @@ export const setupBackfillChunkWorker = (
       );
       let loop_cursor: string | undefined = undefined;
       let transaction_count = 0;
+      let first_date: Date = new Date();
 
       do {
         const { transactions, cursor } =
@@ -215,9 +225,13 @@ export const setupBackfillChunkWorker = (
           );
           transaction_count += transactions.length;
 
+          first_date = transactions[transactions.length - 1]!.block_timestamp;
+
           await job.updateProgress({ transaction_count: transaction_count });
         }
       } while (loop_cursor);
+
+      return first_date;
     },
     {
       connection: {

@@ -283,12 +283,13 @@ export class WalletsService<
   public async finishBackfill(
     address: string,
     blockchain: BlockchainsName,
+    first_date: Date,
   ): Promise<void> {
     // Si llego hasta acá sin tirar error, actualizo su status
-    console.log(`Starting to call the repository: ${blockchain}:${address}`);
     await this.walletsRepository.updateWalletBackfillStatus(
       address,
       blockchain,
+      first_date,
     );
   }
 
