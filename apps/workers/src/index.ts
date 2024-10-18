@@ -127,7 +127,12 @@ const chunks_queue = new Queue<BackfillChunkQueue>("backfillChunkQueue", {
   ...queue_options,
 });
 
-const queue_events = new QueueEvents("backfillChunkQueue");
+const queue_events = new QueueEvents("backfillChunkQueue", {
+  connection: {
+    host: REDIS_URL,
+    port: 6379,
+  },
+});
 
 setupBackfillWorker(wallets_service, chunks_queue, queue_events, REDIS_URL);
 
