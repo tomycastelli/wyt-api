@@ -684,7 +684,10 @@ export class WalletsPostgres implements WalletsRepository {
     address: string,
     blockchain: BlockchainsName,
   ): Promise<void> {
-    return await this.db.transaction(async (tx) => {
+    console.log(
+      `Starting to call the method itself inside the repo: ${blockchain}:${address}`,
+    );
+    await this.db.transaction(async (tx) => {
       const [first_transaction] = await tx
         .select()
         .from(schema.transactions)
@@ -705,6 +708,8 @@ export class WalletsPostgres implements WalletsRepository {
         )
         .orderBy(asc(schema.transactions.block_timestamp))
         .limit(1);
+
+      console.log("First transaction: ", first_transaction);
 
       await tx
         .update(schema.wallets)
