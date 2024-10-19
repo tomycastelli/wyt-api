@@ -695,7 +695,7 @@ export class WalletsPostgres implements WalletsRepository {
       })
       .where(
         and(
-          eq(schema.wallets.address, address),
+          eq(schema.wallets.address, address.toLowerCase()),
           eq(schema.wallets.blockchain, blockchain),
         ),
       );

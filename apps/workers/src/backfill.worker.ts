@@ -148,6 +148,7 @@ export const setupBackfillWorker = (
         max: JOB_CONCURRENCY,
         duration: 1000,
       },
+      lockDuration: 600_000,
     },
   );
 

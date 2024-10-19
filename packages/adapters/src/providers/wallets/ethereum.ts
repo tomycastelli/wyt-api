@@ -116,7 +116,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
       const coins: WalletCoin[] = balances_data.result
         .filter((c) => !c.nativeToken && c.tokenAddress)
         .map((c) => ({
-          coin_address: c.tokenAddress!.checksum,
+          coin_address: c.tokenAddress!.lowercase,
           value: c.balance.value.toBigInt(),
         }));
       wallet_data.coins.push(...coins);
@@ -143,7 +143,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
           (c) => !!c.metadata && Number(c.tokenId) < 1e9 && c.tokenAddress,
         )
         .map((c) => ({
-          coin_address: c.tokenAddress.checksum,
+          coin_address: c.tokenAddress.lowercase,
           value: 0n,
           token_id: Number(c.tokenId),
         }));
@@ -420,7 +420,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
       id: stream_id,
     });
 
-    return stream.result.map((a) => a.address!.checksum);
+    return stream.result.map((a) => a.address!.lowercase);
   }
 
   validateWebhookTransaction(
@@ -594,9 +594,9 @@ export class EthereumProvider implements WalletsStreamsProvider {
         )) {
           transfers.push({
             type: "token",
-            coin_address: erc20tx.address.checksum,
-            from_address: erc20tx.fromAddress.checksum,
-            to_address: erc20tx.toAddress?.checksum ?? null,
+            coin_address: erc20tx.address.lowercase,
+            from_address: erc20tx.fromAddress.lowercase,
+            to_address: erc20tx.toAddress?.lowercase ?? null,
             value: BigInt(erc20tx.value),
             token_id: null,
           });
@@ -605,8 +605,8 @@ export class EthereumProvider implements WalletsStreamsProvider {
         for (const nativeTx of th.nativeTransfers) {
           transfers.push({
             type: "native",
-            from_address: nativeTx.fromAddress.checksum,
-            to_address: nativeTx.toAddress?.checksum ?? null,
+            from_address: nativeTx.fromAddress.lowercase,
+            to_address: nativeTx.toAddress?.lowercase ?? null,
             value: BigInt(nativeTx.value),
             token_id: null,
             coin_address: null,
@@ -618,10 +618,10 @@ export class EthereumProvider implements WalletsStreamsProvider {
         )) {
           transfers.push({
             type: "nft",
-            from_address: nftTx.fromAddress.checksum,
-            to_address: nftTx.toAddress?.checksum ?? null,
+            from_address: nftTx.fromAddress.lowercase,
+            to_address: nftTx.toAddress?.lowercase ?? null,
             value: 0n,
-            coin_address: nftTx.tokenAddress.checksum,
+            coin_address: nftTx.tokenAddress.lowercase,
             token_id: Number(nftTx.tokenId),
           });
         }
@@ -640,8 +640,8 @@ export class EthereumProvider implements WalletsStreamsProvider {
           block_timestamp: new Date(th.blockTimestamp),
           transfers,
           fee: BigInt((fee * 10 ** decimal_places).toFixed(0)),
-          from_address: th.fromAddress.checksum,
-          to_address: th.toAddress?.checksum ?? null,
+          from_address: th.fromAddress.lowercase,
+          to_address: th.toAddress?.lowercase ?? null,
           summary: th.summary,
         };
       });
