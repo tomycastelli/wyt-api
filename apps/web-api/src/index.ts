@@ -9,6 +9,7 @@ import {
   type BlockchainsName,
   CoinsService,
   EveryBlockainsName,
+  type SavedWallet,
   WalletsService,
   blockchains,
 } from "@repo/domain";
@@ -50,7 +51,7 @@ export const second_timestamp = type("string").pipe(
   (n) => new Date(Number(n) * 1000),
 );
 
-export const create_app = (
+export const create_app = async (
   coins_service: CoinsService<CoinGecko, CoinsPostgres>,
   wallets_service: WalletsService<
     WalletsProviderAdapters,
@@ -62,7 +63,7 @@ export const create_app = (
   moralis_streams_secret_key: string,
   redis_url: string,
   api_token: string,
-): Hono<BlankEnv, BlankSchema, "/"> => {
+): Promise<Hono<BlankEnv, BlankSchema, "/">> => {
   // El servidor Node
   const app = new Hono();
 
@@ -136,11 +137,25 @@ export const create_app = (
     },
   });
 
+  // BullMQ para procesos de larga duración
+  const backfill_queue = new Queue<{
+    wallet: SavedWallet;
+  }>("backfillQueue", {
+    connection: {
+      host: redis_url,
+      port: 6379,
+    },
+    defaultJobOptions: {
+      removeOnComplete: 30,
+      removeOnFail: true,
+    },
+  });
+
   const coins_routes = setup_coins_routes(coins_service);
   const wallets_routes = setup_wallets_routes(
     wallets_service,
     base_url,
-    redis_url,
+    backfill_queue,
   );
 
   app.get("/", (c) => {
@@ -182,6 +197,21 @@ export const create_app = (
       return c.text("Webhook recibido");
     },
   );
+
+  // Vamos a enviar pending wallets a los workers desde acá asumiendo solo 1 nodo de web-api
+  const pending_wallets = await wallets_service.getPendingWallets();
+
+  if (pending_wallets.length > 0) {
+    console.log(
+      `Found ${pending_wallets.length} pending wallets. Backfill starting...`,
+    );
+
+    for (const wallet of pending_wallets) {
+      await backfill_queue.add("backfillWallet", {
+        wallet,
+      });
+    }
+  }
 
   app.use(
     "/coins/*",
@@ -246,7 +276,7 @@ const wallets_service = new WalletsService(
   coins_service,
 );
 
-const app = create_app(
+const app = await create_app(
   coins_service,
   wallets_service,
   BASE_URL,

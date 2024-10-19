@@ -11,7 +11,7 @@ import {
   type WalletsService,
 } from "@repo/domain";
 import { type } from "arktype";
-import { Queue } from "bullmq";
+import type { Queue } from "bullmq";
 import { Hono } from "hono";
 import type { BlankEnv, BlankSchema } from "hono/types";
 import { second_timestamp, validate_page } from "../index.js";
@@ -24,22 +24,10 @@ export const setup_wallets_routes = (
     CoinsPostgres
   >,
   base_url: string,
-  redis_url: string,
-): Hono<BlankEnv, BlankSchema, "/"> => {
-  // BullMQ para procesos de larga duración
-  const backfillQueue = new Queue<{
+  backfill_queue: Queue<{
     wallet: SavedWallet;
-  }>("backfillQueue", {
-    connection: {
-      host: redis_url,
-      port: 6379,
-    },
-    defaultJobOptions: {
-      removeOnComplete: 30,
-      removeOnFail: true,
-    },
-  });
-
+  }>,
+): Hono<BlankEnv, BlankSchema, "/"> => {
   const wallets_routes = new Hono();
 
   wallets_routes.post(
@@ -63,7 +51,7 @@ export const setup_wallets_routes = (
       if (!wallet_data) return c.text("Invalid wallet address", 400);
 
       // Enviar a una queue
-      await backfillQueue.add("backfillWallet", {
+      await backfill_queue.add("backfillWallet", {
         wallet: wallet_data.valued_wallet,
       });
 

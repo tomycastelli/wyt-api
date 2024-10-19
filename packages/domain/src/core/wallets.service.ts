@@ -280,15 +280,17 @@ export class WalletsService<
   }
 
   /** Terminar el backfill con los pasos correspondientes */
-  public async finishBackfill(
+  public async changeBackfillStatus(
     address: string,
     blockchain: BlockchainsName,
-    first_date: Date,
+    new_status: "complete" | "active" | "pending",
+    first_date?: Date,
   ): Promise<void> {
     // Si llego hasta acá sin tirar error, actualizo su status
     await this.walletsRepository.updateWalletBackfillStatus(
       address,
       blockchain,
+      new_status,
       first_date,
     );
   }

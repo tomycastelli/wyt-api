@@ -685,12 +685,13 @@ export class WalletsPostgres implements WalletsRepository {
   async updateWalletBackfillStatus(
     address: string,
     blockchain: BlockchainsName,
-    first_date: Date,
+    new_status: "complete" | "active" | "pending",
+    first_date?: Date,
   ): Promise<void> {
     await this.db
       .update(schema.wallets)
       .set({
-        backfill_status: "complete",
+        backfill_status: new_status,
         first_transfer_date: first_date,
       })
       .where(

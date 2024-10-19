@@ -99,6 +99,7 @@ export const frequencyEnum = pgEnum("frequency", ["daily", "hourly"]);
 
 export const backfillStatusEnum = pgEnum("backfillStatus", [
   "pending",
+  "active",
   "complete",
 ]);
 

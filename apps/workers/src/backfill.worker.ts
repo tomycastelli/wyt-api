@@ -21,7 +21,7 @@ export const setupBackfillWorker = (
     CoinsProvider,
     CoinsRepository
   >,
-  chunks_queue: Queue<BackfillChunkQueue>,
+  chunk_queue_events: Queue<BackfillChunkQueue>,
   queue_events: QueueEvents,
   redis_url: string,
 ): Worker<{
@@ -30,6 +30,13 @@ export const setupBackfillWorker = (
   const add_chunks = async (wallet: SavedWallet): Promise<void> => {
     let first_date: Date = new Date();
     const ecosystem = blockchains[wallet.blockchain].ecosystem;
+
+    // Actualizo el estado
+    await wallets_service.changeBackfillStatus(
+      wallet.address,
+      wallet.blockchain,
+      "active",
+    );
 
     if (ecosystem === "ethereum") {
       // Consigo los chunks
@@ -41,7 +48,7 @@ export const setupBackfillWorker = (
       first_date = chunks[0].from_date;
 
       const name = "backfill_chunk";
-      const job_ids = await chunks_queue
+      const job_ids = await chunk_queue_events
         .addBulk(
           chunks.map((c) => ({
             name,
@@ -90,7 +97,7 @@ export const setupBackfillWorker = (
         });
       });
     } else {
-      const job = await chunks_queue.add(
+      const job = await chunk_queue_events.add(
         "backfill_unique_chunk",
         {
           address: wallet.address,
@@ -114,9 +121,10 @@ export const setupBackfillWorker = (
     }
 
     // Termino el proceso
-    await wallets_service.finishBackfill(
+    await wallets_service.changeBackfillStatus(
       wallet.address,
       wallet.blockchain,
+      "complete",
       first_date,
     );
 
@@ -153,20 +161,10 @@ export const setupBackfillWorker = (
   );
 
   backfillWorker.on("ready", async () => {
-    chunks_queue.clean(0, 1000, "active");
-    chunks_queue.clean(0, 1000, "delayed");
-    chunks_queue.clean(0, 1000, "wait");
+    chunk_queue_events.clean(0, 1000, "active");
+    chunk_queue_events.clean(0, 1000, "delayed");
+    chunk_queue_events.clean(0, 1000, "wait");
     console.log("backfillWorker is ready!");
-    const pending_wallets = await wallets_service.getPendingWallets();
-
-    if (pending_wallets.length > 0) {
-      console.log(
-        `Found ${pending_wallets.length} pending wallets. Backfill starting...`,
-      );
-      for (const wallet of pending_wallets) {
-        await add_chunks(wallet);
-      }
-    }
   });
 
   backfillWorker.on("completed", (job) => {

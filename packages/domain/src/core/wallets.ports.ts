@@ -134,7 +134,8 @@ export interface WalletsRepository {
   updateWalletBackfillStatus(
     address: string,
     blockchain: BlockchainsName,
-    first_date: Date,
+    new_status: "complete" | "active" | "pending",
+    first_date?: Date,
   ): Promise<void>;
 
   /** Guarda una [Transaction] y actualiza el estado de la o las [Wallet]s involucradas  */

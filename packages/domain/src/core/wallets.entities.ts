@@ -31,7 +31,7 @@ export const walletType = type({
   native_value: "bigint",
   coins: walletCoin.array(),
   first_transfer_date: "Date|null",
-  backfill_status: "'pending'|'complete'",
+  backfill_status: "'pending'|'active'|'complete'",
 });
 
 export const savedWalletType = walletType.merge({
