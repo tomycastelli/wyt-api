@@ -302,6 +302,7 @@ export class WalletsPostgres implements WalletsRepository {
           .insert(schema.transactions)
           .values({
             ...transaction,
+            hash: transaction.hash.toLowerCase(),
             from_address: transaction.from_address?.toLowerCase(),
             to_address: transaction.to_address?.toLowerCase(),
             fee: transaction.fee,
@@ -317,7 +318,6 @@ export class WalletsPostgres implements WalletsRepository {
             transaction_id: id.id,
             blockchain: transaction.blockchain,
             block_timestamp: transaction.block_timestamp,
-            coin_address: tr.coin_address?.toLowerCase(),
             from_address: tr.from_address?.toLowerCase(),
             to_address: tr.to_address?.toLowerCase(),
             type: tr.type,
@@ -354,6 +354,7 @@ export class WalletsPostgres implements WalletsRepository {
         .insert(schema.transactions)
         .values({
           ...transaction_data,
+          hash: transaction_data.hash.toLowerCase(),
           from_address: transaction_data.from_address?.toLowerCase(),
           to_address: transaction_data.to_address?.toLowerCase(),
           fee: transaction_data.fee,

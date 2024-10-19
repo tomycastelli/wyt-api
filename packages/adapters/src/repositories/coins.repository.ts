@@ -157,7 +157,7 @@ export class CoinsPostgres implements CoinsRepository {
       .leftJoin(schema.contracts, eq(schema.contracts.coin_id, schema.coins.id))
       .where(
         and(
-          eq(schema.contracts.contract_address, coin_address),
+          eq(schema.contracts.contract_address, coin_address.toLowerCase()),
           eq(schema.contracts.blockchain, blockchain),
         ),
       )
@@ -200,7 +200,7 @@ export class CoinsPostgres implements CoinsRepository {
         .from(schema.nfts)
         .where(
           and(
-            eq(schema.nfts.contract_address, contract_address),
+            eq(schema.nfts.contract_address, contract_address.toLowerCase()),
             eq(schema.nfts.token_id, token_id),
             eq(schema.nfts.blockchain, blockchain),
           ),
