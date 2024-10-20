@@ -148,7 +148,9 @@ export class CoinGecko implements CoinsProvider {
 
     const parsed_list = coinsResponseSchema(list);
 
-    if (parsed_list instanceof type.errors) throw parsed_list;
+    if (parsed_list instanceof type.errors) {
+      throw parsed_list;
+    }
 
     return parsed_list;
   }
@@ -173,7 +175,10 @@ export class CoinGecko implements CoinsProvider {
 
     const parsedCoinDetails = coinDetailsSchema(response);
 
-    if (parsedCoinDetails instanceof type.errors) throw parsedCoinDetails;
+    if (parsedCoinDetails instanceof type.errors) {
+      console.error("Failed to parse coinDetails: ", response);
+      throw parsedCoinDetails;
+    }
 
     if (
       parsedCoinDetails.description &&
@@ -240,7 +245,10 @@ export class CoinGecko implements CoinsProvider {
 
     const parsedCandles = candlesResponseSchema(candles);
 
-    if (parsedCandles instanceof type.errors) throw parsedCandles;
+    if (parsedCandles instanceof type.errors) {
+      console.error("Failed to parse candles: ", candles);
+      throw parsedCandles;
+    }
 
     // Segun la frecuencia, agarro las ultimas velas
     const mappedCandles = parsedCandles.slice(-refresh_rate).map((c) => ({
@@ -262,7 +270,10 @@ export class CoinGecko implements CoinsProvider {
 
     const parsedLatestCoins = latestCoinsResponseSchema(latestCoins);
 
-    if (parsedLatestCoins instanceof type.errors) throw parsedLatestCoins;
+    if (parsedLatestCoins instanceof type.errors) {
+      console.error("Failed to parse latestCoins: ", latestCoins);
+      throw parsedLatestCoins;
+    }
 
     // Para cada token se consulta el resto de info:
     // 'descripcion', 'image_url', 'market_data'
@@ -275,7 +286,13 @@ export class CoinGecko implements CoinsProvider {
         platforms: "Record<string, string|null>",
       })(coinDetails);
 
-      if (parsedCoinDetails instanceof type.errors) throw parsedCoinDetails;
+      if (parsedCoinDetails instanceof type.errors) {
+        console.error(
+          "Failed to parse coinDetails in latestCoins: ",
+          coinDetails,
+        );
+        throw parsedCoinDetails;
+      }
 
       return { ...parsedCoinDetails, ...coin };
     });
@@ -335,7 +352,10 @@ export class CoinGecko implements CoinsProvider {
 
     const parsedCoinData = tokenDataByAddressSchema(coinData);
 
-    if (parsedCoinData instanceof type.errors) throw parsedCoinData;
+    if (parsedCoinData instanceof type.errors) {
+      console.error("Failed to parse coinsByAddress: ", coinData);
+      throw parsedCoinData;
+    }
 
     const coins_to_return: Coin[] = [];
 
@@ -352,7 +372,13 @@ export class CoinGecko implements CoinsProvider {
         platforms: "Record<string, string|null>",
       })(coinDetails);
 
-      if (parsedCoinDetails instanceof type.errors) throw parsedCoinDetails;
+      if (parsedCoinDetails instanceof type.errors) {
+        console.error(
+          "Failed to parse coinDetails in coinsByAddress: ",
+          coinDetails,
+        );
+        continue;
+      }
 
       if (
         parsedCoinDetails.description &&
@@ -418,7 +444,10 @@ export class CoinGecko implements CoinsProvider {
 
           const parsedMarketData = marketDataListSchema.array()(marketData);
 
-          if (parsedMarketData instanceof type.errors) throw parsedMarketData;
+          if (parsedMarketData instanceof type.errors) {
+            console.error("Failed to parse all coin market data: ", marketData);
+            throw parsedMarketData;
+          }
 
           if (parsedMarketData.length < 250) {
             // Termino el loop con esta iteracion

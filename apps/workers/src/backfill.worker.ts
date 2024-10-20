@@ -31,13 +31,6 @@ export const setupBackfillWorker = (
     let first_date: Date = new Date();
     const ecosystem = blockchains[wallet.blockchain].ecosystem;
 
-    // Actualizo el estado
-    await wallets_service.changeBackfillStatus(
-      wallet.address,
-      wallet.blockchain,
-      "active",
-    );
-
     if (ecosystem === "ethereum") {
       // Consigo los chunks
       const chunks = await wallets_service.getHistoryTimeChunks(

@@ -86,24 +86,24 @@ const blockchainValue = customType<{ data: bigint }>({
 });
 
 export const blockchainsEnum = pgEnum(
-  "blockchains_enum",
+  "blockchains",
   Object.keys(blockchains) as [string, ...string[]],
 );
 
 export const providersEnum = pgEnum(
-  "providers_enum",
+  "providers",
   providers as [string, ...string[]],
 );
 
 export const frequencyEnum = pgEnum("frequency", ["daily", "hourly"]);
 
-export const backfillStatusEnum = pgEnum("backfillStatus", [
+export const backfillStatusEnum = pgEnum("backfill_status", [
   "pending",
   "active",
   "complete",
 ]);
 
-export const transactionTypeEnum = pgEnum("transactionType", [
+export const transactionTypeEnum = pgEnum("transaction_type", [
   "native",
   "token",
   "nft",
