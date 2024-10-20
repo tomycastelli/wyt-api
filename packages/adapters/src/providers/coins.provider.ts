@@ -5,6 +5,7 @@ import {
   type CoinMarketData,
   type CoinsProvider,
   EveryBlockainsName,
+  chunkArray,
 } from "@repo/domain";
 import { type } from "arktype";
 import { RateLimiter } from "./ratelimiter.js";
@@ -346,77 +347,84 @@ export class CoinGecko implements CoinsProvider {
     blockchain: BlockchainsName,
   ): Promise<Coin[]> {
     if (coin_address.length === 0) return [];
-    const coinData = await this.rateLimitedCallApi(
-      `${this.base_url}/onchain/networks/${this.blockchains_to_networks_mapper[blockchain]}/tokens/multi/${coin_address.join(",")}`,
-    );
-
-    const parsedCoinData = tokenDataByAddressSchema(coinData);
-
-    if (parsedCoinData instanceof type.errors) {
-      console.error("Failed to parse coinsByAddress: ", coinData);
-      throw parsedCoinData;
-    }
 
     const coins_to_return: Coin[] = [];
-
-    const coins_data = parsedCoinData.data;
-
-    for (const coin_data of coins_data
-      .filter((c) => c.attributes.coingecko_coin_id)
-      .map((a) => a.attributes)) {
-      const coinDetails = await this.rateLimitedCallApi(
-        `${this.base_url}/coins/${coin_data.coingecko_coin_id}?localization=false&tickers=false&market_data=true&sparkline=false&community_data=false&developer_data=false`,
+    // Se pueden hasta 30 contract addresses por api call
+    const chunks = chunkArray(coin_address, 30);
+    for (const address_chunk of chunks) {
+      const coinData = await this.rateLimitedCallApi(
+        `${this.base_url}/onchain/networks/${this.blockchains_to_networks_mapper[blockchain]}/tokens/multi/${address_chunk.join(",")}`,
       );
 
-      const parsedCoinDetails = coinDetailsSchema.merge({
-        platforms: "Record<string, string|null>",
-      })(coinDetails);
+      const parsedCoinData = tokenDataByAddressSchema(coinData);
 
-      if (parsedCoinDetails instanceof type.errors) {
-        console.error(
-          "Failed to parse coinDetails in coinsByAddress: ",
-          coinDetails,
+      if (parsedCoinData instanceof type.errors) {
+        console.error("Failed to parse coinsByAddress: ", coinData);
+        console.log(
+          `${this.base_url}/onchain/networks/${this.blockchains_to_networks_mapper[blockchain]}/tokens/multi/${address_chunk.join(",")}`,
         );
-        continue;
+        throw parsedCoinData;
       }
 
-      if (
-        parsedCoinDetails.description &&
-        parsedCoinDetails.image &&
-        parsedCoinDetails.market_data &&
-        parsedCoinDetails.market_data.current_price?.usd &&
-        parsedCoinDetails.market_data.ath?.usd &&
-        parsedCoinDetails.market_data.price_change_percentage_24h &&
-        parsedCoinDetails.market_data.price_change_24h &&
-        Object.keys(parsedCoinDetails.platforms).some((platform) =>
-          EveryBlockainsName.includes(platform as BlockchainsName),
-        )
-      ) {
-        const mappedCoinDetails: Coin = {
-          name: coin_data.coingecko_coin_id!,
-          symbol: coin_data.symbol,
-          provider: "coingecko",
-          description: parsedCoinDetails.description?.en ?? null,
-          ath: parsedCoinDetails.market_data!.ath.usd!,
-          image_url: parsedCoinDetails.image!.large,
-          market_cap: parsedCoinDetails.market_data!.market_cap.usd!,
-          price: parsedCoinDetails.market_data!.current_price!.usd!,
-          price_change_percentage_24h:
-            parsedCoinDetails.market_data!.price_change_percentage_24h!,
-          price_change_24h: parsedCoinDetails.market_data!.price_change_24h!,
-          // Me quedo con solo los contratos que me interesan
-          contracts: Object.entries(parsedCoinDetails.detail_platforms)
-            .filter(([key]) =>
-              EveryBlockainsName.includes(key as BlockchainsName),
-            )
-            .map(([blockchain, detail]) => ({
-              blockchain: blockchain as BlockchainsName,
-              contract_address: detail.contract_address!,
-              decimal_place: detail.decimal_place!,
-            })),
-        };
+      const coins_data = parsedCoinData.data;
 
-        coins_to_return.push(mappedCoinDetails);
+      for (const coin_data of coins_data
+        .filter((c) => c.attributes.coingecko_coin_id)
+        .map((a) => a.attributes)) {
+        const coinDetails = await this.rateLimitedCallApi(
+          `${this.base_url}/coins/${coin_data.coingecko_coin_id}?localization=false&tickers=false&market_data=true&sparkline=false&community_data=false&developer_data=false`,
+        );
+
+        const parsedCoinDetails = coinDetailsSchema.merge({
+          platforms: "Record<string, string|null>",
+        })(coinDetails);
+
+        if (parsedCoinDetails instanceof type.errors) {
+          console.error(
+            "Failed to parse coinDetails in coinsByAddress: ",
+            coinDetails,
+          );
+          continue;
+        }
+
+        if (
+          parsedCoinDetails.description &&
+          parsedCoinDetails.image &&
+          parsedCoinDetails.market_data &&
+          parsedCoinDetails.market_data.current_price?.usd &&
+          parsedCoinDetails.market_data.ath?.usd &&
+          parsedCoinDetails.market_data.price_change_percentage_24h &&
+          parsedCoinDetails.market_data.price_change_24h &&
+          Object.keys(parsedCoinDetails.platforms).some((platform) =>
+            EveryBlockainsName.includes(platform as BlockchainsName),
+          )
+        ) {
+          const mappedCoinDetails: Coin = {
+            name: coin_data.coingecko_coin_id!,
+            symbol: coin_data.symbol,
+            provider: "coingecko",
+            description: parsedCoinDetails.description?.en ?? null,
+            ath: parsedCoinDetails.market_data!.ath.usd!,
+            image_url: parsedCoinDetails.image!.large,
+            market_cap: parsedCoinDetails.market_data!.market_cap.usd!,
+            price: parsedCoinDetails.market_data!.current_price!.usd!,
+            price_change_percentage_24h:
+              parsedCoinDetails.market_data!.price_change_percentage_24h!,
+            price_change_24h: parsedCoinDetails.market_data!.price_change_24h!,
+            // Me quedo con solo los contratos que me interesan
+            contracts: Object.entries(parsedCoinDetails.detail_platforms)
+              .filter(([key]) =>
+                EveryBlockainsName.includes(key as BlockchainsName),
+              )
+              .map(([blockchain, detail]) => ({
+                blockchain: blockchain as BlockchainsName,
+                contract_address: detail.contract_address!,
+                decimal_place: detail.decimal_place!,
+              })),
+          };
+
+          coins_to_return.push(mappedCoinDetails);
+        }
       }
     }
 
