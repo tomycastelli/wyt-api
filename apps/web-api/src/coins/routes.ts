@@ -36,6 +36,20 @@ export const setup_coins_routes = (
   coins_routes.get("/details/:coin_name", async (c) => {
     const coin_name = c.req.param("coin_name");
 
+    if (!Number.isNaN(Number(coin_name))) {
+      // Es un id
+      const coin = await coins_service.getCoinById(Number(coin_name));
+      if (!coin) return c.notFound();
+
+      const candles = await coins_service.getCandlesByDate(
+        "daily",
+        coin.id,
+        new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000),
+        new Date(),
+      );
+
+      return c.json({ coin, candles });
+    }
     const coin = await coins_service.getCoinByName(coin_name);
 
     if (!coin) {

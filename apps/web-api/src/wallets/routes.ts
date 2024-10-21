@@ -170,7 +170,7 @@ export const setup_wallets_routes = (
       type({
         "page?": type("string").pipe((s) => Number.parseInt(s)),
         "transactions?": type("'true'|'false'").pipe((s) => s === "true"),
-        "graph?": "'day'|'week'|'month'|'year'",
+        "graph?": "'day'|'week'|'month'",
       }),
     ),
     async (c) => {

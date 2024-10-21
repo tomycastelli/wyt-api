@@ -158,6 +158,7 @@ export class WalletsService<
     // Consigo las [Transaction]s
     const transaction_data = await this.walletsRepository.getTransactions(
       address,
+      blockchain,
       page,
       from_date,
       to_date,
@@ -305,7 +306,10 @@ export class WalletsService<
       blockchain,
     );
 
-    await this.walletsRepository.saveTransactions(coined_transactions);
+    await this.walletsRepository.saveTransactions(
+      coined_transactions,
+      blockchain,
+    );
 
     return { new_coins };
   }
@@ -413,7 +417,10 @@ export class WalletsService<
       );
 
     // Guardo las nuevas transacciones
-    await this.walletsRepository.saveTransactions(coined_transactions);
+    await this.walletsRepository.saveTransactions(
+      coined_transactions,
+      saved_wallet.blockchain,
+    );
 
     return { new_coins: [...new_wallet_coins, ...new_tx_coins] };
   }
@@ -695,25 +702,27 @@ export class WalletsService<
 
   private subtractTime(
     date: Date,
-    time_range: "hour" | "day" | "week" | "month" | "year",
+    time_range: "day" | "week" | "month" | "year",
   ): Date {
     const newDate = new Date(date.getTime()); // Create a copy of the input date
 
     switch (time_range) {
-      case "hour":
-        newDate.setHours(newDate.getHours() - 1);
-        break;
       case "day":
-        newDate.setDate(newDate.getDate() - 1);
+        newDate.setUTCDate(newDate.getDate() - 1);
+        newDate.setUTCMinutes(0, 0, 0);
         break;
       case "week":
-        newDate.setDate(newDate.getDate() - 7);
+        newDate.setUTCDate(newDate.getDate() - 7);
+        newDate.setUTCHours(0, 0, 0, 0);
         break;
       case "month":
-        newDate.setMonth(newDate.getMonth() - 1);
+        newDate.setUTCMonth(newDate.getMonth() - 1);
+        newDate.setUTCHours(0, 0, 0, 0);
         break;
       case "year":
-        newDate.setFullYear(newDate.getFullYear() - 1);
+        newDate.setUTCFullYear(newDate.getFullYear() - 1);
+        newDate.setUTCMonth(newDate.getMonth(), 1);
+        newDate.setUTCHours(0, 0, 0, 0);
         break;
     }
 
@@ -730,19 +739,24 @@ export class WalletsService<
   */
   public async getWalletValueChangeGraph(
     valued_wallet: ValuedWallet,
-    time_range: "day" | "week" | "month" | "year",
-  ): Promise<{
-    data: ValueChangeGraph;
-    missing_prices: { timestamp: Date; coin_id: number }[];
-  }> {
+    time_range: "day" | "week" | "month",
+  ) {
     // Necesito saber las posesiones de la [Wallet] en el rango dado
     // Para eso veo las posesiones actuales y las transacciones que sucedieron hasta el fin del rango
     const current_date = new Date();
 
     const granularity = time_range === "day" ? "hourly" : "daily";
 
-    const transactions = await this.walletsRepository.getTransactionsByRange(
+    console.log(
+      "Time substract func: ",
+      this.subtractTime(current_date, time_range),
+    );
+
+    const transactions = await this.walletsRepository.getTransactions(
       valued_wallet.address,
+      valued_wallet.blockchain,
+      // Para tener todas las transacciones en ese rango
+      0,
       this.subtractTime(current_date, time_range),
       current_date,
     );
@@ -751,7 +765,7 @@ export class WalletsService<
     /** Map => coin_id: { time_key: value } */
     const net_changes_map: Map<number, Map<number, bigint>> = new Map();
 
-    // Hago un map de coin_id: decimal_places para mas tarde
+    /** Map => coin_id: decimal_places */
     const decimal_places_map: Map<number, number> = new Map();
 
     decimal_places_map.set(
@@ -837,17 +851,32 @@ export class WalletsService<
 
     const missing_prices: { timestamp: Date; coin_id: number }[] = [];
 
-    const _current_usd_balance = valued_wallet.total_value_usd;
-
     /** coin_id: value */
     const current_coin_values: Map<number, bigint> = new Map(
-      valued_wallet.coins.map((c) => [c.coin.id, c.value]),
+      valued_wallet.coins
+        .filter((c) => !c.token_id)
+        .map((c) => [c.coin.id, c.value]),
     );
     // Añado el native value como uno más
     current_coin_values.set(
       valued_wallet.native_coin.id,
       valued_wallet.native_value,
     );
+
+    // Añado al mapa de cambios netos las coins que tiene la wallet que no tuvieron transacciones en el rango buscado
+    for (const [coin_id, _] of current_coin_values) {
+      if (!net_changes_map.get(coin_id)) {
+        net_changes_map.set(coin_id, new Map());
+        // Añado sus decimales al map de decimales
+        const coin = await this.coinsService.getCoinById(coin_id);
+        decimal_places_map.set(
+          coin_id,
+          coin!.contracts.find(
+            (c) => c.blockchain === valued_wallet.blockchain,
+          )!.decimal_place,
+        );
+      }
+    }
 
     const coins_graphs: {
       timestamp: number;
@@ -880,7 +909,7 @@ export class WalletsService<
       // Voy por cada timestamp y hago el grafico para esa coin
       for (const timestamp of full_date_range) {
         const price_this_day = full_range_candles.find(
-          (c) => c.timestamp === new Date(timestamp),
+          (c) => c.timestamp.getTime() === timestamp,
         )?.close;
         if (!price_this_day) {
           missing_prices.push({ timestamp: new Date(timestamp), coin_id });
@@ -903,7 +932,10 @@ export class WalletsService<
           this_coin_graph.push({
             timestamp,
             value: new_balance,
-            value_usd: Number(new_balance) * price_this_day,
+            value_usd:
+              Number(
+                new_balance / BigInt(10 ** decimal_places_map.get(coin_id)!),
+              ) * price_this_day,
           });
         } else {
           if (!current_value)
@@ -914,7 +946,10 @@ export class WalletsService<
           this_coin_graph.push({
             timestamp,
             value: current_value,
-            value_usd: Number(current_value) * price_this_day,
+            value_usd:
+              Number(
+                current_value / BigInt(10 ** decimal_places_map.get(coin_id)!),
+              ) * price_this_day,
           });
         }
       }
@@ -924,7 +959,7 @@ export class WalletsService<
     }
 
     // Ahora que tengo eso, agrupo por fecha sumando sus valores en usd de cada [Coin]
-    const final_graph = coins_graphs.reduce((acc, item) => {
+    const unified_graph = coins_graphs.reduce((acc, item) => {
       const acc_date = acc.find(
         (a) => a.timestamp.getTime() === item.timestamp,
       );
@@ -942,7 +977,7 @@ export class WalletsService<
 
     console.log("Grafico por [Coin]: ", coins_graphs);
 
-    return { data: final_graph, missing_prices };
+    return { unified_graph, coins_graphs, missing_prices };
   }
 
   // /** Genera un gráfico a través del tiempo del valor de una [Coin] en una [Wallet]  */

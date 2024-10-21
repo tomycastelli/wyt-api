@@ -16,7 +16,6 @@ import {
   eq,
   gte,
   inArray,
-  isNull,
   lt,
   notInArray,
   or,
@@ -166,7 +165,10 @@ export class WalletsPostgres implements WalletsRepository {
   ): Promise<SavedWallet | undefined> {
     const saved_wallet = await this.db.query.wallets.findFirst({
       where: (wallets, { eq, and }) =>
-        and(eq(wallets.address, address), eq(wallets.blockchain, blockchain)),
+        and(
+          eq(wallets.address, address.toLowerCase()),
+          eq(wallets.blockchain, blockchain),
+        ),
       with: {
         walletCoins: {
           with: {
@@ -274,16 +276,22 @@ export class WalletsPostgres implements WalletsRepository {
     return mapped_wallets;
   }
 
-  async saveTransactions(transactions: CoinedTransaction[]): Promise<void> {
+  async saveTransactions(
+    transactions: CoinedTransaction[],
+    blockchain: BlockchainsName,
+  ): Promise<void> {
     await this.db.transaction(async (tx) => {
       // Busco los hashes ya existentes
       const existing_hashes = await tx
         .select()
         .from(schema.transactions)
         .where(
-          inArray(
-            schema.transactions.hash,
-            transactions.map((t) => t.hash),
+          and(
+            eq(schema.transactions.blockchain, blockchain),
+            inArray(
+              schema.transactions.hash,
+              transactions.map((t) => t.hash),
+            ),
           ),
         );
 
@@ -519,27 +527,28 @@ export class WalletsPostgres implements WalletsRepository {
 
   async getTransactions(
     wallet_address: string,
+    blockchain: BlockchainsName,
     transactions_page: number,
     from_date: Date | undefined,
     to_date: Date | undefined,
   ): Promise<Transaction[]> {
-    const page_size = 10;
+    if (transactions_page < 0) return [];
+    const page_size = transactions_page === 0 ? 1_000_000 : 10;
     // Busco las transfers en donde esté la Wallet involucrada
     const transfers_query = this.db
       .selectDistinct({ transactionId: schema.transfers.transaction_id })
       .from(schema.transfers)
       .where(
         and(
+          eq(schema.transfers.blockchain, sql.placeholder("blockchain")),
           or(
             eq(schema.transfers.from_address, sql.placeholder("walletAddress")),
             eq(schema.transfers.to_address, sql.placeholder("walletAddress")),
           ),
           from_date
-            ? gte(schema.transactions.block_timestamp, from_date)
+            ? gte(schema.transfers.block_timestamp, from_date)
             : undefined,
-          to_date
-            ? lt(schema.transactions.block_timestamp, to_date)
-            : undefined,
+          to_date ? lt(schema.transfers.block_timestamp, to_date) : undefined,
         ),
       )
       .orderBy(desc(schema.transfers.transaction_id))
@@ -562,15 +571,34 @@ export class WalletsPostgres implements WalletsRepository {
           eq(schema.contracts.blockchain, schema.transactions.blockchain),
         ),
       )
-      .where(inArray(schema.transactions.id, transfers_query))
+      .where(
+        and(
+          eq(schema.transactions.blockchain, sql.placeholder("blockchain")),
+          or(
+            eq(
+              schema.transactions.from_address,
+              sql.placeholder("walletAddress"),
+            ),
+            eq(
+              schema.transactions.to_address,
+              sql.placeholder("walletAddress"),
+            ),
+            inArray(schema.transactions.id, transfers_query),
+          ),
+        ),
+      )
       .orderBy(desc(schema.transactions.id))
+      .offset(sql.placeholder("queryOffset"))
+      .limit(sql.placeholder("queryLimit"))
       .prepare("transactions_query");
 
     // Me aseguro tener 20 transacciones, por mas que el array tenga mas porque haya mas de 20 transfers
     const transactions_data = await transactions_query.execute({
-      queryOffset: (transactions_page - 1) * page_size,
+      queryOffset:
+        transactions_page === 0 ? 0 : (transactions_page - 1) * page_size,
       queryLimit: page_size,
-      walletAddress: wallet_address,
+      walletAddress: wallet_address.toLowerCase(),
+      blockchain,
     });
 
     const mapped_transactions = transactions_data.reduce((acc, transaction) => {
@@ -587,81 +615,6 @@ export class WalletsPostgres implements WalletsRepository {
         value: BigInt(transaction.transfers!.value),
         coin_address: is_nft
           ? transaction.nfts?.contract_address!
-          : (transaction.contracts?.contract_address ?? null),
-      };
-
-      if (!existing_transaction) {
-        const new_transaction: Transaction = {
-          ...transaction.transactions,
-          fee: BigInt(transaction.transactions.fee),
-          transfers: [transfer_to_add],
-        };
-        acc.push(new_transaction);
-      } else {
-        existing_transaction.transfers.push(transfer_to_add);
-      }
-
-      return acc;
-    }, [] as Transaction[]);
-
-    return mapped_transactions;
-  }
-
-  async getTransactionsByRange(
-    wallet_address: string,
-    from_date: Date,
-    to_date: Date,
-  ): Promise<Transaction[]> {
-    const transactions_query = this.db
-      .select()
-      .from(schema.transactions)
-      .leftJoin(
-        schema.transfers,
-        eq(schema.transfers.transaction_id, schema.transactions.id),
-      )
-      .leftJoin(schema.coins, eq(schema.coins.id, schema.transfers.coin_id))
-      .leftJoin(schema.nfts, eq(schema.nfts.id, schema.transfers.nft_id))
-      .leftJoin(
-        schema.contracts,
-        and(
-          eq(schema.contracts.coin_id, schema.transfers.coin_id),
-          eq(schema.contracts.blockchain, schema.transactions.blockchain),
-        ),
-      )
-      .where(
-        and(
-          // Transfers donde la wallet este involucrada
-          or(
-            eq(schema.transfers.from_address, sql.placeholder("walletAddress")),
-            eq(schema.transfers.to_address, sql.placeholder("walletAddress")),
-          ),
-          // En el rango dado
-          gte(schema.transactions.block_timestamp, from_date),
-          lt(schema.transactions.block_timestamp, to_date),
-          // Que no sean NFT
-          isNull(schema.transfers.nft_id),
-        ),
-      )
-      .orderBy(desc(schema.transactions.block_timestamp))
-      .prepare("transactions_query");
-
-    const transactions_data = await transactions_query.execute({
-      walletAddress: wallet_address,
-    });
-
-    const mapped_transactions = transactions_data.reduce((acc, transaction) => {
-      // Uso el hash ya que la entidad Transaction no tiene id
-      const existing_transaction = acc.find(
-        (tx) => tx.hash === transaction.transactions.hash,
-      );
-
-      const transfer_to_add: Transfer = {
-        ...transaction.transfers!,
-        token_id: transaction.nfts?.token_id ?? null,
-        value: BigInt(transaction.transfers!.value),
-        // Si es nft
-        coin_address: transaction.nfts?.token_id
-          ? transaction.nfts?.contract_address
           : (transaction.contracts?.contract_address ?? null),
       };
 

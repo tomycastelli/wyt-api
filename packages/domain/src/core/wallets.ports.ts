@@ -104,20 +104,15 @@ export interface WalletsRepository {
   ): Promise<SavedWallet[]>;
 
   /** Consigue las [Transaction]s de una [Wallet] de manera paginada y descendente  \
-  Acepta un rango de fechas opcional
+  - Si la pagina es 0, devuelve todas las transacciones \
+  - Acepta un rango de fechas opcional.
   */
   getTransactions(
     wallet_address: string,
+    blockchain: BlockchainsName,
     transactions_page: number,
     from_date: Date | undefined,
     to_date: Date | undefined,
-  ): Promise<Transaction[]>;
-
-  /** Consigue las [Transaction]s de una [Wallet] en un rango de tiempo */
-  getTransactionsByRange(
-    wallet_address: string,
-    from_date: Date,
-    to_date: Date,
   ): Promise<Transaction[]>;
 
   /** Consigue la [Transaction] mas reciente o mas vieja insertada. Segun el order pasado */
@@ -128,7 +123,10 @@ export interface WalletsRepository {
 
   /** Guarda una lista de [Transaction]s sin afectar el estado de la [Wallet].
   _Pensado para hacer backfill inicial del historial o actualizar redes sin transacciones detalladas_ */
-  saveTransactions(transactions: CoinedTransaction[]): Promise<void>;
+  saveTransactions(
+    transactions: CoinedTransaction[],
+    blockchain: BlockchainsName,
+  ): Promise<void>;
 
   /** Actualiza el backfill status de una [Wallet] a completado */
   updateWalletBackfillStatus(

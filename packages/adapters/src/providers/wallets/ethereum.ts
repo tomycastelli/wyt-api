@@ -76,6 +76,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
   async initialize() {
     await Moralis.start({
       apiKey: this.api_key,
+      maxRetries: 3,
     });
   }
 

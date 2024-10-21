@@ -133,7 +133,7 @@ export class CoinsPostgres implements CoinsRepository {
       },
     });
 
-    return coin!;
+    return coin;
   }
 
   async getCoinByName(coin_name: string): Promise<SavedCoin | undefined> {
