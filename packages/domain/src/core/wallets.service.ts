@@ -977,7 +977,7 @@ export class WalletsService<
 
     console.log("Grafico por [Coin]: ", coins_graphs);
 
-    return { unified_graph, coins_graphs, missing_prices };
+    return { unified: unified_graph, coins: coins_graphs, missing_prices };
   }
 
   // /** Genera un gráfico a través del tiempo del valor de una [Coin] en una [Wallet]  */

@@ -551,9 +551,18 @@ export class WalletsPostgres implements WalletsRepository {
           to_date ? lt(schema.transfers.block_timestamp, to_date) : undefined,
         ),
       )
-      .orderBy(desc(schema.transfers.transaction_id))
+      .orderBy(desc(schema.transfers.block_timestamp))
       .offset(sql.placeholder("queryOffset"))
-      .limit(sql.placeholder("queryLimit"));
+      .limit(sql.placeholder("queryLimit"))
+      .prepare("transfers_query");
+
+    const transaction_ids = await transfers_query.execute({
+      queryOffset:
+        transactions_page === 0 ? 0 : (transactions_page - 1) * page_size,
+      queryLimit: page_size,
+      walletAddress: wallet_address.toLowerCase(),
+      blockchain,
+    });
 
     const transactions_query = this.db
       .select()
@@ -583,11 +592,14 @@ export class WalletsPostgres implements WalletsRepository {
               schema.transactions.to_address,
               sql.placeholder("walletAddress"),
             ),
-            inArray(schema.transactions.id, transfers_query),
+            inArray(
+              schema.transactions.id,
+              transaction_ids.map((a) => a.transactionId),
+            ),
           ),
         ),
       )
-      .orderBy(desc(schema.transactions.id))
+      .orderBy(desc(schema.transactions.block_timestamp))
       .offset(sql.placeholder("queryOffset"))
       .limit(sql.placeholder("queryLimit"))
       .prepare("transactions_query");

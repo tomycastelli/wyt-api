@@ -275,7 +275,8 @@ export class EthereumProvider implements WalletsStreamsProvider {
       fromDate: from_date,
       toDate: to_date,
       cursor: loop_cursor,
-      limit: 300,
+      // Paginamos menos para evitar errores de respuesta muy larga
+      limit: 150,
     });
 
     return {
