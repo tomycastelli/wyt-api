@@ -287,7 +287,7 @@ export const transactions = pgTable(
   (table) => {
     return {
       uniqueHashBlockchain: uniqueIndex("unique_hash_blockchain").on(
-        lower(table.hash),
+        table.hash,
         table.blockchain,
       ),
       blockTimestampIdx: index("block_timestamp_idx").on(table.block_timestamp),

@@ -26,7 +26,7 @@ export class CoinsService<
   private coinsRepository: TRepository;
   private coinsProvider: TProvider;
 
-  private global_minimum_market_cap = 10_000_000;
+  private global_minimum_market_cap = 1_000_000;
 
   constructor(repository: TRepository, provider: TProvider) {
     this.coinsRepository = repository;
@@ -305,22 +305,24 @@ export class CoinsService<
     let minimum_market_cap = 0;
     let maximum_market_cap: undefined | number = undefined;
 
-    const medium_market_cap = this.global_minimum_market_cap * 0.4;
+    const importat_market_cap = this.global_minimum_market_cap * 5;
+    // Vamos a definir que las importantes son 5 veces el minimum market_cap
+    // Las medianas son el minimum market cap hasta el
 
     switch (importance_level) {
       case 1: {
-        minimum_market_cap = this.global_minimum_market_cap;
+        minimum_market_cap = importat_market_cap;
         maximum_market_cap = undefined;
         break;
       }
       case 2: {
-        minimum_market_cap = medium_market_cap;
-        maximum_market_cap = this.global_minimum_market_cap;
+        minimum_market_cap = this.global_minimum_market_cap;
+        maximum_market_cap = importat_market_cap;
         break;
       }
       case 3: {
         minimum_market_cap = 0;
-        maximum_market_cap = medium_market_cap;
+        maximum_market_cap = this.global_minimum_market_cap;
         break;
       }
     }
