@@ -30,6 +30,7 @@ const txInfoType = type({
   fee: "number",
   status: {
     block_time: "number",
+    block_height: "number",
   },
 }).array();
 
@@ -82,13 +83,14 @@ export class BitcoinProvider implements WalletsProvider {
 
   async getWalletTimes(
     wallet_data: Wallet,
-  ): Promise<{ first_transaction: Date; last_transaction: Date }> {
+  ): Promise<{ first_block: number; last_block: number; first_date: Date }> {
     let is_first_time = true;
     const limit = 25;
     let last_seen_txid = "";
 
-    let first_transaction = new Date();
-    let last_transaction = new Date();
+    let first_block = 0;
+    let last_block = 0;
+    let first_date = new Date();
 
     while (true) {
       await new Promise((resolve) => setTimeout(resolve, 250));
@@ -103,29 +105,27 @@ export class BitcoinProvider implements WalletsProvider {
       if (parsedResponse.length === 0) break;
 
       if (is_first_time) {
-        first_transaction = new Date(
-          parsedResponse[0].status.block_time * 1000,
-        );
+        first_block = parsedResponse[0].status.block_height;
+        first_date = new Date(parsedResponse[0].status.block_time * 1000);
         is_first_time = false;
       }
 
-      last_transaction = new Date(
-        parsedResponse[parsedResponse.length - 1].status.block_time * 1000,
-      );
+      last_block =
+        parsedResponse[parsedResponse.length - 1].status.block_height;
 
       last_seen_txid = parsedResponse[parsedResponse.length - 1].txid;
 
       if (parsedResponse.length < limit) break;
     }
 
-    return { first_transaction, last_transaction };
+    return { first_block, last_block, first_date };
   }
 
   async getTransactionHistory(
     address: string,
     _blockchain: BlockchainsName,
-    _from_date: Date,
-    _to_date: Date,
+    _from_block: number,
+    _to_block: number,
     loop_cursor: string | undefined,
   ): Promise<{ transactions: Transaction[]; cursor: string | undefined }> {
     await new Promise((resolve) => setTimeout(resolve, 250));

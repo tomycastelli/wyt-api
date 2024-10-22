@@ -53,8 +53,8 @@ export type WalletJobsQueue = {
 export type BackfillChunkQueue = {
   address: string;
   blockchain: BlockchainsName;
-  from_date: string;
-  to_date: string;
+  from_block: number;
+  to_block: number;
   total_chunks: number;
 };
 

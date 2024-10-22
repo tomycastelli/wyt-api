@@ -69,12 +69,13 @@ export const create_app = async (
 
   app.onError((err, c) => {
     logger.error(err.message, {
-      message: err.message,
+      name: err.name,
       stack: err.stack,
+      cause: err.cause,
     });
     console.error("Node server error", err);
 
-    return c.json({ error: err.message }, 500);
+    return c.text(err.message, 500);
   });
 
   // Genera un request-id

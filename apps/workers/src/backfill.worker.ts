@@ -33,12 +33,10 @@ export const setupBackfillWorker = (
 
     if (ecosystem === "ethereum") {
       // Consigo los chunks
-      const chunks = await wallets_service.getHistoryTimeChunks(
-        wallet,
-        CHUNK_AMOUNT,
-      );
+      const { chunks, first_date: first_date_from_history } =
+        await wallets_service.getHistoryTimeChunks(wallet, CHUNK_AMOUNT);
 
-      first_date = chunks[0].from_date;
+      first_date = first_date_from_history;
 
       const name = "backfill_chunk";
       const job_ids = await chunk_queue_events
@@ -46,8 +44,8 @@ export const setupBackfillWorker = (
           chunks.map((c) => ({
             name,
             data: {
-              from_date: c.from_date.toISOString(),
-              to_date: c.to_date.toISOString(),
+              from_block: c.from_block,
+              to_block: c.to_block,
               address: wallet.address,
               blockchain: wallet.blockchain,
               total_chunks: CHUNK_AMOUNT,
@@ -95,8 +93,9 @@ export const setupBackfillWorker = (
         {
           address: wallet.address,
           blockchain: wallet.blockchain,
-          from_date: new Date().toISOString(),
-          to_date: new Date().toISOString(),
+          // Si no es ethereum el ecosistema, no se usan
+          from_block: 0,
+          to_block: 0,
           total_chunks: 1,
         },
         {
@@ -188,7 +187,7 @@ export const setupBackfillChunkWorker = (
     async (job) => {
       console.log(
         `Starting chunk job ${job.name} with ID ${job.id} for wallet: ${job.data.blockchain}:${job.data.address}.`,
-        `From ${job.data.from_date} to ${job.data.to_date}`,
+        `From ${job.data.from_block} to ${job.data.to_block}`,
       );
       let loop_cursor: string | undefined = undefined;
       let transaction_count = 0;
@@ -199,8 +198,8 @@ export const setupBackfillChunkWorker = (
           await wallets_service.getTransactionHistory(
             job.data.address,
             job.data.blockchain,
-            new Date(job.data.from_date),
-            new Date(job.data.to_date),
+            job.data.from_block,
+            job.data.to_block,
             loop_cursor,
           );
 

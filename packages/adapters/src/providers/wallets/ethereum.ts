@@ -228,7 +228,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
 
   async getWalletTimes(
     wallet_data: Wallet,
-  ): Promise<{ first_transaction: Date; last_transaction: Date }> {
+  ): Promise<{ first_block: number; last_block: number; first_date: Date }> {
     await this.rate_limiter.acquire();
     const first_transaction_made =
       await Moralis.EvmApi.wallets.getWalletHistory({
@@ -250,11 +250,12 @@ export class EthereumProvider implements WalletsStreamsProvider {
     );
 
     return {
-      first_transaction: new Date(
-        first_transaction_made.result[0]!.blockTimestamp,
+      first_block: Number(
+        first_transaction_made.result[0]!.blockNumber.toString(),
       ),
-      last_transaction: new Date(
-        last_transaction_made.result[0]!.blockTimestamp,
+      first_date: new Date(first_transaction_made.result[0]!.blockTimestamp),
+      last_block: Number(
+        last_transaction_made.result[0]!.blockNumber.toString(),
       ),
     };
   }
@@ -262,8 +263,8 @@ export class EthereumProvider implements WalletsStreamsProvider {
   async getTransactionHistory(
     address: string,
     blockchain: BlockchainsName,
-    from_date: Date,
-    to_date: Date,
+    from_block: number,
+    to_block: number,
     loop_cursor: string | undefined,
   ): Promise<{ transactions: Transaction[]; cursor: string | undefined }> {
     await this.rate_limiter.acquire();
@@ -274,11 +275,11 @@ export class EthereumProvider implements WalletsStreamsProvider {
           address,
           order: "DESC",
           includeInternalTransactions: false,
-          fromDate: from_date,
-          toDate: to_date,
+          fromBlock: from_block,
+          toBlock: to_block,
           cursor: loop_cursor,
           // Paginamos menos para evitar errores de respuesta muy larga
-          limit: 150,
+          limit: 100,
         },
       );
 
@@ -298,8 +299,8 @@ export class EthereumProvider implements WalletsStreamsProvider {
           address,
           order: "DESC",
           includeInternalTransactions: false,
-          fromDate: from_date,
-          toDate: to_date,
+          fromBlock: from_block,
+          toBlock: to_block,
           cursor: loop_cursor,
           // Paginamos menos para evitar errores de respuesta muy larga
           limit: 150,

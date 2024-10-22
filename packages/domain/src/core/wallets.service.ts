@@ -236,34 +236,34 @@ export class WalletsService<
   public async getHistoryTimeChunks(
     saved_wallet: SavedWallet,
     chunk_amount: number,
-  ): Promise<{ from_date: Date; to_date: Date }[]> {
+  ): Promise<{
+    chunks: { from_block: number; to_block: number }[];
+    first_date: Date;
+  }> {
     // Primero veo la primera y última transacción hecha por la Wallet
-    const { first_transaction, last_transaction } =
+    const { first_block, last_block, first_date } =
       await this.walletsProvider.getWalletTimes(saved_wallet);
 
-    const chunks: { from_date: Date; to_date: Date }[] = [];
+    const chunks: { from_block: number; to_block: number }[] = [];
 
-    const chunk_duration =
-      (last_transaction.getTime() - first_transaction.getTime()) / chunk_amount;
+    const chunk_duration = (last_block - first_block) / chunk_amount;
 
     for (let i = 0; i < chunk_amount; i++) {
-      const from_date = new Date(
-        first_transaction.getTime() + i * chunk_duration,
-      );
-      const to_date = new Date(from_date.getTime() + chunk_duration);
+      const from_block = first_block + i * chunk_duration;
+      const to_block = from_block + chunk_duration;
 
-      chunks.push({ from_date, to_date });
+      chunks.push({ from_block, to_block });
     }
 
-    return chunks;
+    return { chunks, first_date };
   }
 
   /** Consigue el historial de transacciones de una [Wallet] dada una ventana de tiempo */
   public async getTransactionHistory(
     address: string,
     blockchain: BlockchainsName,
-    from_date: Date,
-    to_date: Date,
+    from_block: number,
+    to_block: number,
     loop_cursor: string | undefined,
   ): Promise<{
     transactions: Transaction[];
@@ -273,8 +273,8 @@ export class WalletsService<
       await this.walletsProvider.getTransactionHistory(
         address,
         blockchain,
-        from_date,
-        to_date,
+        from_block,
+        to_block,
         loop_cursor,
       );
     return { transactions, cursor };

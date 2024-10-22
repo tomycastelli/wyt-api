@@ -19,17 +19,19 @@ export interface WalletsProvider {
   /** Busca las [Transaction]s mas recientes de una [Wallet] con una cantidad arbitrario */
   getRecentTransactions(wallet_data: Wallet): Promise<Transaction[]>;
 
-  /** Busca la primera y última transacción de una [Wallet] */
-  getWalletTimes(
-    wallet_data: Wallet,
-  ): Promise<{ first_transaction: Date; last_transaction: Date }>;
+  /** Busca el primer y último bloque de una [Wallet] */
+  getWalletTimes(wallet_data: Wallet): Promise<{
+    first_block: number;
+    last_block: number;
+    first_date: Date;
+  }>;
 
   /** Busca el historial de [Transaction]s de una [Wallet] con un cursor para ir paginando */
   getTransactionHistory(
     address: string,
     blockchain: BlockchainsName,
-    from_date: Date,
-    to_date: Date,
+    from_block: number,
+    to_block: number,
     loop_cursor: string | undefined,
   ): Promise<{ transactions: Transaction[]; cursor: string | undefined }>;
 

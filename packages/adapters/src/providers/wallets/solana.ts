@@ -128,13 +128,14 @@ export class SolanaProvider implements WalletsProvider {
 
   async getWalletTimes(
     wallet_data: Wallet,
-  ): Promise<{ first_transaction: Date; last_transaction: Date }> {
+  ): Promise<{ first_block: number; last_block: number; first_date: Date }> {
     const public_key = new PublicKey(wallet_data.address);
     let loop_cursor: string | undefined = undefined;
     let is_first_time = true;
 
-    let first_transaction = new Date();
-    let last_transaction = new Date();
+    let first_block = 0;
+    let last_block = 0;
+    let first_date = new Date();
 
     do {
       const transactions = await this.getConnection().getSignaturesForAddress(
@@ -146,26 +147,25 @@ export class SolanaProvider implements WalletsProvider {
       );
       if (transactions.length === 0) break;
       if (is_first_time) {
-        first_transaction = new Date(transactions[0].blockTime! * 1000);
+        first_block = transactions[0].slot;
+        first_date = new Date(transactions[0].blockTime! * 1000);
         is_first_time = false;
       }
 
-      last_transaction = new Date(
-        transactions[transactions.length - 1].blockTime! * 1000,
-      );
+      last_block = transactions[transactions.length - 1].slot;
       if (transactions.length < 1000) break;
 
       loop_cursor = transactions[transactions.length - 1].signature;
     } while (loop_cursor);
 
-    return { first_transaction, last_transaction };
+    return { first_block, last_block, first_date };
   }
 
   async getTransactionHistory(
     address: string,
     _blockchain: BlockchainsName,
-    _from_date: Date,
-    _to_date: Date,
+    _from_block: number,
+    _to_block: number,
     loop_cursor: string | undefined,
   ): Promise<{ transactions: Transaction[]; cursor: string | undefined }> {
     const public_key = new PublicKey(address);

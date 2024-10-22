@@ -117,13 +117,16 @@ export class CoinsService<
     const coinsData = await this.coinsRepository.getCoinsByBlockchain(
       blockchain,
       page_number,
-      page_size,
+      name_search ? 1_000_000 : page_size,
       ids,
     );
     if (name_search) {
       const coinsFuse = new Fuse(coinsData, { keys: ["name"] });
 
-      return coinsFuse.search(name_search).map((f) => f.item);
+      return coinsFuse
+        .search(name_search)
+        .map((f) => f.item)
+        .slice((page_number - 1) * page_size, page_number * page_size);
     }
     return coinsData;
   }

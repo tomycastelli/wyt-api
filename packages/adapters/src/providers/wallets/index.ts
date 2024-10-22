@@ -55,7 +55,7 @@ export class WalletsProviderAdapters implements WalletsStreamsProvider {
 
   async getWalletTimes(
     wallet_data: Wallet,
-  ): Promise<{ first_transaction: Date; last_transaction: Date }> {
+  ): Promise<{ first_block: number; last_block: number; first_date: Date }> {
     const ecosystem = blockchains[wallet_data.blockchain].ecosystem;
     switch (ecosystem) {
       case "ethereum":
@@ -70,8 +70,8 @@ export class WalletsProviderAdapters implements WalletsStreamsProvider {
   async getTransactionHistory(
     address: string,
     blockchain: BlockchainsName,
-    from_date: Date,
-    to_date: Date,
+    from_block: number,
+    to_block: number,
     loop_cursor: string | undefined,
   ): Promise<{ transactions: Transaction[]; cursor: string | undefined }> {
     const ecosystem = blockchains[blockchain].ecosystem;
@@ -80,24 +80,24 @@ export class WalletsProviderAdapters implements WalletsStreamsProvider {
         return this.ethereumProvider.getTransactionHistory(
           address,
           blockchain,
-          from_date,
-          to_date,
+          from_block,
+          to_block,
           loop_cursor,
         );
       case "solana":
         return this.solanaProvider.getTransactionHistory(
           address,
           blockchain,
-          from_date,
-          to_date,
+          from_block,
+          to_block,
           loop_cursor,
         );
       case "bitcoin":
         return this.bitcoinProvider.getTransactionHistory(
           address,
           blockchain,
-          from_date,
-          to_date,
+          from_block,
+          to_block,
           loop_cursor,
         );
     }

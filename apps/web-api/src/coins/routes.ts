@@ -1,10 +1,6 @@
 import { arktypeValidator } from "@hono/arktype-validator";
 import type { CoinGecko, CoinsPostgres } from "@repo/adapters";
-import {
-  type BlockchainsName,
-  type CoinsService,
-  blockchains,
-} from "@repo/domain";
+import { type CoinsService, EveryBlockainsName } from "@repo/domain";
 import { type } from "arktype";
 import { type Context, Hono } from "hono";
 import type { BlankEnv, BlankSchema } from "hono/types";
@@ -109,6 +105,12 @@ export const setup_coins_routes = (
   coins_routes.get(
     "/:blockchain",
     arktypeValidator(
+      "param",
+      type({
+        blockchain: ["===", ...EveryBlockainsName],
+      }),
+    ),
+    arktypeValidator(
       "query",
       type({
         "page?": type("string").pipe((s) => Number.parseInt(s)),
@@ -119,11 +121,7 @@ export const setup_coins_routes = (
       }),
     ),
     async (c) => {
-      const blockchain = c.req.param("blockchain");
-      if (!(blockchain in blockchains)) {
-        c.status(404);
-        return c.json({ message: "invalid blockchain", blockchains });
-      }
+      const { blockchain } = c.req.valid("param");
       const { page, name_search, ids } = c.req.valid("query");
 
       if (page) {
@@ -132,7 +130,7 @@ export const setup_coins_routes = (
 
       const page_size = 30;
       const savedCoins = await coins_service.getCoinsByBlockchain(
-        blockchain as BlockchainsName,
+        blockchain,
         page ?? 1,
         page_size,
         ids,
