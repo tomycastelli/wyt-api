@@ -14,6 +14,7 @@ import {
   asc,
   desc,
   eq,
+  exists,
   gte,
   inArray,
   lt,
@@ -534,6 +535,7 @@ export class WalletsPostgres implements WalletsRepository {
   ): Promise<Transaction[]> {
     if (transactions_page < 0) return [];
     const page_size = transactions_page === 0 ? 1_000_000 : 10;
+
     // Busco las transfers en donde esté la Wallet involucrada
     const transfers_query = this.db
       .selectDistinct({
@@ -557,22 +559,17 @@ export class WalletsPostgres implements WalletsRepository {
       .orderBy(desc(schema.transfers.block_timestamp))
       .offset(sql.placeholder("queryOffset"))
       .limit(sql.placeholder("queryLimit"))
-      .prepare("transfers_query");
-
-    const transaction_ids = await transfers_query.execute({
-      queryOffset:
-        transactions_page === 0 ? 0 : (transactions_page - 1) * page_size,
-      queryLimit: page_size,
-      walletAddress: wallet_address.toLowerCase(),
-      blockchain,
-    });
+      .as("transfers_query");
 
     const transactions_query = this.db
       .select()
       .from(schema.transactions)
       .leftJoin(
         schema.transfers,
-        eq(schema.transfers.transaction_id, schema.transactions.id),
+        and(
+          eq(schema.transfers.blockchain, sql.placeholder("blockchain")),
+          eq(schema.transfers.transaction_id, schema.transactions.id),
+        ),
       )
       .leftJoin(schema.coins, eq(schema.coins.id, schema.transfers.coin_id))
       .leftJoin(schema.nfts, eq(schema.nfts.id, schema.transfers.nft_id))
@@ -580,12 +577,18 @@ export class WalletsPostgres implements WalletsRepository {
         schema.contracts,
         and(
           eq(schema.contracts.coin_id, schema.transfers.coin_id),
-          eq(schema.contracts.blockchain, schema.transactions.blockchain),
+          eq(schema.contracts.blockchain, sql.placeholder("blockchain")),
         ),
       )
       .where(
         and(
           eq(schema.transactions.blockchain, sql.placeholder("blockchain")),
+          from_date
+            ? gte(schema.transactions.block_timestamp, from_date)
+            : undefined,
+          to_date
+            ? lt(schema.transactions.block_timestamp, to_date)
+            : undefined,
           or(
             eq(
               schema.transactions.from_address,
@@ -595,9 +598,13 @@ export class WalletsPostgres implements WalletsRepository {
               schema.transactions.to_address,
               sql.placeholder("walletAddress"),
             ),
-            inArray(
-              schema.transactions.id,
-              transaction_ids.map((a) => a.transactionId),
+            exists(
+              this.db
+                .select()
+                .from(transfers_query)
+                .where(
+                  eq(schema.transactions.id, transfers_query.transactionId),
+                ),
             ),
           ),
         ),
@@ -607,6 +614,7 @@ export class WalletsPostgres implements WalletsRepository {
       .limit(sql.placeholder("queryLimit"))
       .prepare("transactions_query");
 
+    console.time("txDataQuery");
     // Me aseguro tener 20 transacciones, por mas que el array tenga mas porque haya mas de 20 transfers
     const transactions_data = await transactions_query.execute({
       queryOffset:
@@ -615,6 +623,7 @@ export class WalletsPostgres implements WalletsRepository {
       walletAddress: wallet_address.toLowerCase(),
       blockchain,
     });
+    console.timeEnd("txDataQuery");
 
     const mapped_transactions = transactions_data.reduce((acc, transaction) => {
       // Uso el hash ya que la entidad Transaction no tiene id

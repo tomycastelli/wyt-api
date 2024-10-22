@@ -975,8 +975,6 @@ export class WalletsService<
       return acc;
     }, [] as ValueChangeGraph);
 
-    console.log("Grafico por [Coin]: ", coins_graphs);
-
     return { unified: unified_graph, coins: coins_graphs, missing_prices };
   }
 
