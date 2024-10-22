@@ -536,7 +536,10 @@ export class WalletsPostgres implements WalletsRepository {
     const page_size = transactions_page === 0 ? 1_000_000 : 10;
     // Busco las transfers en donde esté la Wallet involucrada
     const transfers_query = this.db
-      .selectDistinct({ transactionId: schema.transfers.transaction_id })
+      .selectDistinct({
+        transactionId: schema.transfers.transaction_id,
+        block_timestamp: schema.transfers.block_timestamp,
+      })
       .from(schema.transfers)
       .where(
         and(

@@ -496,6 +496,8 @@ export class CoinGecko implements CoinsProvider {
           index_cursor + chunk_size,
         );
 
+        if (coins_to_fetch.length === 0) break;
+
         const marketData = await this.rateLimitedCallApi(
           `${this.base_url}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&price_change_percentage=24h&locale=en&precision=18&ids=${coins_to_fetch.join(",")}`,
         );
