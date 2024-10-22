@@ -267,26 +267,46 @@ export class EthereumProvider implements WalletsStreamsProvider {
     loop_cursor: string | undefined,
   ): Promise<{ transactions: Transaction[]; cursor: string | undefined }> {
     await this.rate_limiter.acquire();
-    const transaction_history = await Moralis.EvmApi.wallets.getWalletHistory({
-      chain: this.blockchain_mapper[blockchain],
-      address,
-      order: "DESC",
-      includeInternalTransactions: false,
-      fromDate: from_date,
-      toDate: to_date,
-      cursor: loop_cursor,
-      // Paginamos menos para evitar errores de respuesta muy larga
-      limit: 150,
-    });
+    try {
+      const transaction_history = await Moralis.EvmApi.wallets.getWalletHistory(
+        {
+          chain: this.blockchain_mapper[blockchain],
+          address,
+          order: "DESC",
+          includeInternalTransactions: false,
+          fromDate: from_date,
+          toDate: to_date,
+          cursor: loop_cursor,
+          // Paginamos menos para evitar errores de respuesta muy larga
+          limit: 150,
+        },
+      );
 
-    return {
-      transactions: this.transactionsFromWalletHistory(
-        transaction_history.result,
-        address,
-        blockchain,
-      ),
-      cursor: transaction_history.pagination.cursor,
-    };
+      return {
+        transactions: this.transactionsFromWalletHistory(
+          transaction_history.result,
+          address,
+          blockchain,
+        ),
+        cursor: transaction_history.pagination.cursor,
+      };
+    } catch (e) {
+      console.error(e);
+      console.log({
+        values_used: {
+          chain: this.blockchain_mapper[blockchain],
+          address,
+          order: "DESC",
+          includeInternalTransactions: false,
+          fromDate: from_date,
+          toDate: to_date,
+          cursor: loop_cursor,
+          // Paginamos menos para evitar errores de respuesta muy larga
+          limit: 150,
+        },
+      });
+      return { transactions: [], cursor: undefined };
+    }
   }
 
   async createStreams(
