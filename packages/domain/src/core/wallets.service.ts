@@ -246,13 +246,21 @@ export class WalletsService<
 
     const chunks: { from_block: number; to_block: number }[] = [];
 
-    const chunk_duration = (last_block - first_block) / chunk_amount;
+    const total_blocks = last_block - first_block + 1;
+    const chunk_size = Math.floor(total_blocks / chunk_amount);
+    let current_block = first_block;
 
     for (let i = 0; i < chunk_amount; i++) {
-      const from_block = first_block + i * chunk_duration;
-      const to_block = from_block + chunk_duration;
+      const from_block = current_block;
+      let to_block = from_block + chunk_size - 1;
+
+      // Ensure the last chunk extends to the last_block
+      if (i === chunk_amount - 1) {
+        to_block = last_block;
+      }
 
       chunks.push({ from_block, to_block });
+      current_block = to_block + 1;
     }
 
     return { chunks, first_date };

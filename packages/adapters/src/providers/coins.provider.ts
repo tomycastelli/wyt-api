@@ -126,8 +126,11 @@ export class CoinGecko implements CoinsProvider {
 
         const json = await response.json();
 
+        if (json === undefined || json === null) continue;
+
         return json;
-      } catch (_e) {
+      } catch (e) {
+        console.error(`Failed calling ${url}`, e);
         if (i === retries - i) {
           return null;
         }
@@ -356,13 +359,13 @@ export class CoinGecko implements CoinsProvider {
         `${this.base_url}/onchain/networks/${this.blockchains_to_networks_mapper[blockchain]}/tokens/multi/${address_chunk.join(",")}`,
       );
 
+      if (!coinData) continue;
+
       const parsedCoinData = tokenDataByAddressSchema(coinData);
 
       if (parsedCoinData instanceof type.errors) {
         console.error("Failed to parse coinsByAddress: ", coinData);
-        console.log(
-          `${this.base_url}/onchain/networks/${this.blockchains_to_networks_mapper[blockchain]}/tokens/multi/${address_chunk.join(",")}`,
-        );
+
         throw parsedCoinData;
       }
 

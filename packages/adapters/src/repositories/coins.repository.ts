@@ -216,9 +216,10 @@ export class CoinsPostgres implements CoinsRepository {
           blockchain,
           token_id,
         })
+        .onConflictDoNothing()
         .returning();
 
-      return new_nft!;
+      return new_nft;
     });
   }
 
