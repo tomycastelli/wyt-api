@@ -69,7 +69,7 @@ const smallDecimalNumber = customType<{ data: number }>({
 
 const blockchainValue = customType<{ data: bigint }>({
   dataType() {
-    return "numeric(32, 0)";
+    return "numeric(36, 0)";
   },
   fromDriver(value) {
     return BigInt(Number(value));
@@ -77,8 +77,13 @@ const blockchainValue = customType<{ data: bigint }>({
   toDriver(value) {
     const valueStr = value.toString();
 
-    if (valueStr.length > 32) {
-      throw new Error("Value exceeds the precision limit of numeric(32, 0)");
+    if (valueStr.length > 36) {
+      console.warn(
+        "Value exceeds the precision limit of numeric(36, 0): ",
+        valueStr,
+      );
+      const truncatedStr = valueStr.substring(0, 36);
+      return truncatedStr;
     }
 
     return valueStr;
@@ -114,11 +119,13 @@ export const coins = pgTable(
   {
     id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
     name: varchar("name", { length: 70 }).notNull().unique(),
+    display_name: varchar("name", { length: 70 }),
     symbol: varchar("symbol", { length: 50 }).notNull(),
     provider: providersEnum("provider").notNull(),
     description: text("description"),
     image_url: text("image_url"),
     market_cap: largeDecimalNumber("market_cap").notNull(),
+    total_volume: largeDecimalNumber("total_volume"),
     price: decimalNumber("price").notNull(),
     ath: decimalNumber("ath").notNull(),
     price_change_percentage_24h: smallDecimalNumber(

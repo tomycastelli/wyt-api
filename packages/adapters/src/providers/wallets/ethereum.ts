@@ -199,7 +199,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
           includeInternalTransactions: false,
           fromDate: from_date,
           cursor: loop_cursor,
-          limit: 50,
+          limit: 200,
         });
 
         if (new_transactions.result.length > 0) {
@@ -222,7 +222,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
           includeInternalTransactions: false,
           fromDate: from_date,
           cursor: loop_cursor,
-          limit: 50,
+          limit: 200,
         });
       }
     } while (loop_cursor);
@@ -293,7 +293,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
           toBlock: to_block,
           cursor: loop_cursor,
           // Paginamos menos para evitar errores de respuesta muy larga
-          limit: 50,
+          limit: 200,
         },
       );
 
@@ -317,7 +317,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
           toBlock: to_block,
           cursor: loop_cursor,
           // Paginamos menos para evitar errores de respuesta muy larga
-          limit: 50,
+          limit: 200,
         },
       });
       return { transactions: [], cursor: undefined };

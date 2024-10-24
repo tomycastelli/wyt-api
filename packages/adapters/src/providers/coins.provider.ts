@@ -40,6 +40,10 @@ const coinDetailsSchema = type({
       "usd?": "number",
       "+": "delete",
     },
+    total_volume: {
+      "usd?": "number",
+      "+": "delete",
+    },
     ath: {
       "usd?": "number",
       "+": "delete",
@@ -53,10 +57,12 @@ const coinDetailsSchema = type({
 
 const marketDataListSchema = type({
   id: "string",
+  name: "string",
   current_price: "number|null",
   market_cap: "number|null",
   price_change_percentage_24h: "number|null",
   price_change_24h: "number|null",
+  total_volume: "number|null",
   ath: "number|null",
   "+": "delete",
 });
@@ -73,6 +79,7 @@ const tokenDataByAddressSchema = type({
   data: type({
     attributes: {
       symbol: "string",
+      name: "string",
       coingecko_coin_id: "string|null",
       "+": "delete",
     },
@@ -162,6 +169,7 @@ export class CoinGecko implements CoinsProvider {
   async getCoinDetails(
     coin: {
       id: string;
+      name: string;
       symbol: string;
       platforms: Record<string, string>;
     },
@@ -189,13 +197,15 @@ export class CoinGecko implements CoinsProvider {
       parsedCoinDetails.image &&
       parsedCoinDetails.market_data &&
       parsedCoinDetails.market_data.current_price?.usd &&
-      parsedCoinDetails.market_data.ath?.usd &&
+      parsedCoinDetails.market_data.ath.usd &&
       parsedCoinDetails.market_data.price_change_percentage_24h &&
       parsedCoinDetails.market_data.price_change_24h &&
+      parsedCoinDetails.market_data.total_volume.usd &&
       (parsedCoinDetails.market_data.market_cap?.usd ?? 0) >= minimum_market_cap
     ) {
       return {
         name: coin.id,
+        display_name: coin.name,
         symbol: coin.symbol,
         provider: "coingecko",
         description: parsedCoinDetails.description!.en,
@@ -206,6 +216,7 @@ export class CoinGecko implements CoinsProvider {
         price_change_percentage_24h:
           parsedCoinDetails.market_data!.price_change_percentage_24h!,
         price_change_24h: parsedCoinDetails.market_data!.price_change_24h!,
+        total_volume: parsedCoinDetails.market_data!.total_volume.usd!,
         // Me quedo con solo los contratos que me interesan
         contracts: Object.entries(parsedCoinDetails.detail_platforms)
           .filter(([key]) =>
@@ -308,6 +319,7 @@ export class CoinGecko implements CoinsProvider {
         parsedCoinDetails.market_data.ath?.usd &&
         parsedCoinDetails.market_data.price_change_percentage_24h &&
         parsedCoinDetails.market_data.price_change_24h &&
+        parsedCoinDetails.market_data.total_volume.usd &&
         Object.keys(parsedCoinDetails.platforms).some((platform) =>
           EveryBlockainsName.includes(platform as BlockchainsName),
         ) &&
@@ -316,6 +328,7 @@ export class CoinGecko implements CoinsProvider {
       ) {
         coins.push({
           name: coin.id,
+          display_name: coin.name,
           symbol: coin.symbol,
           provider: "coingecko",
           description: parsedCoinDetails.description!.en,
@@ -326,6 +339,7 @@ export class CoinGecko implements CoinsProvider {
           price_change_percentage_24h:
             parsedCoinDetails.market_data!.price_change_percentage_24h!,
           price_change_24h: parsedCoinDetails.market_data!.price_change_24h!,
+          total_volume: parsedCoinDetails.market_data!.total_volume.usd!,
           // Me quedo con solo los contratos que me interesan
           contracts: Object.entries(parsedCoinDetails.detail_platforms)
             .filter(([key]) =>
@@ -396,12 +410,14 @@ export class CoinGecko implements CoinsProvider {
           parsedCoinDetails.market_data.ath?.usd &&
           parsedCoinDetails.market_data.price_change_percentage_24h &&
           parsedCoinDetails.market_data.price_change_24h &&
+          parsedCoinDetails.market_data.total_volume.usd &&
           Object.keys(parsedCoinDetails.platforms).some((platform) =>
             EveryBlockainsName.includes(platform as BlockchainsName),
           )
         ) {
           const mappedCoinDetails: Coin = {
             name: coin_data.coingecko_coin_id!,
+            display_name: coin_data.name,
             symbol: coin_data.symbol,
             provider: "coingecko",
             description: parsedCoinDetails.description?.en ?? null,
@@ -412,6 +428,7 @@ export class CoinGecko implements CoinsProvider {
             price_change_percentage_24h:
               parsedCoinDetails.market_data!.price_change_percentage_24h!,
             price_change_24h: parsedCoinDetails.market_data!.price_change_24h!,
+            total_volume: parsedCoinDetails.market_data!.total_volume.usd!,
             // Me quedo con solo los contratos que me interesan
             contracts: Object.entries(parsedCoinDetails.detail_platforms)
               .filter(([key]) =>
@@ -432,152 +449,61 @@ export class CoinGecko implements CoinsProvider {
     return coins_to_return;
   }
 
-  async getAllCoinMarketData(coin_names?: string[]): Promise<CoinMarketData[]> {
+  async getAllCoinMarketData(coin_names: string[]): Promise<CoinMarketData[]> {
     const market_data_array: CoinMarketData[] = [];
-    if (!coin_names) {
-      // Vamos a ir haciendo requests por categoria
-      for (const category of this.blockchains_categories) {
-        let is_last_page = false;
-        let page = 1;
-        while (!is_last_page) {
-          const marketData = await this.rateLimitedCallApi(
-            `${this.base_url}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&price_change_percentage=24h&locale=en&precision=18&category=${category}&page=${page}`,
-          );
 
-          if (!marketData) {
-            console.error(
-              `Failed to fetch CoinGecko data from: ${this.base_url}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&price_change_percentage=24h&locale=en&precision=18&category=${category}&page=${page}`,
-            );
-            return [];
-          }
+    // Reparto en chunks de 250 coin names y hago la query
+    const chunk_size = 250;
+    let index_cursor = 0;
+    let is_last_page = false;
+    while (!is_last_page) {
+      const coins_to_fetch = coin_names.slice(
+        index_cursor,
+        index_cursor + chunk_size,
+      );
 
-          const parsedMarketData = marketDataListSchema.array()(marketData);
+      if (coins_to_fetch.length === 0) break;
 
-          if (parsedMarketData instanceof type.errors) {
-            console.error("Failed to parse all coin market data: ", marketData);
-            throw parsedMarketData;
-          }
+      const marketData = await this.rateLimitedCallApi(
+        `${this.base_url}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&price_change_percentage=24h&locale=en&precision=18&ids=${coins_to_fetch.join(",")}`,
+      );
 
-          if (parsedMarketData.length < 250) {
-            // Termino el loop con esta iteracion
-            is_last_page = true;
-          }
+      const parsedMarketData = marketDataListSchema.array()(marketData);
 
-          const mappedMarketData: CoinMarketData[] = parsedMarketData
-            .filter(
-              (md) =>
-                md.price_change_24h &&
-                md.market_cap &&
-                md.ath &&
-                md.current_price &&
-                md.price_change_percentage_24h,
-            )
-            .map((md) => ({
-              name: md.id,
-              price: md.current_price!,
-              ath: md.ath!,
-              market_cap: md.market_cap!,
-              price_change_24h: md.price_change_24h!,
-              price_change_percentage_24h: md.price_change_percentage_24h!,
-            }));
+      if (parsedMarketData instanceof type.errors) throw parsedMarketData;
 
-          page++;
-
-          market_data_array.push(...mappedMarketData);
-        }
+      if (parsedMarketData.length < chunk_size) {
+        // Termino el loop con esta iteracion
+        is_last_page = true;
       }
-    } else {
-      // Reparto en chunks de 250 coin names y hago la query
-      const chunk_size = 250;
-      let index_cursor = 0;
-      let is_last_page = false;
-      while (!is_last_page) {
-        const coins_to_fetch = coin_names.slice(
-          index_cursor,
-          index_cursor + chunk_size,
-        );
 
-        if (coins_to_fetch.length === 0) break;
+      index_cursor += chunk_size;
 
-        const marketData = await this.rateLimitedCallApi(
-          `${this.base_url}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&price_change_percentage=24h&locale=en&precision=18&ids=${coins_to_fetch.join(",")}`,
-        );
+      const mappedMarketData: CoinMarketData[] = parsedMarketData
+        .filter(
+          (md) =>
+            md.price_change_24h &&
+            md.market_cap &&
+            md.ath &&
+            md.current_price &&
+            md.price_change_percentage_24h &&
+            md.total_volume,
+        )
+        .map((md) => ({
+          name: md.id,
+          display_name: md.name,
+          price: md.current_price!,
+          ath: md.ath!,
+          market_cap: md.market_cap!,
+          price_change_24h: md.price_change_24h!,
+          price_change_percentage_24h: md.price_change_percentage_24h!,
+          total_volume: md.total_volume!,
+        }));
 
-        const parsedMarketData = marketDataListSchema.array()(marketData);
-
-        if (parsedMarketData instanceof type.errors) throw parsedMarketData;
-
-        if (parsedMarketData.length < chunk_size) {
-          // Termino el loop con esta iteracion
-          is_last_page = true;
-        }
-
-        index_cursor += chunk_size;
-
-        const mappedMarketData: CoinMarketData[] = parsedMarketData
-          .filter(
-            (md) =>
-              md.price_change_24h &&
-              md.market_cap &&
-              md.ath &&
-              md.current_price &&
-              md.price_change_percentage_24h,
-          )
-          .map((md) => ({
-            name: md.id,
-            price: md.current_price!,
-            ath: md.ath!,
-            market_cap: md.market_cap!,
-            price_change_24h: md.price_change_24h!,
-            price_change_percentage_24h: md.price_change_percentage_24h!,
-          }));
-
-        market_data_array.push(...mappedMarketData);
-      }
+      market_data_array.push(...mappedMarketData);
     }
 
     return market_data_array;
-  }
-
-  async getCoinMarketData(coin_name: string): Promise<CoinMarketData> {
-    const coinDetails = await this.rateLimitedCallApi(
-      `${this.base_url}/coins/${coin_name}?localization=false&tickers=false&market_data=true&sparkline=false&community_data=false&developer_data=false`,
-    );
-
-    const parsedCoinDetails = coinDetailsSchema(coinDetails);
-
-    if (parsedCoinDetails instanceof type.errors) throw parsedCoinDetails;
-
-    const market_data = parsedCoinDetails.market_data;
-
-    if (
-      !market_data ||
-      market_data.ath.usd === undefined ||
-      market_data.ath.usd === null ||
-      market_data.current_price?.usd === undefined ||
-      market_data.current_price?.usd === null ||
-      market_data.market_cap.usd === undefined ||
-      market_data.market_cap.usd === null ||
-      market_data.price_change_24h === undefined ||
-      market_data.price_change_24h === null ||
-      market_data.price_change_percentage_24h === undefined ||
-      market_data.price_change_percentage_24h === null
-    )
-      throw Error("Unavailable market data: ", {
-        cause: `Got this response: ${JSON.stringify(parsedCoinDetails)}`,
-      });
-
-    // Asumo que como es una [Coin] que ya tenemos, va a haber Market data disponible
-    const coin_market_data: CoinMarketData = {
-      name: coin_name,
-      ath: market_data.ath.usd,
-      market_cap: market_data.market_cap.usd,
-      price: market_data.current_price.usd,
-      price_change_24h: market_data.price_change_24h,
-      price_change_percentage_24h: market_data.price_change_percentage_24h,
-    };
-
-    return coin_market_data;
   }
 
   async getCandlesByDateRange(

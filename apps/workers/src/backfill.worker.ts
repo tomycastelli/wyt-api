@@ -242,6 +242,10 @@ export const setupBackfillChunkWorker = (
     console.log("backfillChunkWorker is ready!");
   });
 
+  backfillChunkWorker.on("progress", (job) => {
+    console.log(`Job ${job.id} is progressing: `, job.progress);
+  });
+
   backfillChunkWorker.on("completed", async (job) => {
     const { address, blockchain } = job.data;
     console.log(

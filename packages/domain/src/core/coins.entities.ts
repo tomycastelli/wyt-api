@@ -8,12 +8,15 @@ const coinMarketDataType = type({
   price: "number",
   price_change_percentage_24h: "number",
   price_change_24h: "number",
+  total_volume: "number|null",
   ath: "number",
   name: "string",
+  display_name: "string",
 });
 
 export const coinType = coinMarketDataType.merge({
   name: "string",
+  display_name: "string|null",
   symbol: "string",
   provider: type.enumerated(...providers),
   contracts: [

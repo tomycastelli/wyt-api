@@ -61,9 +61,6 @@ export interface CoinsProvider {
   /** Devuelve todos los [CoinMarketData] disponibles */
   getAllCoinMarketData(coin_names?: string[]): Promise<CoinMarketData[]>;
 
-  /** Devuelve el [CoinMarketData] de una Coin en especifico */
-  getCoinMarketData(coin_name: string): Promise<CoinMarketData>;
-
   /** Consigue todas las tokens existentes */
   getAllCoins(): Promise<
     {
@@ -78,6 +75,7 @@ export interface CoinsProvider {
   getCoinDetails(
     coin: {
       id: string;
+      name: string;
       symbol: string;
       platforms: Record<string, string>;
     },

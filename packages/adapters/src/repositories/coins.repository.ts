@@ -52,6 +52,7 @@ export class CoinsPostgres implements CoinsRepository {
             price_change_24h: sql.raw(
               `excluded.${schema.coins.price_change_24h.name}`,
             ),
+            total_volume: sql.raw(`excluded.${schema.coins.total_volume.name}`),
             symbol: sql.raw(`excluded.${schema.coins.symbol.name}`),
             provider: sql.raw(`excluded.${schema.coins.provider.name}`),
             last_update: new Date(),
@@ -347,6 +348,7 @@ export class CoinsPostgres implements CoinsRepository {
           .update(schema.coins)
           .set({
             ath: market_data.ath,
+            display_name: market_data.display_name,
             market_cap: market_data.market_cap,
             price: market_data.price,
             price_change_24h: market_data.price_change_24h,
