@@ -76,7 +76,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
   async initialize() {
     await Moralis.start({
       apiKey: this.api_key,
-      maxRetries: 3,
+      maxRetries: 5,
     });
   }
 
@@ -191,26 +191,40 @@ export class EthereumProvider implements WalletsStreamsProvider {
 
     do {
       await this.rate_limiter.acquire();
-      const new_transactions = await Moralis.EvmApi.wallets.getWalletHistory({
-        chain: this.blockchain_mapper[wallet_data.blockchain],
-        address: wallet_data.address,
-        order: "DESC",
-        includeInternalTransactions: false,
-        fromDate: from_date,
-        cursor: loop_cursor,
-      });
+      try {
+        const new_transactions = await Moralis.EvmApi.wallets.getWalletHistory({
+          chain: this.blockchain_mapper[wallet_data.blockchain],
+          address: wallet_data.address,
+          order: "DESC",
+          includeInternalTransactions: false,
+          fromDate: from_date,
+          cursor: loop_cursor,
+          limit: 50,
+        });
 
-      if (new_transactions.result.length > 0) {
-        transactions.push(
-          ...this.transactionsFromWalletHistory(
-            new_transactions.result,
-            wallet_data.address,
-            wallet_data.blockchain,
-          ),
-        );
+        if (new_transactions.result.length > 0) {
+          transactions.push(
+            ...this.transactionsFromWalletHistory(
+              new_transactions.result,
+              wallet_data.address,
+              wallet_data.blockchain,
+            ),
+          );
+        }
+
+        loop_cursor = new_transactions.pagination.cursor;
+      } catch (e) {
+        console.error("Failed getting the new_transactions from wallet", e);
+        console.log("Values used: ", {
+          chain: this.blockchain_mapper[wallet_data.blockchain],
+          address: wallet_data.address,
+          order: "DESC",
+          includeInternalTransactions: false,
+          fromDate: from_date,
+          cursor: loop_cursor,
+          limit: 50,
+        });
       }
-
-      loop_cursor = new_transactions.pagination.cursor;
     } while (loop_cursor);
 
     return transactions;
@@ -279,7 +293,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
           toBlock: to_block,
           cursor: loop_cursor,
           // Paginamos menos para evitar errores de respuesta muy larga
-          limit: 80,
+          limit: 50,
         },
       );
 
@@ -292,7 +306,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
         cursor: transaction_history.pagination.cursor,
       };
     } catch (e) {
-      console.error(e);
+      console.error("Failed getting wallet tx history: ", e);
       console.log({
         values_used: {
           chain: this.blockchain_mapper[blockchain],
@@ -303,7 +317,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
           toBlock: to_block,
           cursor: loop_cursor,
           // Paginamos menos para evitar errores de respuesta muy larga
-          limit: 150,
+          limit: 50,
         },
       });
       return { transactions: [], cursor: undefined };

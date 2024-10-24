@@ -279,12 +279,14 @@ export class CoinGecko implements CoinsProvider {
       throw parsedLatestCoins;
     }
 
-    // Para cada token se consulta el resto de info:
-    // 'descripcion', 'image_url', 'market_data'
-    const detailsListPromises = parsedLatestCoins.map(async (coin) => {
+    const coins: Coin[] = [];
+
+    for (const coin of parsedLatestCoins) {
       const coinDetails = await this.rateLimitedCallApi(
         `${this.base_url}/coins/${coin.id}?localization=false&tickers=false&market_data=true&sparkline=false&community_data=false&developer_data=false`,
       );
+
+      if (!coinDetails) continue;
 
       const parsedCoinDetails = coinDetailsSchema.merge({
         platforms: "Record<string, string|null>",
@@ -295,54 +297,50 @@ export class CoinGecko implements CoinsProvider {
           "Failed to parse coinDetails in latestCoins: ",
           coinDetails,
         );
-        throw parsedCoinDetails;
+        continue;
       }
 
-      return { ...parsedCoinDetails, ...coin };
-    });
+      if (
+        parsedCoinDetails.description &&
+        parsedCoinDetails.image &&
+        parsedCoinDetails.market_data &&
+        parsedCoinDetails.market_data.current_price?.usd &&
+        parsedCoinDetails.market_data.ath?.usd &&
+        parsedCoinDetails.market_data.price_change_percentage_24h &&
+        parsedCoinDetails.market_data.price_change_24h &&
+        Object.keys(parsedCoinDetails.platforms).some((platform) =>
+          EveryBlockainsName.includes(platform as BlockchainsName),
+        ) &&
+        (parsedCoinDetails.market_data.market_cap?.usd ?? 0) >=
+          minimum_market_cap
+      ) {
+        coins.push({
+          name: coin.id,
+          symbol: coin.symbol,
+          provider: "coingecko",
+          description: parsedCoinDetails.description!.en,
+          ath: parsedCoinDetails.market_data!.ath.usd!,
+          image_url: parsedCoinDetails.image!.large,
+          market_cap: parsedCoinDetails.market_data!.market_cap.usd!,
+          price: parsedCoinDetails.market_data!.current_price!.usd!,
+          price_change_percentage_24h:
+            parsedCoinDetails.market_data!.price_change_percentage_24h!,
+          price_change_24h: parsedCoinDetails.market_data!.price_change_24h!,
+          // Me quedo con solo los contratos que me interesan
+          contracts: Object.entries(parsedCoinDetails.detail_platforms)
+            .filter(([key]) =>
+              EveryBlockainsName.includes(key as BlockchainsName),
+            )
+            .map(([blockchain, detail]) => ({
+              blockchain: blockchain as BlockchainsName,
+              contract_address: detail.contract_address!,
+              decimal_place: detail.decimal_place!,
+            })),
+        });
+      }
+    }
 
-    const coinDetails = await Promise.all(detailsListPromises);
-
-    const mappedCoinDetails: Coin[] = coinDetails
-      .filter(
-        (coin) =>
-          coin.description &&
-          coin.image &&
-          coin.market_data &&
-          coin.market_data.current_price?.usd &&
-          coin.market_data.ath?.usd &&
-          coin.market_data.price_change_percentage_24h &&
-          coin.market_data.price_change_24h &&
-          Object.keys(coin.platforms).some((platform) =>
-            EveryBlockainsName.includes(platform as BlockchainsName),
-          ) &&
-          (coin.market_data.market_cap?.usd ?? 0) >= minimum_market_cap,
-      )
-      .map((coin) => ({
-        name: coin.id,
-        symbol: coin.symbol,
-        provider: "coingecko",
-        description: coin.description!.en,
-        ath: coin.market_data!.ath.usd!,
-        image_url: coin.image!.large,
-        market_cap: coin.market_data!.market_cap.usd!,
-        price: coin.market_data!.current_price!.usd!,
-        price_change_percentage_24h:
-          coin.market_data!.price_change_percentage_24h!,
-        price_change_24h: coin.market_data!.price_change_24h!,
-        // Me quedo con solo los contratos que me interesan
-        contracts: Object.entries(coin.detail_platforms)
-          .filter(([key]) =>
-            EveryBlockainsName.includes(key as BlockchainsName),
-          )
-          .map(([blockchain, detail]) => ({
-            blockchain: blockchain as BlockchainsName,
-            contract_address: detail.contract_address!,
-            decimal_place: detail.decimal_place!,
-          })),
-      }));
-
-    return mappedCoinDetails;
+    return coins;
   }
 
   async getCoinsByAddress(

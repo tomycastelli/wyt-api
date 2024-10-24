@@ -136,6 +136,7 @@ export class CoinsService<
     const latestCoins = await this.coinsProvider.getLatestCoins(
       this.global_minimum_market_cap,
     );
+
     const savedCoins = await this.coinsRepository.saveCoins(latestCoins);
     return savedCoins;
   }

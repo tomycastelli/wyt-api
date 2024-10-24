@@ -97,8 +97,8 @@ const queue_options: QueueOptions = {
     removeOnFail: true,
     attempts: 3,
     backoff: {
-      type: "fixed",
-      delay: 5000,
+      type: "exponential",
+      delay: 3000,
     },
   },
 };
