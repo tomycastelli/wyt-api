@@ -64,9 +64,9 @@ export interface CoinsProvider {
   /** Consigue todas las tokens existentes */
   getAllCoins(): Promise<
     {
-      id: string;
-      symbol: string;
       name: string;
+      symbol: string;
+      display_name: string;
       platforms: Record<string, string>;
     }[]
   >;
@@ -74,8 +74,8 @@ export interface CoinsProvider {
   /** Dado el name de una coin, consigue sus detalles */
   getCoinDetails(
     coin: {
-      id: string;
       name: string;
+      display_name: string;
       symbol: string;
       platforms: Record<string, string>;
     },

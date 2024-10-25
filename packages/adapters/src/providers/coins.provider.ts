@@ -147,9 +147,9 @@ export class CoinGecko implements CoinsProvider {
 
   async getAllCoins(): Promise<
     {
-      id: string;
-      symbol: string;
       name: string;
+      symbol: string;
+      display_name: string;
       platforms: Record<string, string>;
     }[]
   > {
@@ -163,13 +163,18 @@ export class CoinGecko implements CoinsProvider {
       throw parsed_list;
     }
 
-    return parsed_list;
+    return parsed_list.map((c) => ({
+      display_name: c.name,
+      name: c.id,
+      platforms: c.platforms,
+      symbol: c.symbol,
+    }));
   }
 
   async getCoinDetails(
     coin: {
-      id: string;
       name: string;
+      display_name: string;
       symbol: string;
       platforms: Record<string, string>;
     },
@@ -178,7 +183,7 @@ export class CoinGecko implements CoinsProvider {
     // Para cada token se consulta el resto de info:
     // 'descripcion', 'image_url', 'market_data'
     const response = await this.rateLimitedCallApi(
-      `${this.base_url}/coins/${coin.id}?localization=false&tickers=false&market_data=true&sparkline=false&community_data=false&developer_data=false`,
+      `${this.base_url}/coins/${coin.name}?localization=false&tickers=false&market_data=true&sparkline=false&community_data=false&developer_data=false`,
     );
 
     if (!response) {
@@ -204,8 +209,8 @@ export class CoinGecko implements CoinsProvider {
       (parsedCoinDetails.market_data.market_cap?.usd ?? 0) >= minimum_market_cap
     ) {
       return {
-        name: coin.id,
-        display_name: coin.name,
+        name: coin.name,
+        display_name: coin.display_name,
         symbol: coin.symbol,
         provider: "coingecko",
         description: parsedCoinDetails.description!.en,

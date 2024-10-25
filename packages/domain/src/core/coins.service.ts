@@ -1,10 +1,9 @@
 import Fuse from "fuse.js";
-import type { Candle, SavedCoin, SavedNFT } from "./coins.entities.js";
+import type { Candle, Coin, SavedCoin, SavedNFT } from "./coins.entities.js";
 import type { CoinsProvider, CoinsRepository } from "./coins.ports.js";
 import {
   type BlockchainCoin,
   type BlockchainsName,
-  EveryBlockainsName,
   base_coins,
   generateFilledDateRange,
 } from "./vars.js";
@@ -153,28 +152,28 @@ export class CoinsService<
     // Se filtran los tokens que esten dentro de las blockchains que nos interesan y aparte no estén ya guardadas
     const blockchain_coins = coin_list.filter(
       (coin) =>
-        (!saved_coins_names.includes(coin.id) &&
-          base_coins.includes(coin.id as BlockchainCoin)) ||
-        Object.keys(coin.platforms).some((platform) =>
-          EveryBlockainsName.includes(platform as BlockchainsName),
-        ),
+        !saved_coins_names.includes(coin.name) &&
+        base_coins.includes(coin.name as BlockchainCoin),
+      // Object.keys(coin.platforms).some((platform) =>
+      //   EveryBlockainsName.includes(platform as BlockchainsName),
+      // ),
     );
 
     if (blockchain_coins.length === 0) return [];
 
     // Consigo su market_cap de a baches
     const filtered_market_caps = await this.coinsProvider.getAllCoinMarketData(
-      blockchain_coins.map((f) => f.id),
+      blockchain_coins.map((f) => f.name),
     );
 
     // Filtrado último
     const filtered_list = blockchain_coins.filter(
       (bc) =>
-        filtered_market_caps.find((fmc) => fmc.name === bc.id)?.market_cap ??
+        filtered_market_caps.find((fmc) => fmc.name === bc.name)?.market_cap ??
         0 >= this.global_minimum_market_cap,
     );
 
-    const saved_coins: SavedCoin[] = [];
+    const coins_to_save: Coin[] = [];
 
     for (const coin of filtered_list) {
       const coin_to_save = await this.coinsProvider.getCoinDetails(
@@ -182,16 +181,11 @@ export class CoinsService<
         this.global_minimum_market_cap,
       );
       if (coin_to_save) {
-        try {
-          const [saved_coin] = await this.coinsRepository.saveCoins([
-            coin_to_save,
-          ]);
-          saved_coins.push(saved_coin);
-        } catch (e) {
-          console.error(e);
-        }
+        coins_to_save.push(coin_to_save);
       }
     }
+
+    const saved_coins = await this.coinsRepository.saveCoins(coins_to_save);
 
     return saved_coins;
   }

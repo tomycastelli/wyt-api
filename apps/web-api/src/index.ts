@@ -164,7 +164,7 @@ export const create_app = async (
   });
 
   app.get("/blockchains", async (c) => {
-    return c.json({ blockchains });
+    return c.json({ ...blockchains });
   });
 
   app.post(
@@ -286,7 +286,7 @@ const app = await create_app(
   API_TOKEN,
 );
 
-const port = 80;
+const port = 3000;
 console.log(`Server is running on port ${port}`);
 
 serve({

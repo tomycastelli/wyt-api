@@ -1,5 +1,5 @@
 {
-  "id": "4dec4647-5944-4d13-a627-e3f86dd8a042",
+  "id": "35063fe9-d831-4c6c-b181-288e7c72b1bb",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -97,7 +97,7 @@
           "name": "name",
           "type": "varchar(70)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "symbol": {
           "name": "symbol",
@@ -107,7 +107,7 @@
         },
         "provider": {
           "name": "provider",
-          "type": "providers_enum",
+          "type": "providers",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
@@ -129,6 +129,12 @@
           "type": "numeric(24, 6)",
           "primaryKey": false,
           "notNull": true
+        },
+        "total_volume": {
+          "name": "total_volume",
+          "type": "numeric(24, 6)",
+          "primaryKey": false,
+          "notNull": false
         },
         "price": {
           "name": "price",
@@ -215,7 +221,7 @@
         },
         "provider": {
           "name": "provider",
-          "type": "providers_enum",
+          "type": "providers",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
@@ -259,7 +265,7 @@
         },
         "blockchain": {
           "name": "blockchain",
-          "type": "blockchains_enum",
+          "type": "blockchains",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
@@ -326,7 +332,7 @@
         },
         "blockchain": {
           "name": "blockchain",
-          "type": "blockchains_enum",
+          "type": "blockchains",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
@@ -400,7 +406,7 @@
         },
         "blockchain": {
           "name": "blockchain",
-          "type": "blockchains_enum",
+          "type": "blockchains",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
@@ -425,7 +431,7 @@
         },
         "fee": {
           "name": "fee",
-          "type": "numeric(32, 0)",
+          "type": "numeric(36, 0)",
           "primaryKey": false,
           "notNull": true
         },
@@ -441,9 +447,9 @@
           "name": "unique_hash_blockchain",
           "columns": [
             {
-              "expression": "lower(\"hash\")",
+              "expression": "hash",
+              "isExpression": false,
               "asc": true,
-              "isExpression": true,
               "nulls": "last"
             },
             {
@@ -507,7 +513,7 @@
         },
         "blockchain": {
           "name": "blockchain",
-          "type": "blockchains_enum",
+          "type": "blockchains",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
@@ -520,7 +526,7 @@
         },
         "type": {
           "name": "type",
-          "type": "transactionType",
+          "type": "transaction_type",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
@@ -551,7 +557,7 @@
         },
         "value": {
           "name": "value",
-          "type": "numeric(32, 0)",
+          "type": "numeric(36, 0)",
           "primaryKey": false,
           "notNull": true
         }
@@ -638,7 +644,7 @@
         },
         "value": {
           "name": "value",
-          "type": "numeric(32, 0)",
+          "type": "numeric(36, 0)",
           "primaryKey": false,
           "notNull": true
         }
@@ -747,7 +753,7 @@
         },
         "blockchain": {
           "name": "blockchain",
-          "type": "blockchains_enum",
+          "type": "blockchains",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
@@ -760,7 +766,7 @@
         },
         "native_value": {
           "name": "native_value",
-          "type": "numeric(32, 0)",
+          "type": "numeric(36, 0)",
           "primaryKey": false,
           "notNull": true
         },
@@ -772,7 +778,7 @@
         },
         "backfill_status": {
           "name": "backfill_status",
-          "type": "backfillStatus",
+          "type": "backfill_status",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
@@ -813,13 +819,13 @@
     }
   },
   "enums": {
-    "public.backfillStatus": {
-      "name": "backfillStatus",
+    "public.backfill_status": {
+      "name": "backfill_status",
       "schema": "public",
-      "values": ["pending", "complete"]
+      "values": ["pending", "active", "complete"]
     },
-    "public.blockchains_enum": {
-      "name": "blockchains_enum",
+    "public.blockchains": {
+      "name": "blockchains",
       "schema": "public",
       "values": [
         "bitcoin",
@@ -835,13 +841,13 @@
       "schema": "public",
       "values": ["daily", "hourly"]
     },
-    "public.providers_enum": {
-      "name": "providers_enum",
+    "public.providers": {
+      "name": "providers",
       "schema": "public",
       "values": ["coingecko"]
     },
-    "public.transactionType": {
-      "name": "transactionType",
+    "public.transaction_type": {
+      "name": "transaction_type",
       "schema": "public",
       "values": ["native", "token", "nft"]
     }

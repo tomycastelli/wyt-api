@@ -33,7 +33,17 @@ export class CoinsPostgres implements CoinsRepository {
         .insert(schema.coins)
         .values(
           coins.map((c) => ({
-            ...c,
+            ath: c.ath,
+            market_cap: c.market_cap,
+            display_name: c.display_name,
+            total_volume: c.total_volume,
+            description: c.description,
+            image_url: c.image_url,
+            name: c.name,
+            price: c.price,
+            price_change_24h: c.price_change_24h,
+            price_change_percentage_24h: c.price_change_percentage_24h,
+            provider: c.provider,
             symbol: c.symbol.toLowerCase(),
             last_update: new Date(),
           })),
@@ -343,9 +353,9 @@ export class CoinsPostgres implements CoinsRepository {
   }
 
   async saveMarketData(coin_market_data: CoinMarketData[]): Promise<void> {
-    await this.db.transaction(async (tx) => {
-      for (const market_data of coin_market_data) {
-        try {
+    try {
+      await this.db.transaction(async (tx) => {
+        for (const market_data of coin_market_data) {
           await tx
             .update(schema.coins)
             .set({
@@ -354,20 +364,16 @@ export class CoinsPostgres implements CoinsRepository {
               market_cap: market_data.market_cap,
               price: market_data.price,
               price_change_24h: market_data.price_change_24h,
+              total_volume: market_data.total_volume,
               price_change_percentage_24h:
                 market_data.price_change_percentage_24h,
               last_update: new Date(),
             })
             .where(eq(schema.coins.name, market_data.name));
-        } catch (e) {
-          console.error(
-            "Could not insert the following market_data: ",
-            market_data,
-            "Error: ",
-            e,
-          );
         }
-      }
-    });
+      });
+    } catch (e) {
+      console.error("Could not insert market_data: ", e);
+    }
   }
 }

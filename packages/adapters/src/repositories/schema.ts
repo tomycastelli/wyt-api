@@ -119,7 +119,7 @@ export const coins = pgTable(
   {
     id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
     name: varchar("name", { length: 70 }).notNull().unique(),
-    display_name: varchar("name", { length: 70 }),
+    display_name: varchar("display_name", { length: 70 }),
     symbol: varchar("symbol", { length: 50 }).notNull(),
     provider: providersEnum("provider").notNull(),
     description: text("description"),
