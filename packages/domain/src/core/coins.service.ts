@@ -338,10 +338,14 @@ export class CoinsService<
       maximum_market_cap,
     );
 
+    console.log("Coins found within the market cap: ", coins.slice(0, 4));
+
     // Market data
     const market_data = await this.coinsProvider.getAllCoinMarketData(
       coins.map((c) => c.name),
     );
+
+    console.log("Market data found: ", market_data.slice(0, 4));
 
     await this.coinsRepository.saveMarketData(market_data);
 

@@ -43,7 +43,7 @@ export type CoinJobsQueue = {
 };
 
 export type WalletJobsQueue = {
-  jobName: "updateBlockchainWallets" | "saveTransactions";
+  jobName: "updateBlockchainWallets";
   data: {
     blockchain: BlockchainsName;
     transactions?: Transaction[];

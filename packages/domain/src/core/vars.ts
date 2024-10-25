@@ -3,31 +3,37 @@ export const blockchains = {
     ecosystem: "bitcoin",
     coin: "bitcoin",
     decimal_places: 8,
+    scanner: "https://www.blockchain.com/en/explorer",
   },
   ethereum: {
     ecosystem: "ethereum",
     coin: "ethereum",
     decimal_places: 18,
+    scanner: "https://etherscan.io",
   },
   solana: {
     ecosystem: "solana",
     coin: "solana",
     decimal_places: 9,
+    scanner: "https://solscan.io",
   },
   "polygon-pos": {
     ecosystem: "ethereum",
     coin: "matic-network",
     decimal_places: 18,
+    scanner: "https://polygonscan.com",
   },
   "binance-smart-chain": {
     ecosystem: "ethereum",
     coin: "binancecoin",
     decimal_places: 18,
+    scanner: "https://bscscan.com",
   },
   avalanche: {
     ecosystem: "ethereum",
     coin: "avalanche-2",
     decimal_places: 18,
+    scanner: "https://snowtrace.io",
   },
 } as const;
 

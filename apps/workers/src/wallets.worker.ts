@@ -45,8 +45,6 @@ export const setupWalletsWorker = (
 
           break;
         }
-        case "saveTransactions": {
-        }
       }
     },
     {

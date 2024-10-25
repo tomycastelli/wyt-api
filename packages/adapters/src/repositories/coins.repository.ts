@@ -41,6 +41,7 @@ export class CoinsPostgres implements CoinsRepository {
         .onConflictDoUpdate({
           target: [schema.coins.name],
           set: {
+            display_name: sql.raw(`excluded.${schema.coins.display_name.name}`),
             price: sql.raw(`excluded.${schema.coins.price.name}`),
             ath: sql.raw(`excluded.${schema.coins.ath.name}`),
             market_cap: sql.raw(`excluded.${schema.coins.market_cap.name}`),
@@ -344,19 +345,28 @@ export class CoinsPostgres implements CoinsRepository {
   async saveMarketData(coin_market_data: CoinMarketData[]): Promise<void> {
     await this.db.transaction(async (tx) => {
       for (const market_data of coin_market_data) {
-        await tx
-          .update(schema.coins)
-          .set({
-            ath: market_data.ath,
-            display_name: market_data.display_name,
-            market_cap: market_data.market_cap,
-            price: market_data.price,
-            price_change_24h: market_data.price_change_24h,
-            price_change_percentage_24h:
-              market_data.price_change_percentage_24h,
-            last_update: new Date(),
-          })
-          .where(eq(schema.coins.name, market_data.name));
+        try {
+          await tx
+            .update(schema.coins)
+            .set({
+              ath: market_data.ath,
+              display_name: market_data.display_name,
+              market_cap: market_data.market_cap,
+              price: market_data.price,
+              price_change_24h: market_data.price_change_24h,
+              price_change_percentage_24h:
+                market_data.price_change_percentage_24h,
+              last_update: new Date(),
+            })
+            .where(eq(schema.coins.name, market_data.name));
+        } catch (e) {
+          console.error(
+            "Could not insert the following market_data: ",
+            market_data,
+            "Error: ",
+            e,
+          );
+        }
       }
     });
   }
