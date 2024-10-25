@@ -286,7 +286,7 @@ const app = await create_app(
   API_TOKEN,
 );
 
-const port = 3000;
+const port = 80;
 console.log(`Server is running on port ${port}`);
 
 serve({

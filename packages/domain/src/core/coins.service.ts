@@ -4,6 +4,7 @@ import type { CoinsProvider, CoinsRepository } from "./coins.ports.js";
 import {
   type BlockchainCoin,
   type BlockchainsName,
+  EveryBlockainsName,
   base_coins,
   generateFilledDateRange,
 } from "./vars.js";
@@ -152,11 +153,11 @@ export class CoinsService<
     // Se filtran los tokens que esten dentro de las blockchains que nos interesan y aparte no estén ya guardadas
     const blockchain_coins = coin_list.filter(
       (coin) =>
-        !saved_coins_names.includes(coin.name) &&
-        base_coins.includes(coin.name as BlockchainCoin),
-      // Object.keys(coin.platforms).some((platform) =>
-      //   EveryBlockainsName.includes(platform as BlockchainsName),
-      // ),
+        (!saved_coins_names.includes(coin.name) &&
+          base_coins.includes(coin.name as BlockchainCoin)) ||
+        Object.keys(coin.platforms).some((platform) =>
+          EveryBlockainsName.includes(platform as BlockchainsName),
+        ),
     );
 
     if (blockchain_coins.length === 0) return [];
