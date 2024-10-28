@@ -242,8 +242,8 @@ export const setupBackfillChunkWorker = (
     console.log("backfillChunkWorker is ready!");
   });
 
-  backfillChunkWorker.on("progress", (job) => {
-    console.log(`Job ${job.id} is progressing: `, job.progress);
+  backfillChunkWorker.on("progress", (job, progress) => {
+    console.log(`Transactions saved ${job.id}: `, progress);
   });
 
   backfillChunkWorker.on("completed", async (job) => {

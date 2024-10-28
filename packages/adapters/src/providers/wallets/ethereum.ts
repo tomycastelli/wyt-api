@@ -1,7 +1,7 @@
 import {
   EvmChain,
-  type EvmWalletHistory,
-  type EvmWalletHistoryTransaction,
+  type EvmWalletHistoryJSON,
+  type EvmWalletHistoryTransactionJSON,
 } from "@moralisweb3/common-evm-utils";
 import {
   type BlockchainsName,
@@ -212,7 +212,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
       }
       const new_transactions = (await this.rateLimitedCallApi(
         url,
-      )) as EvmWalletHistory;
+      )) as EvmWalletHistoryJSON;
 
       if (new_transactions && new_transactions.result.length > 0) {
         transactions.push(
@@ -287,19 +287,21 @@ export class EthereumProvider implements WalletsStreamsProvider {
     }
     const transaction_history = (await this.rateLimitedCallApi(
       url,
-    )) as EvmWalletHistory;
+    )) as EvmWalletHistoryJSON;
 
     if (!transaction_history) {
       // Falló la call a la api
       return { transactions: [], cursor: undefined };
     }
 
+    const mapped_transactions = this.transactionsFromWalletHistory(
+      transaction_history.result,
+      address,
+      blockchain,
+    );
+
     return {
-      transactions: this.transactionsFromWalletHistory(
-        transaction_history.result,
-        address,
-        blockchain,
-      ),
+      transactions: mapped_transactions,
       cursor: transaction_history.cursor,
     };
   }
@@ -588,77 +590,77 @@ export class EthereumProvider implements WalletsStreamsProvider {
   }
 
   transactionsFromWalletHistory(
-    transaction_history_data: EvmWalletHistoryTransaction[],
+    transaction_history_data: EvmWalletHistoryTransactionJSON[],
     address: string,
     blockchain: BlockchainsName,
   ): Transaction[] {
     const transactions_data: Transaction[] = transaction_history_data
       .filter(
         (th) =>
-          th.possibleSpam === false &&
+          th.possible_spam === false &&
           // Es relevante en este caso porque es la que paga la fee
-          (th.fromAddress.lowercase === address.toLowerCase() ||
+          (th.from_address === address.toLowerCase() ||
             // Es relevantre en este caso porque sumo o resto alguna coin o nft
-            th.erc20Transfers.length > 0 ||
-            th.nativeTransfers.length > 0 ||
-            th.nftTransfers.length > 0),
+            th.erc20_transfers.length > 0 ||
+            th.native_transfers.length > 0 ||
+            th.nft_transfers.length > 0),
       )
       .map((th) => {
         const transfers: Transfer[] = [];
 
-        for (const erc20tx of th.erc20Transfers.filter(
-          (erc) => erc.possibleSpam === false,
+        for (const erc20tx of th.erc20_transfers.filter(
+          (erc) => erc.possible_spam === false,
         )) {
           transfers.push({
             type: "token",
-            coin_address: erc20tx.address.lowercase,
-            from_address: erc20tx.fromAddress.lowercase,
-            to_address: erc20tx.toAddress?.lowercase ?? null,
+            coin_address: erc20tx.address,
+            from_address: erc20tx.from_address,
+            to_address: erc20tx.to_address ?? null,
             value: BigInt(erc20tx.value),
             token_id: null,
           });
         }
 
-        for (const nativeTx of th.nativeTransfers) {
+        for (const nativeTx of th.native_transfers) {
           transfers.push({
             type: "native",
-            from_address: nativeTx.fromAddress.lowercase,
-            to_address: nativeTx.toAddress?.lowercase ?? null,
+            from_address: nativeTx.from_address,
+            to_address: nativeTx.to_address ?? null,
             value: BigInt(nativeTx.value),
             token_id: null,
             coin_address: null,
           });
         }
 
-        for (const nftTx of th.nftTransfers.filter(
-          (nft) => nft.possibleSpam === false && Number(nft.tokenId) < 1e9,
+        for (const nftTx of th.nft_transfers.filter(
+          (nft) => nft.possible_spam === false && Number(nft.token_id) < 1e9,
         )) {
           transfers.push({
             type: "nft",
-            from_address: nftTx.fromAddress.lowercase,
-            to_address: nftTx.toAddress?.lowercase ?? null,
+            from_address: nftTx.from_address,
+            to_address: nftTx.to_address ?? null,
             value: 0n,
-            coin_address: nftTx.tokenAddress.lowercase,
-            token_id: Number(nftTx.tokenId),
+            coin_address: nftTx.token_address,
+            token_id: Number(nftTx.token_id),
           });
         }
 
         const decimal_places = blockchains[blockchain].decimal_places;
 
         const fee = Number(
-          th.transactionFee
-            ? th.transactionFee.toString().slice(0, decimal_places)
+          th.transaction_fee
+            ? th.transaction_fee.toString().slice(0, decimal_places)
             : 0,
         );
 
         return {
           blockchain: blockchain,
           hash: th.hash,
-          block_timestamp: new Date(th.blockTimestamp),
+          block_timestamp: new Date(th.block_timestamp),
           transfers,
           fee: BigInt((fee * 10 ** decimal_places).toFixed(0)),
-          from_address: th.fromAddress.lowercase,
-          to_address: th.toAddress?.lowercase ?? null,
+          from_address: th.from_address,
+          to_address: th.to_address ?? null,
           summary: th.summary,
         };
       });

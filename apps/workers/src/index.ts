@@ -44,7 +44,7 @@ export type CoinJobsQueue = {
 export type WalletJobsQueue = {
   jobName: "updateWallets";
   data: {
-    hourly_frequency: 0.25 | 0.5 | 1 | 2 | 4 | 24 | 48;
+    hourly_frequency: 0.25 | 0.5 | 1 | 2 | 4 | 24;
   };
 };
 

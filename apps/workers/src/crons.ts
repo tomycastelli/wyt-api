@@ -58,15 +58,6 @@ export const wallet_crons = (
       },
     });
   });
-
-  schedule("20 3 */2 * *", () => {
-    wallet_jobs_queue.add("updating 48 hour wallets", {
-      jobName: "updateWallets",
-      data: {
-        hourly_frequency: 48,
-      },
-    });
-  });
 };
 
 export const coin_crons = (coin_jobs_queue: Queue<CoinJobsQueue>): void => {

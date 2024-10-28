@@ -105,6 +105,7 @@ export class SolanaProvider implements WalletsProvider {
       alias: null,
       backfill_status: "pending",
       first_transfer_date: null,
+      transaction_frequency: null,
       native_value: BigInt(account_info.lamports),
       coins,
     };

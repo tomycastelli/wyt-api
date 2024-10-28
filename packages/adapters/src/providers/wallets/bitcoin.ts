@@ -58,6 +58,7 @@ export class BitcoinProvider implements WalletsProvider {
       backfill_status: "pending",
       coins: [],
       first_transfer_date: null,
+      transaction_frequency: null,
       native_value: BigInt(
         parsedResponse.chain_stats.funded_txo_sum -
           parsedResponse.chain_stats.spent_txo_sum,

@@ -391,14 +391,40 @@ export class WalletsService<
   }
 
   public async getWalletsToUpdate(
-    hourly_frequency: 0.25 | 0.5 | 1 | 2 | 4 | 24 | 48,
+    hourly_frequency: 0.25 | 0.5 | 1 | 2 | 4 | 24,
   ): Promise<SavedWallet[]> {
     // Definimos que [Wallet]s actualizar segun la frecuencia pasada
     // Las frecuencias estan en txs/hora
     // quiero en promedio conseguir entre 10 y 30 transacciones al actualizar
-    const from_frequency = hourly_frequency === 48 ? 0 : 10 / hourly_frequency;
-    const to_frequency: number | null =
-      hourly_frequency === 0.25 ? null : 30 / hourly_frequency;
+    let from_frequency: number;
+    let to_frequency: number | null;
+
+    switch (hourly_frequency) {
+      case 0.25:
+        from_frequency = 30;
+        to_frequency = null;
+        break;
+      case 0.5:
+        from_frequency = 15;
+        to_frequency = 30;
+        break;
+      case 1:
+        from_frequency = 5;
+        to_frequency = 15;
+        break;
+      case 2:
+        from_frequency = 1;
+        to_frequency = 5;
+        break;
+      case 4:
+        from_frequency = 0.5;
+        to_frequency = 1;
+        break;
+      case 24:
+        from_frequency = 0;
+        to_frequency = 0.5;
+        break;
+    }
 
     const wallets =
       await this.walletsRepository.getWalletsByTransactionFrequency(
@@ -431,7 +457,9 @@ export class WalletsService<
     const hours_range =
       Math.abs(new Date().getTime() - saved_wallet.last_update.getTime()) /
       3.6e6;
-    const transaction_frequency = new_transactions.length / hours_range;
+    const transaction_frequency = Math.round(
+      new_transactions.length / hours_range,
+    );
 
     // Actualizo sus posesiones y su transaction_frequency
     const { valued_wallet, new_coins: new_wallet_coins } =
