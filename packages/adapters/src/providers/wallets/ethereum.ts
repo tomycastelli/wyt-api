@@ -70,7 +70,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
 
   private readonly api_key: string;
 
-  private readonly base_url = "https://deep-index.moralis.io/api/v2.2/";
+  private readonly base_url = "https://deep-index.moralis.io/api/v2.2";
 
   constructor(api_key: string) {
     this.api_key = api_key;
