@@ -1,4 +1,3 @@
-import { EveryBlockainsName } from "@repo/domain";
 import type { Queue } from "bullmq";
 import { schedule } from "node-cron";
 import type { CoinJobsQueue, WalletJobsQueue } from "./index.js";
@@ -6,19 +5,67 @@ import type { CoinJobsQueue, WalletJobsQueue } from "./index.js";
 export const wallet_crons = (
   wallet_jobs_queue: Queue<WalletJobsQueue>,
 ): void => {
+  schedule("*/15 * * * *", () => {
+    wallet_jobs_queue.add("updating 15 minutes wallets", {
+      jobName: "updateWallets",
+      data: {
+        hourly_frequency: 0.25,
+      },
+    });
+  });
+
   schedule("*/30 * * * *", () => {
-    // Cada media hora
-    wallet_jobs_queue.addBulk(
-      EveryBlockainsName.map((blockchain) => ({
-        name: `updating ${blockchain} wallets`,
-        data: {
-          jobName: "updateBlockchainWallets",
-          data: {
-            blockchain,
-          },
-        },
-      })),
-    );
+    wallet_jobs_queue.add("updating 30 minutes wallets", {
+      jobName: "updateWallets",
+      data: {
+        hourly_frequency: 0.5,
+      },
+    });
+  });
+
+  schedule("5 * * * *", () => {
+    wallet_jobs_queue.add("updating 1 hour wallets", {
+      jobName: "updateWallets",
+      data: {
+        hourly_frequency: 1,
+      },
+    });
+  });
+
+  schedule("5 */2 * * *", () => {
+    wallet_jobs_queue.add("updating 2 hour wallets", {
+      jobName: "updateWallets",
+      data: {
+        hourly_frequency: 2,
+      },
+    });
+  });
+
+  schedule("10 */4 * * *", () => {
+    wallet_jobs_queue.add("updating 4 hour wallets", {
+      jobName: "updateWallets",
+      data: {
+        hourly_frequency: 4,
+      },
+    });
+  });
+
+  schedule("10 3 * * *", () => {
+    wallet_jobs_queue.add("updating 24 hour wallets", {
+      jobName: "updateWallets",
+      data: {
+        hourly_frequency: 24,
+      },
+    });
+  });
+
+  schedule("20 3 */2 * *", () => {
+    wallet_jobs_queue.add("updating 48 hour wallets", {
+      jobName: "updateWallets",
+      data: {
+        hourly_frequency: 48,
+      },
+    });
   });
 };
 

@@ -1,5 +1,6 @@
 import {
   EvmChain,
+  type EvmWalletHistory,
   type EvmWalletHistoryTransaction,
 } from "@moralisweb3/common-evm-utils";
 import {
@@ -69,6 +70,8 @@ export class EthereumProvider implements WalletsStreamsProvider {
 
   private readonly api_key: string;
 
+  private readonly base_url = "https://deep-index.moralis.io/api/v2.2/";
+
   constructor(api_key: string) {
     this.api_key = api_key;
   }
@@ -81,6 +84,36 @@ export class EthereumProvider implements WalletsStreamsProvider {
   }
 
   private rate_limiter: RateLimiter = new RateLimiter(10, 20);
+
+  async rateLimitedCallApi(url: string): Promise<unknown | null> {
+    const retries = 3;
+    for (let i = 0; i < retries; i++) {
+      try {
+        await this.rate_limiter.acquire();
+        const response = await fetch(url, {
+          method: "GET",
+          headers: {
+            accept: "application/json",
+            "X-API-Key": this.api_key,
+          },
+        });
+        if (!response.ok) {
+          throw Error(`Invalid request: ${JSON.stringify(response)}`);
+        }
+
+        const json = await response.json();
+
+        if (json === undefined || json === null) continue;
+
+        return json;
+      } catch (e) {
+        console.error(`Failed calling ${url}`, e);
+        if (i === retries - i) {
+          return null;
+        }
+      }
+    }
+  }
 
   async getWallet(
     address: string,
@@ -95,6 +128,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
       first_transfer_date: null,
       alias: null,
       native_value: 0n,
+      transaction_frequency: null,
     };
 
     await this.rate_limiter.acquire();
@@ -163,24 +197,6 @@ export class EthereumProvider implements WalletsStreamsProvider {
     return wallet_data;
   }
 
-  async getRecentTransactions(wallet_data: Wallet): Promise<Transaction[]> {
-    await this.rate_limiter.acquire();
-    const recent_transactions = await Moralis.EvmApi.wallets.getWalletHistory({
-      chain: this.blockchain_mapper[wallet_data.blockchain],
-      address: wallet_data.address,
-      order: "DESC",
-      includeInternalTransactions: false,
-      // Limito para que sea mas rapido
-      limit: 10,
-    });
-
-    return this.transactionsFromWalletHistory(
-      recent_transactions.result,
-      wallet_data.address,
-      wallet_data.blockchain,
-    );
-  }
-
   async getAllTransactionsFromDate(
     wallet_data: Wallet,
     from_date: Date,
@@ -190,41 +206,25 @@ export class EthereumProvider implements WalletsStreamsProvider {
     let loop_cursor: string | undefined = undefined;
 
     do {
-      await this.rate_limiter.acquire();
-      try {
-        const new_transactions = await Moralis.EvmApi.wallets.getWalletHistory({
-          chain: this.blockchain_mapper[wallet_data.blockchain],
-          address: wallet_data.address,
-          order: "DESC",
-          includeInternalTransactions: false,
-          fromDate: from_date,
-          cursor: loop_cursor,
-          limit: 200,
-        });
-
-        if (new_transactions.result.length > 0) {
-          transactions.push(
-            ...this.transactionsFromWalletHistory(
-              new_transactions.result,
-              wallet_data.address,
-              wallet_data.blockchain,
-            ),
-          );
-        }
-
-        loop_cursor = new_transactions.pagination.cursor;
-      } catch (e) {
-        console.error("Failed getting the new_transactions from wallet", e);
-        console.log("Values used: ", {
-          chain: this.blockchain_mapper[wallet_data.blockchain],
-          address: wallet_data.address,
-          order: "DESC",
-          includeInternalTransactions: false,
-          fromDate: from_date,
-          cursor: loop_cursor,
-          limit: 200,
-        });
+      let url = `${this.base_url}/wallets/${wallet_data.address}/history?chain=${this.blockchain_mapper[wallet_data.blockchain].apiHex}&from_date=${from_date.toISOString()}&include_internal_transactions=false&limit=300&order=DESC`;
+      if (loop_cursor) {
+        url += `&cursor=${loop_cursor}`;
       }
+      const new_transactions = (await this.rateLimitedCallApi(
+        url,
+      )) as EvmWalletHistory;
+
+      if (new_transactions && new_transactions.result.length > 0) {
+        transactions.push(
+          ...this.transactionsFromWalletHistory(
+            new_transactions.result,
+            wallet_data.address,
+            wallet_data.blockchain,
+          ),
+        );
+      }
+
+      loop_cursor = new_transactions.cursor;
     } while (loop_cursor);
 
     return transactions;
@@ -281,47 +281,27 @@ export class EthereumProvider implements WalletsStreamsProvider {
     to_block: number,
     loop_cursor: string | undefined,
   ): Promise<{ transactions: Transaction[]; cursor: string | undefined }> {
-    await this.rate_limiter.acquire();
-    try {
-      const transaction_history = await Moralis.EvmApi.wallets.getWalletHistory(
-        {
-          chain: this.blockchain_mapper[blockchain],
-          address,
-          order: "DESC",
-          includeInternalTransactions: false,
-          fromBlock: from_block,
-          toBlock: to_block,
-          cursor: loop_cursor,
-          // Paginamos menos para evitar errores de respuesta muy larga
-          limit: 200,
-        },
-      );
+    let url = `${this.base_url}/wallets/${address}/history?chain=${this.blockchain_mapper[blockchain].apiHex}&from_block=${from_block}&to_block=${to_block}&include_internal_transactions=false&limit=300&order=DESC`;
+    if (loop_cursor) {
+      url += `&cursor=${loop_cursor}`;
+    }
+    const transaction_history = (await this.rateLimitedCallApi(
+      url,
+    )) as EvmWalletHistory;
 
-      return {
-        transactions: this.transactionsFromWalletHistory(
-          transaction_history.result,
-          address,
-          blockchain,
-        ),
-        cursor: transaction_history.pagination.cursor,
-      };
-    } catch (e) {
-      console.error("Failed getting wallet tx history: ", e);
-      console.log({
-        values_used: {
-          chain: this.blockchain_mapper[blockchain],
-          address,
-          order: "DESC",
-          includeInternalTransactions: false,
-          fromBlock: from_block,
-          toBlock: to_block,
-          cursor: loop_cursor,
-          // Paginamos menos para evitar errores de respuesta muy larga
-          limit: 200,
-        },
-      });
+    if (!transaction_history) {
+      // Falló la call a la api
       return { transactions: [], cursor: undefined };
     }
+
+    return {
+      transactions: this.transactionsFromWalletHistory(
+        transaction_history.result,
+        address,
+        blockchain,
+      ),
+      cursor: transaction_history.cursor,
+    };
   }
 
   async createStreams(

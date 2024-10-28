@@ -67,20 +67,6 @@ export class BitcoinProvider implements WalletsProvider {
     return wallet;
   }
 
-  async getRecentTransactions(wallet_data: Wallet): Promise<Transaction[]> {
-    const response = await fetch(
-      `${this.api_url}/address/${wallet_data.address}/txs/chain`,
-    ).then((res) => res.json());
-
-    const parsedResponse = txInfoType(response);
-
-    if (parsedResponse instanceof type.errors) throw parsedResponse;
-
-    const transactions = this.mapTransactionData(parsedResponse.slice(0, 10));
-
-    return transactions;
-  }
-
   async getWalletTimes(
     wallet_data: Wallet,
   ): Promise<{ first_block: number; last_block: number; first_date: Date }> {

@@ -10,7 +10,6 @@ import {
   type BlockchainsName,
   CoinsService,
   type SavedWallet,
-  type Transaction,
   WalletsService,
 } from "@repo/domain";
 import {
@@ -43,10 +42,9 @@ export type CoinJobsQueue = {
 };
 
 export type WalletJobsQueue = {
-  jobName: "updateBlockchainWallets";
+  jobName: "updateWallets";
   data: {
-    blockchain: BlockchainsName;
-    transactions?: Transaction[];
+    hourly_frequency: 0.25 | 0.5 | 1 | 2 | 4 | 24 | 48;
   };
 };
 

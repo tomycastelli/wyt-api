@@ -23,27 +23,21 @@ export const setupWalletsWorker = (
       console.log(`Starting job ${job.name} with ID ${job.id}`);
       const payload = job.data;
       switch (payload.jobName) {
-        case "updateBlockchainWallets": {
-          let page = 1;
-          let is_last_page = false;
+        case "updateWallets": {
+          const wallets = await wallets_service.getWalletsToUpdate(
+            payload.data.hourly_frequency,
+          );
 
-          while (!is_last_page) {
-            const wallets = await wallets_service.getWalletsByBlockchain(
-              payload.data.blockchain,
-              page,
-            );
-
-            // Las actualizo
-            for (const wallet of wallets) {
-              await wallets_service.updateWallet(wallet);
-              await job.updateProgress({ page, wallet: wallet.address });
-            }
-
-            if (wallets.length < 20) is_last_page = true;
-            page++;
+          // Las actualizo
+          let counter = 0;
+          for (const wallet of wallets) {
+            await wallets_service.updateWallet(wallet);
+            counter++;
+            await job.updateProgress({
+              wallet: wallet.address,
+              out_of_total: counter / wallets.length,
+            });
           }
-
-          break;
         }
       }
     },
@@ -73,6 +67,10 @@ export const setupWalletsWorker = (
       `Job ${job?.data.jobName}-${job?.id} has failed with err: `,
       err,
     );
+  });
+
+  walletJobsWorker.on("progress", (_, progress) => {
+    console.log("Wallet updated: ", progress);
   });
 
   return walletJobsWorker;

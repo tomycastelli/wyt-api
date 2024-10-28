@@ -217,6 +217,7 @@ export const wallets = pgTable(
       mode: "date",
       withTimezone: false,
     }).notNull(),
+    transaction_frequency: integer("transaction_frequency"),
   },
   (table) => {
     return {

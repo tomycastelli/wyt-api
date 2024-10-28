@@ -32,6 +32,7 @@ export const walletType = type({
   coins: walletCoin.array(),
   first_transfer_date: "Date|null",
   backfill_status: "'pending'|'active'|'complete'",
+  transaction_frequency: "number|null",
 });
 
 export const savedWalletType = walletType.merge({

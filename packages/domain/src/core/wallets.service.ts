@@ -390,14 +390,29 @@ export class WalletsService<
     return { new_coins, webhooks_handled };
   }
 
+  public async getWalletsToUpdate(
+    hourly_frequency: 0.25 | 0.5 | 1 | 2 | 4 | 24 | 48,
+  ): Promise<SavedWallet[]> {
+    // Definimos que [Wallet]s actualizar segun la frecuencia pasada
+    // Las frecuencias estan en txs/hora
+    // quiero en promedio conseguir entre 10 y 30 transacciones al actualizar
+    const from_frequency = hourly_frequency === 48 ? 0 : 10 / hourly_frequency;
+    const to_frequency: number | null =
+      hourly_frequency === 0.25 ? null : 30 / hourly_frequency;
+
+    const wallets =
+      await this.walletsRepository.getWalletsByTransactionFrequency(
+        from_frequency,
+        to_frequency,
+      );
+    return wallets;
+  }
+
   /** Actualiza los token holdings de la [Wallet] y consigue nuevas transacciones vinculadas.
   El cambio del estado se hace directo sin recurrir a las [Transaction]s. */
   public async updateWallet(
     saved_wallet: SavedWallet,
   ): Promise<{ new_coins: SavedCoin[] } | null> {
-    // Si esta pendiente de backfill no la actualizo todavía
-    if (saved_wallet.backfill_status === "pending") return null;
-
     const updated_wallet_data = await this.walletsProvider.getWallet(
       saved_wallet.address,
       saved_wallet.blockchain,
@@ -405,18 +420,27 @@ export class WalletsService<
 
     if (!updated_wallet_data) return null;
 
-    const { valued_wallet, new_coins: new_wallet_coins } =
-      await this.getValuedWallet(updated_wallet_data);
-
-    // Actualizo sus posesiones
-    await this.walletsRepository.updateWallet(saved_wallet.id, valued_wallet);
-
     // Consigo las nuevas transacciones
     const new_transactions =
       await this.walletsProvider.getAllTransactionsFromDate(
         saved_wallet,
         saved_wallet.last_update,
       );
+
+    // Actualizo el transaction_frequency. Es txs/hour
+    const hours_range =
+      Math.abs(new Date().getTime() - saved_wallet.last_update.getTime()) /
+      3.6e6;
+    const transaction_frequency = new_transactions.length / hours_range;
+
+    // Actualizo sus posesiones y su transaction_frequency
+    const { valued_wallet, new_coins: new_wallet_coins } =
+      await this.getValuedWallet(updated_wallet_data);
+    await this.walletsRepository.updateWallet(
+      saved_wallet.id,
+      valued_wallet,
+      transaction_frequency,
+    );
 
     const { coined_transactions, new_coins: new_tx_coins } =
       await this.getCoinedTransactions(
@@ -754,11 +778,6 @@ export class WalletsService<
     const current_date = new Date();
 
     const granularity = time_range === "day" ? "hourly" : "daily";
-
-    console.log(
-      "Time substract func: ",
-      this.subtractTime(current_date, time_range),
-    );
 
     const transactions = await this.walletsRepository.getTransactions(
       valued_wallet.address,

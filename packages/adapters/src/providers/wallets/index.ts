@@ -41,18 +41,6 @@ export class WalletsProviderAdapters implements WalletsStreamsProvider {
     }
   }
 
-  async getRecentTransactions(wallet_data: Wallet): Promise<Transaction[]> {
-    const ecosystem = blockchains[wallet_data.blockchain].ecosystem;
-    switch (ecosystem) {
-      case "ethereum":
-        return this.ethereumProvider.getRecentTransactions(wallet_data);
-      case "solana":
-        return this.solanaProvider.getRecentTransactions(wallet_data);
-      case "bitcoin":
-        return this.bitcoinProvider.getRecentTransactions(wallet_data);
-    }
-  }
-
   async getWalletTimes(
     wallet_data: Wallet,
   ): Promise<{ first_block: number; last_block: number; first_date: Date }> {

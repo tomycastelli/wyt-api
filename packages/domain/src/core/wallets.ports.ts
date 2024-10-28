@@ -16,9 +16,6 @@ export interface WalletsProvider {
     blockchain: BlockchainsName,
   ): Promise<Wallet | null>;
 
-  /** Busca las [Transaction]s mas recientes de una [Wallet] con una cantidad arbitrario */
-  getRecentTransactions(wallet_data: Wallet): Promise<Transaction[]>;
-
   /** Busca el primer y último bloque de una [Wallet] */
   getWalletTimes(wallet_data: Wallet): Promise<{
     first_block: number;
@@ -86,7 +83,11 @@ export interface WalletsRepository {
   saveWallet(coined_wallet: CoinedWallet): Promise<SavedWallet>;
 
   /** Actualiza el portfolio de una [Wallet] */
-  updateWallet(wallet_id: number, new_data: CoinedWallet): Promise<void>;
+  updateWallet(
+    wallet_id: number,
+    new_data: CoinedWallet,
+    transaction_frequency: number,
+  ): Promise<void>;
 
   /** Consigue una [Wallet] guardada */
   getWallet(
@@ -103,6 +104,12 @@ export interface WalletsRepository {
     blockchain: BlockchainsName,
     wallets_page: number,
     ids?: number[],
+  ): Promise<SavedWallet[]>;
+
+  /** Consigue una lista de [Wallet]s segun un rango de frecuencia de transacciones */
+  getWalletsByTransactionFrequency(
+    from_frequency: number,
+    to_frequency: number | null,
   ): Promise<SavedWallet[]>;
 
   /** Consigue las [Transaction]s de una [Wallet] de manera paginada y descendente  \

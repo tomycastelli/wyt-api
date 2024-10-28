@@ -83,13 +83,18 @@ export class WalletsPostgres implements WalletsRepository {
     };
   }
 
-  async updateWallet(wallet_id: number, new_data: CoinedWallet): Promise<void> {
+  async updateWallet(
+    wallet_id: number,
+    new_data: CoinedWallet,
+    transaction_frequency: number,
+  ): Promise<void> {
     await this.db.transaction(async (tx) => {
       // Actualizo el native value
       await tx
         .update(schema.wallets)
         .set({
           native_value: new_data.native_value,
+          transaction_frequency,
         })
         .where(eq(schema.wallets.id, wallet_id));
 
@@ -207,9 +212,10 @@ export class WalletsPostgres implements WalletsRepository {
       address: saved_wallet.address,
       alias: saved_wallet.alias,
       backfill_status: saved_wallet.backfill_status,
-      last_update: saved_wallet.last_update,
       blockchain: saved_wallet.blockchain,
       first_transfer_date: saved_wallet.first_transfer_date,
+      last_update: saved_wallet.last_update,
+      transaction_frequency: saved_wallet.transaction_frequency,
       native_value: BigInt(saved_wallet.native_value),
       coins: [...wallet_coins, ...wallet_nfts],
     };
@@ -269,6 +275,71 @@ export class WalletsPostgres implements WalletsRepository {
         blockchain: saved_wallet.blockchain,
         first_transfer_date: saved_wallet.first_transfer_date,
         last_update: saved_wallet.last_update,
+        transaction_frequency: saved_wallet.transaction_frequency,
+        native_value: BigInt(saved_wallet.native_value),
+        coins: [...wallet_coins, ...wallet_nfts],
+      };
+    });
+
+    return mapped_wallets;
+  }
+
+  async getWalletsByTransactionFrequency(
+    from_frequency: number,
+    to_frequency: number | null,
+  ): Promise<SavedWallet[]> {
+    const saved_wallets = await this.db.query.wallets.findMany({
+      where: (wallets, { and, gte, lt, isNull, or }) =>
+        or(
+          isNull(wallets.transaction_frequency),
+          and(
+            gte(wallets.transaction_frequency, from_frequency),
+            to_frequency
+              ? lt(wallets.transaction_frequency, to_frequency)
+              : undefined,
+          ),
+        ),
+      with: {
+        walletCoins: {
+          with: {
+            coin: {
+              with: {
+                contracts: true,
+              },
+            },
+          },
+        },
+        walletNFTs: {
+          with: {
+            nft: true,
+          },
+        },
+      },
+    });
+
+    const mapped_wallets: SavedWallet[] = saved_wallets.map((saved_wallet) => {
+      const wallet_coins: WalletCoin[] = saved_wallet.walletCoins.map((wc) => ({
+        coin_address: wc.coin.contracts.find(
+          (c) => c.blockchain === saved_wallet.blockchain,
+        )!.contract_address,
+        value: BigInt(wc.value),
+      }));
+
+      const wallet_nfts: WalletCoin[] = saved_wallet.walletNFTs.map((wn) => ({
+        coin_address: wn.nft.contract_address,
+        token_id: wn.nft.token_id,
+        value: 0n,
+      }));
+
+      return {
+        id: saved_wallet.id,
+        address: saved_wallet.address,
+        alias: saved_wallet.alias,
+        backfill_status: saved_wallet.backfill_status,
+        blockchain: saved_wallet.blockchain,
+        first_transfer_date: saved_wallet.first_transfer_date,
+        last_update: saved_wallet.last_update,
+        transaction_frequency: saved_wallet.transaction_frequency,
         native_value: BigInt(saved_wallet.native_value),
         coins: [...wallet_coins, ...wallet_nfts],
       };
@@ -720,9 +791,10 @@ export class WalletsPostgres implements WalletsRepository {
         address: saved_wallet.address,
         alias: saved_wallet.alias,
         backfill_status: saved_wallet.backfill_status,
-        last_update: saved_wallet.last_update,
         blockchain: saved_wallet.blockchain,
         first_transfer_date: saved_wallet.first_transfer_date,
+        last_update: saved_wallet.last_update,
+        transaction_frequency: saved_wallet.transaction_frequency,
         native_value: BigInt(saved_wallet.native_value),
         coins: [...wallet_coins, ...wallet_nfts],
       });

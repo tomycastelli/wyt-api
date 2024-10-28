@@ -112,20 +112,6 @@ export class SolanaProvider implements WalletsProvider {
     return wallet;
   }
 
-  async getRecentTransactions(wallet_data: Wallet): Promise<Transaction[]> {
-    const public_key = new PublicKey(wallet_data.address);
-
-    // Agarro las primeras 5 por temas de velocidad
-    const transactions = await this.getConnection().getSignaturesForAddress(
-      public_key,
-      {
-        limit: 5,
-      },
-    );
-
-    return this.mapTransactionData(transactions);
-  }
-
   async getWalletTimes(
     wallet_data: Wallet,
   ): Promise<{ first_block: number; last_block: number; first_date: Date }> {
