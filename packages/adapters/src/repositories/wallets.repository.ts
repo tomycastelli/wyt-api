@@ -259,7 +259,10 @@ export class WalletsPostgres implements WalletsRepository {
             with: {
               coin: {
                 with: {
-                  contracts: true,
+                  contracts: {
+                    where: (contracts, { eq }) =>
+                      eq(contracts.blockchain, blockchain),
+                  },
                 },
               },
             },
@@ -316,7 +319,10 @@ export class WalletsPostgres implements WalletsRepository {
             with: {
               coin: {
                 with: {
-                  contracts: true,
+                  contracts: {
+                    where: (contracts, { eq }) =>
+                      eq(contracts.blockchain, blockchain),
+                  },
                 },
               },
             },
