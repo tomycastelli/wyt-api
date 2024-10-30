@@ -222,8 +222,18 @@ export class WalletsService<
       include_nfts,
     );
 
+    // Me quedo con las primeras 10 coins con mayor porcentaje de la wallet
     const valued_wallets = await Promise.all(
-      saved_wallets.map(async (cw) => await this.getValuedWallet(cw)),
+      saved_wallets.map(
+        async (cw) =>
+          await this.getValuedWallet(cw).then((vw) => ({
+            valued_wallet: {
+              ...vw.valued_wallet,
+              coins: vw.valued_wallet.coins.slice(0, 10),
+            },
+            new_coins: vw.new_coins,
+          })),
+      ),
     );
 
     return valued_wallets.map((vw) => vw.valued_wallet);
@@ -590,7 +600,17 @@ export class WalletsService<
         decimal_places,
       );
 
-      valued_transactions.push({ ...tx, transfers: valued_transfers, fee_usd });
+      valued_transactions.push({
+        hash: tx.hash,
+        blockchain: tx.blockchain,
+        block_timestamp: tx.block_timestamp,
+        from_address: tx.from_address,
+        to_address: tx.to_address,
+        fee: tx.fee,
+        fee_usd,
+        summary: tx.summary,
+        transfers: valued_transfers,
+      });
     }
 
     return {
@@ -659,7 +679,16 @@ export class WalletsService<
       // Si no hay transfers despues de buscar las Coins, no agrego la tx
       if (valued_transfers.length === 0) continue;
 
-      coined_transactions.push({ ...tx, transfers: valued_transfers });
+      coined_transactions.push({
+        hash: tx.hash,
+        blockchain: tx.blockchain,
+        block_timestamp: tx.block_timestamp,
+        from_address: tx.from_address,
+        to_address: tx.to_address,
+        fee: tx.fee,
+        summary: tx.summary,
+        transfers: valued_transfers,
+      });
     }
 
     return {
@@ -750,17 +779,24 @@ export class WalletsService<
 
     total_value_usd += native_value_usd;
 
-    // Calculo porcentajes
-    const valued_wallet_coins: ValuedWalletCoin[] =
-      partial_valued_wallet_coins.map((c) => ({
+    // Calculo porcentajes y ordeno de mayor a menor
+    const valued_wallet_coins: ValuedWalletCoin[] = partial_valued_wallet_coins
+      .map((c) => ({
         ...c,
         percentage_in_wallet: Number(
           ((c.value_usd / total_value_usd) * 100).toFixed(4),
         ),
-      }));
+      }))
+      .sort((a, b) => b.percentage_in_wallet - a.percentage_in_wallet);
 
     const valued_wallet: ValuedWallet = {
-      ...wallet_data,
+      address: wallet_data.address,
+      blockchain: wallet_data.blockchain,
+      alias: wallet_data.alias,
+      backfill_status: wallet_data.backfill_status,
+      first_transfer_date: wallet_data.first_transfer_date,
+      native_value: wallet_data.native_value,
+      transaction_frequency: wallet_data.transaction_frequency,
       native_value_usd,
       total_value_usd,
       native_coin: native_coin!,
