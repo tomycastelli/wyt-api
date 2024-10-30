@@ -1,9 +1,11 @@
-import type {
-  BlockchainsName,
-  Transaction,
-  Transfer,
-  Wallet,
-  WalletsProvider,
+import {
+  type BlockchainsName,
+  type Transaction,
+  type Transfer,
+  type Wallet,
+  type WalletsProvider,
+  blockchains,
+  formatBlockchainValue,
 } from "@repo/domain";
 import { type } from "arktype";
 
@@ -51,6 +53,11 @@ export class BitcoinProvider implements WalletsProvider {
 
     if (parsedResponse instanceof type.errors) throw parsedResponse;
 
+    const native_value = BigInt(
+      parsedResponse.chain_stats.funded_txo_sum -
+        parsedResponse.chain_stats.spent_txo_sum,
+    );
+
     const wallet: Wallet = {
       address,
       blockchain,
@@ -59,9 +66,10 @@ export class BitcoinProvider implements WalletsProvider {
       coins: [],
       first_transfer_date: null,
       transaction_frequency: null,
-      native_value: BigInt(
-        parsedResponse.chain_stats.funded_txo_sum -
-          parsedResponse.chain_stats.spent_txo_sum,
+      native_value,
+      formated_native_value: formatBlockchainValue(
+        native_value,
+        blockchains[blockchain].decimal_places,
       ),
     };
 

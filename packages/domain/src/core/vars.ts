@@ -101,3 +101,13 @@ export function calculateFiatValue(
 
   return Number(result);
 }
+
+export function formatBlockchainValue(value: BigInt, decimals: number): number {
+  const valueBig = new Big(value.toString());
+
+  const divisor = new Big(10).pow(decimals);
+
+  const result = valueBig.div(divisor);
+
+  return Number(result);
+}

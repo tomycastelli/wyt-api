@@ -29,6 +29,7 @@ export const walletType = type({
   blockchain: blockchain,
   alias: "string|null",
   native_value: "bigint",
+  formated_native_value: "number",
   coins: walletCoin.array(),
   first_transfer_date: "Date|null",
   backfill_status: "'pending'|'active'|'complete'",

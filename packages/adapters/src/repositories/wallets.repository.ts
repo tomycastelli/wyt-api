@@ -1,13 +1,15 @@
-import type {
-  BlockchainsName,
-  CoinedTransaction,
-  CoinedWallet,
-  SavedWallet,
-  Transaction,
-  Transfer,
-  Wallet,
-  WalletCoin,
-  WalletsRepository,
+import {
+  type BlockchainsName,
+  type CoinedTransaction,
+  type CoinedWallet,
+  type SavedWallet,
+  type Transaction,
+  type Transfer,
+  type Wallet,
+  type WalletCoin,
+  type WalletsRepository,
+  blockchains,
+  formatBlockchainValue,
 } from "@repo/domain";
 import {
   and,
@@ -79,6 +81,10 @@ export class WalletsPostgres implements WalletsRepository {
     return {
       ...saved_wallet,
       native_value: BigInt(saved_wallet.native_value),
+      formated_native_value: formatBlockchainValue(
+        BigInt(saved_wallet.native_value),
+        blockchains[saved_wallet.blockchain].decimal_places,
+      ),
       coins: coined_wallet.coins,
     };
   }
@@ -235,6 +241,10 @@ export class WalletsPostgres implements WalletsRepository {
       last_update: saved_wallet.last_update,
       transaction_frequency: saved_wallet.transaction_frequency,
       native_value: BigInt(saved_wallet.native_value),
+      formated_native_value: formatBlockchainValue(
+        BigInt(saved_wallet.native_value),
+        blockchains[saved_wallet.blockchain].decimal_places,
+      ),
       coins: [...wallet_coins, ...wallet_nfts],
     };
   }
@@ -303,6 +313,10 @@ export class WalletsPostgres implements WalletsRepository {
           last_update: saved_wallet.last_update,
           transaction_frequency: saved_wallet.transaction_frequency,
           native_value: BigInt(saved_wallet.native_value),
+          formated_native_value: formatBlockchainValue(
+            BigInt(saved_wallet.native_value),
+            blockchains[saved_wallet.blockchain].decimal_places,
+          ),
           coins: [...wallet_coins, ...wallet_nfts],
         });
       }
@@ -352,6 +366,10 @@ export class WalletsPostgres implements WalletsRepository {
           last_update: saved_wallet.last_update,
           transaction_frequency: saved_wallet.transaction_frequency,
           native_value: BigInt(saved_wallet.native_value),
+          formated_native_value: formatBlockchainValue(
+            BigInt(saved_wallet.native_value),
+            blockchains[saved_wallet.blockchain].decimal_places,
+          ),
           coins: wallet_coins,
         });
       }
@@ -417,6 +435,10 @@ export class WalletsPostgres implements WalletsRepository {
         last_update: saved_wallet.last_update,
         transaction_frequency: saved_wallet.transaction_frequency,
         native_value: BigInt(saved_wallet.native_value),
+        formated_native_value: formatBlockchainValue(
+          BigInt(saved_wallet.native_value),
+          blockchains[saved_wallet.blockchain].decimal_places,
+        ),
         coins: [...wallet_coins, ...wallet_nfts],
       };
     });
@@ -872,6 +894,10 @@ export class WalletsPostgres implements WalletsRepository {
         last_update: saved_wallet.last_update,
         transaction_frequency: saved_wallet.transaction_frequency,
         native_value: BigInt(saved_wallet.native_value),
+        formated_native_value: formatBlockchainValue(
+          BigInt(saved_wallet.native_value),
+          blockchains[saved_wallet.blockchain].decimal_places,
+        ),
         coins: [...wallet_coins, ...wallet_nfts],
       });
     }

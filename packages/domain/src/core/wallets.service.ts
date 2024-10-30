@@ -23,6 +23,7 @@ import {
   type BlockchainsName,
   blockchains,
   calculateFiatValue,
+  formatBlockchainValue,
   generateFilledDateRange,
 } from "./vars.js";
 import type {
@@ -796,6 +797,10 @@ export class WalletsService<
       backfill_status: wallet_data.backfill_status,
       first_transfer_date: wallet_data.first_transfer_date,
       native_value: wallet_data.native_value,
+      formated_native_value: formatBlockchainValue(
+        wallet_data.native_value,
+        decimal_places,
+      ),
       transaction_frequency: wallet_data.transaction_frequency,
       native_value_usd,
       total_value_usd,

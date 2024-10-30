@@ -13,6 +13,7 @@ import {
   type WalletCoin,
   type WalletsStreamsProvider,
   blockchains,
+  formatBlockchainValue,
 } from "@repo/domain";
 import { type } from "arktype";
 import Moralis from "moralis";
@@ -128,6 +129,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
       first_transfer_date: null,
       alias: null,
       native_value: 0n,
+      formated_native_value: 0,
       transaction_frequency: null,
     };
 
@@ -145,6 +147,11 @@ export class EthereumProvider implements WalletsStreamsProvider {
     wallet_data.native_value = balances_data.result
       .find((c) => c.nativeToken)!
       .balance.value.toBigInt();
+
+    wallet_data.formated_native_value = formatBlockchainValue(
+      wallet_data.native_value,
+      blockchains[blockchain].decimal_places,
+    );
 
     // Agrego coins hasta que no haya mas páginas
     do {

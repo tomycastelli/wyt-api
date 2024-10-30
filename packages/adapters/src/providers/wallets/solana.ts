@@ -1,10 +1,12 @@
-import type {
-  BlockchainsName,
-  Transaction,
-  Transfer,
-  Wallet,
-  WalletCoin,
-  WalletsProvider,
+import {
+  type BlockchainsName,
+  type Transaction,
+  type Transfer,
+  type Wallet,
+  type WalletCoin,
+  type WalletsProvider,
+  blockchains,
+  formatBlockchainValue,
 } from "@repo/domain";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import {
@@ -107,6 +109,10 @@ export class SolanaProvider implements WalletsProvider {
       first_transfer_date: null,
       transaction_frequency: null,
       native_value: BigInt(account_info.lamports),
+      formated_native_value: formatBlockchainValue(
+        BigInt(account_info.lamports),
+        blockchains[blockchain].decimal_places,
+      ),
       coins,
     };
 
