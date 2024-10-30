@@ -14,7 +14,11 @@ import { type } from "arktype";
 import type { Queue } from "bullmq";
 import { Hono } from "hono";
 import type { BlankEnv, BlankSchema } from "hono/types";
-import { second_timestamp, validate_page } from "../index.js";
+import {
+  second_timestamp,
+  validate_page,
+  type WalletJobsQueue,
+} from "../index.js";
 
 export const setup_wallets_routes = (
   wallets_service: WalletsService<
@@ -27,6 +31,7 @@ export const setup_wallets_routes = (
   backfill_queue: Queue<{
     wallet: SavedWallet;
   }>,
+  wallet_jobs_queue: Queue<WalletJobsQueue>,
 ): Hono<BlankEnv, BlankSchema, "/"> => {
   const wallets_routes = new Hono();
 
@@ -181,18 +186,29 @@ export const setup_wallets_routes = (
         validate_page(page, c);
       }
 
-      const wallet_with_tx = await wallets_service.getValuedWalletData(
+      const wallet_data = await wallets_service.getValuedWalletData(
         address,
         blockchain,
       );
 
-      if (!wallet_with_tx) return c.notFound();
+      if (!wallet_data) return c.notFound();
 
-      const return_object: { [key: string]: any } = wallet_with_tx;
+      // Mando a actualizar la wallet
+      wallet_jobs_queue.add("update fetched wallet", {
+        jobName: "updateOneWallet",
+        data: {
+          wallet: {
+            address,
+            blockchain,
+          },
+        },
+      });
+
+      const return_object: { [key: string]: any } = wallet_data;
 
       if (graph) {
         const wallet_graph = await wallets_service.getWalletValueChangeGraph(
-          wallet_with_tx,
+          wallet_data,
           graph,
         );
         return_object.graph = wallet_graph;

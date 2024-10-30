@@ -42,9 +42,13 @@ export type CoinJobsQueue = {
 };
 
 export type WalletJobsQueue = {
-  jobName: "updateWallets";
+  jobName: "updateWallets" | "updateOneWallet";
   data: {
-    hourly_frequency: 0.25 | 0.5 | 1 | 2 | 4 | 24;
+    hourly_frequency?: 0.25 | 0.5 | 1 | 2 | 4 | 24;
+    wallet?: {
+      blockchain: BlockchainsName;
+      address: string;
+    };
   };
 };
 

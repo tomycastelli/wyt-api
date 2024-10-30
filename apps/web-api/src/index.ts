@@ -21,7 +21,7 @@ import { getPath } from "hono/utils/url";
 import "dotenv/config";
 import { arktypeValidator } from "@hono/arktype-validator";
 import { type } from "arktype";
-import { Queue } from "bullmq";
+import { Queue, QueueOptions } from "bullmq";
 import { bearerAuth } from "hono/bearer-auth";
 import { compress } from "hono/compress";
 import type { BlankEnv, BlankSchema } from "hono/types";
@@ -50,6 +50,17 @@ export const validate_page = (page: number, c: Context) => {
 export const second_timestamp = type("string").pipe(
   (n) => new Date(Number(n) * 1000),
 );
+
+export type WalletJobsQueue = {
+  jobName: "updateWallets" | "updateOneWallet";
+  data: {
+    hourly_frequency?: 0.25 | 0.5 | 1 | 2 | 4 | 24;
+    wallet?: {
+      blockchain: BlockchainsName;
+      address: string;
+    };
+  };
+};
 
 export const create_app = async (
   coins_service: CoinsService<CoinGecko, CoinsPostgres>,
@@ -124,10 +135,7 @@ export const create_app = async (
     });
   });
 
-  const transactionsStreamQueue = new Queue<{
-    body: any;
-    blockchain: BlockchainsName;
-  }>("transactionsStreamQueue", {
+  const queue_options: QueueOptions = {
     connection: {
       host: redis_url,
       port: 6379,
@@ -135,28 +143,35 @@ export const create_app = async (
     defaultJobOptions: {
       removeOnComplete: true,
       removeOnFail: true,
+      attempts: 3,
+      backoff: {
+        type: "exponential",
+        delay: 3000,
+      },
     },
-  });
+  };
+
+  const transactionsStreamQueue = new Queue<{
+    body: any;
+    blockchain: BlockchainsName;
+  }>("transactionsStreamQueue", queue_options);
 
   // BullMQ para procesos de larga duración
   const backfill_queue = new Queue<{
     wallet: SavedWallet;
-  }>("backfillQueue", {
-    connection: {
-      host: redis_url,
-      port: 6379,
-    },
-    defaultJobOptions: {
-      removeOnComplete: 30,
-      removeOnFail: true,
-    },
-  });
+  }>("backfillQueue", queue_options);
+
+  const wallet_jobs_queue = new Queue<WalletJobsQueue>(
+    "walletJobsQueue",
+    queue_options,
+  );
 
   const coins_routes = setup_coins_routes(coins_service);
   const wallets_routes = setup_wallets_routes(
     wallets_service,
     base_url,
     backfill_queue,
+    wallet_jobs_queue,
   );
 
   app.get("/", (c) => {

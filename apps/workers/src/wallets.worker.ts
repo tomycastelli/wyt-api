@@ -25,7 +25,7 @@ export const setupWalletsWorker = (
       switch (payload.jobName) {
         case "updateWallets": {
           const wallets = await wallets_service.getWalletsToUpdate(
-            payload.data.hourly_frequency,
+            payload.data.hourly_frequency!,
           );
 
           // Las actualizo
@@ -38,6 +38,17 @@ export const setupWalletsWorker = (
               out_of_total: counter / wallets.length,
             });
           }
+        }
+
+        case "updateOneWallet": {
+          const wallet = await wallets_service.getWallet(
+            payload.data.wallet!.address,
+            payload.data.wallet!.blockchain,
+          );
+
+          if (!wallet) return;
+
+          await wallets_service.updateWallet(wallet);
         }
       }
     },
