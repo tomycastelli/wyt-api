@@ -1,3 +1,5 @@
+import Big from "big.js";
+
 export const blockchains = {
   bitcoin: {
     ecosystem: "bitcoin",
@@ -75,11 +77,27 @@ export const generateFilledDateRange = (
   return timestamps;
 };
 
-// Helper function to chunk the array
+/* Helper function to chunk the array */
 export function chunkArray<T>(array: T[], size: number): T[][] {
   const result: T[][] = [];
   for (let i = 0; i < array.length; i += size) {
     result.push(array.slice(i, i + size));
   }
   return result;
+}
+
+/* Calcula un valor en moneda dado un precio y el valor de blockchain con sus decimales */
+export function calculateFiatValue(
+  value: BigInt,
+  price: number,
+  decimals: number,
+): number {
+  const valueBig = new Big(value.toString());
+
+  const divisor = new Big(10).pow(decimals);
+  const dividedValue = valueBig.div(divisor);
+
+  const result = dividedValue.times(price);
+
+  return Number(result);
 }

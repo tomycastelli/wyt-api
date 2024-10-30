@@ -12,7 +12,9 @@
     "default": "./dist/index.js"
   },
   "dependencies": {
+    "@types/big.js": "^6.2.2",
     "arktype": "2.0.0-rc.6",
+    "big.js": "^6.2.2",
     "fuse.js": "^7.0.0",
     "moment": "^2.30.1"
   },

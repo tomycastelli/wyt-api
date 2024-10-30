@@ -22,6 +22,7 @@ import type { CoinsService } from "./coins.service.js";
 import {
   type BlockchainsName,
   blockchains,
+  calculateFiatValue,
   generateFilledDateRange,
 } from "./vars.js";
 import type {
@@ -534,9 +535,11 @@ export class WalletsService<
         } else if (tr.type === "native") {
           const decimal_places = blockchains[tx.blockchain].decimal_places;
 
-          const value_usd =
-            (Number(tr.value) * native_coin!.price) /
-            Number(BigInt(10 ** decimal_places));
+          const value_usd = calculateFiatValue(
+            tr.value,
+            native_coin!.price,
+            decimal_places,
+          );
 
           valued_transfers.push({ ...tr, coin: native_coin!, value_usd });
         } else {
@@ -554,9 +557,11 @@ export class WalletsService<
             (co) => co.blockchain === tx.blockchain,
           )!.decimal_place;
 
-          const value_usd =
-            (Number(tr.value) * coin.price) /
-            Number(BigInt(10 ** decimal_places));
+          const value_usd = calculateFiatValue(
+            tr.value,
+            coin.price,
+            decimal_places,
+          );
 
           valued_transfers.push({ ...tr, coin: coin, value_usd });
         }
@@ -567,9 +572,11 @@ export class WalletsService<
 
       // Calculo el valor en USD del fee
       const decimal_places = blockchains[tx.blockchain].decimal_places;
-      const fee_usd =
-        (Number(tx.fee) * native_coin!.price) /
-        Number(BigInt(10 ** decimal_places));
+      const fee_usd = calculateFiatValue(
+        tx.fee,
+        native_coin!.price,
+        decimal_places,
+      );
 
       valued_transactions.push({ ...tx, transfers: valued_transfers, fee_usd });
     }
@@ -703,8 +710,11 @@ export class WalletsService<
         )!.decimal_place;
 
         // El valor en la wallet dividido por los decimales en la blockchain multiplicado por el precio guardado
-        const value_usd =
-          Number(c.value / BigInt(10 ** decimal_place)) * coin.price;
+        const value_usd = calculateFiatValue(
+          c.value,
+          coin.price,
+          decimal_place,
+        );
 
         // Sumo al valor total de la wallet
         total_value_usd += value_usd;
@@ -720,9 +730,11 @@ export class WalletsService<
     // Sumo el valor de la coin nativa
     const decimal_places = blockchains[wallet_data.blockchain].decimal_places;
 
-    const native_value_usd =
-      (Number(wallet_data.native_value) * native_coin!.price) /
-      Number(BigInt(10 ** decimal_places));
+    const native_value_usd = calculateFiatValue(
+      wallet_data.native_value,
+      native_coin!.price,
+      decimal_places,
+    );
 
     total_value_usd += native_value_usd;
 
@@ -731,7 +743,7 @@ export class WalletsService<
       partial_valued_wallet_coins.map((c) => ({
         ...c,
         percentage_in_wallet: Number(
-          ((c.value_usd / total_value_usd) * 100).toFixed(2),
+          ((c.value_usd / total_value_usd) * 100).toFixed(4),
         ),
       }));
 
@@ -926,9 +938,11 @@ export class WalletsService<
         const coin = await this.coinsService.getCoinById(coin_id);
         decimal_places_map.set(
           coin_id,
-          coin!.contracts.find(
-            (c) => c.blockchain === valued_wallet.blockchain,
-          )!.decimal_place,
+          coin_id === valued_wallet.native_coin.id
+            ? blockchains[valued_wallet.blockchain].decimal_places
+            : coin!.contracts.find(
+                (c) => c.blockchain === valued_wallet.blockchain,
+              )!.decimal_place,
         );
       }
     }
@@ -987,24 +1001,27 @@ export class WalletsService<
           this_coin_graph.push({
             timestamp,
             value: new_balance,
-            value_usd:
-              Number(
-                new_balance / BigInt(10 ** decimal_places_map.get(coin_id)!),
-              ) * price_this_day,
+            value_usd: calculateFiatValue(
+              new_balance,
+              price_this_day,
+              decimal_places_map.get(coin_id)!,
+            ),
           });
         } else {
           if (!current_value)
             throw Error(
               `current_value not present but neither value_change_this_day. Transations: ${coined_transactions}. Current state: ${current_coin_values}`,
             );
+
           // Uso el balance en su estado actual por con el precio del día de hoy
           this_coin_graph.push({
             timestamp,
             value: current_value,
-            value_usd:
-              Number(
-                current_value / BigInt(10 ** decimal_places_map.get(coin_id)!),
-              ) * price_this_day,
+            value_usd: calculateFiatValue(
+              current_value,
+              price_this_day,
+              decimal_places_map.get(coin_id)!,
+            ),
           });
         }
       }

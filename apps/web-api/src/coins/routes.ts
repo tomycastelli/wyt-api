@@ -37,10 +37,11 @@ export const setup_coins_routes = (
       const coin = await coins_service.getCoinById(Number(coin_name));
       if (!coin) return c.notFound();
 
+      // Ultimos 7 días
       const candles = await coins_service.getCandlesByDate(
         "daily",
         coin.id,
-        new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000),
+        new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000),
         new Date(),
       );
 
@@ -76,6 +77,28 @@ export const setup_coins_routes = (
     async (c) => {
       const { candle_type, coin_name } = c.req.valid("param");
       const { from, to } = c.req.valid("query");
+
+      if (!Number.isNaN(Number(coin_name))) {
+        // Es un id
+        const coin = await coins_service.getCoinById(Number(coin_name));
+        if (!coin) return c.notFound();
+
+        // Si no pasan la fecha, busco los ultimos 7 dias o 24 horas
+        const from_date = from
+          ? from
+          : candle_type === "daily"
+            ? new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000)
+            : new Date(new Date().getTime() - 24 * 60 * 60 * 1000);
+        const to_date = to ? to : new Date();
+
+        const candles = await coins_service.getCandlesByDate(
+          candle_type,
+          coin.id,
+          from_date,
+          to_date,
+        );
+        return c.json(candles);
+      }
 
       const coin = await coins_service.getCoinByName(coin_name);
 
