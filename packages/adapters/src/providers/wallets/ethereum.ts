@@ -241,13 +241,14 @@ export class EthereumProvider implements WalletsStreamsProvider {
   }
 
   async getWalletTimes(
-    wallet_data: Wallet,
+    address: string,
+    blockchain: BlockchainsName,
   ): Promise<{ first_block: number; last_block: number; first_date: Date }> {
     await this.rate_limiter.acquire();
     const first_transaction_made =
       await Moralis.EvmApi.wallets.getWalletHistory({
-        chain: this.blockchain_mapper[wallet_data.blockchain],
-        address: wallet_data.address,
+        chain: this.blockchain_mapper[blockchain],
+        address: address,
         order: "ASC",
         includeInternalTransactions: false,
         limit: 1,
@@ -255,8 +256,8 @@ export class EthereumProvider implements WalletsStreamsProvider {
 
     const last_transaction_made = await Moralis.EvmApi.wallets.getWalletHistory(
       {
-        chain: this.blockchain_mapper[wallet_data.blockchain],
-        address: wallet_data.address,
+        chain: this.blockchain_mapper[blockchain],
+        address: address,
         order: "DESC",
         includeInternalTransactions: false,
         limit: 1,

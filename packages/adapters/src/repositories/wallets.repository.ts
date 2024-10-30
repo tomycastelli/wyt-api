@@ -165,6 +165,24 @@ export class WalletsPostgres implements WalletsRepository {
     });
   }
 
+  async walletExists(
+    address: string,
+    blockchain: BlockchainsName,
+  ): Promise<boolean> {
+    const saved_wallet = await this.db
+      .select({ id: schema.wallets.id })
+      .from(schema.wallets)
+      .where(
+        and(
+          eq(schema.wallets.address, address.toLowerCase()),
+          eq(schema.wallets.blockchain, blockchain),
+        ),
+      )
+      .limit(1);
+
+    return saved_wallet.length > 0;
+  }
+
   async getWallet(
     address: string,
     blockchain: BlockchainsName,

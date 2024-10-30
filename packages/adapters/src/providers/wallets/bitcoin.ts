@@ -69,7 +69,8 @@ export class BitcoinProvider implements WalletsProvider {
   }
 
   async getWalletTimes(
-    wallet_data: Wallet,
+    address: string,
+    _blockchain: BlockchainsName,
   ): Promise<{ first_block: number; last_block: number; first_date: Date }> {
     let is_first_time = true;
     const limit = 25;
@@ -83,7 +84,7 @@ export class BitcoinProvider implements WalletsProvider {
       await new Promise((resolve) => setTimeout(resolve, 250));
 
       const response = await fetch(
-        `${this.api_url}/address/${wallet_data.address}/txs/chain/${last_seen_txid}`,
+        `${this.api_url}/address/${address}/txs/chain/${last_seen_txid}`,
       ).then((res) => res.json());
 
       const parsedResponse = txInfoType(response);

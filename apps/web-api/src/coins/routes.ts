@@ -4,7 +4,7 @@ import { type CoinsService, EveryBlockainsName } from "@repo/domain";
 import { type } from "arktype";
 import { type Context, Hono } from "hono";
 import type { BlankEnv, BlankSchema } from "hono/types";
-import { second_timestamp, validate_page } from "../index.js";
+import { second_timestamp } from "../index.js";
 
 export const setup_coins_routes = (
   coins_service: CoinsService<CoinGecko, CoinsPostgres>,
@@ -147,8 +147,10 @@ export const setup_coins_routes = (
       const { blockchain } = c.req.valid("param");
       const { page, name_search, ids } = c.req.valid("query");
 
-      if (page) {
-        validate_page(page, c);
+      if (page !== undefined) {
+        if (page < 1) {
+          return c.json({ error: `invalid page (${page} is less than 1)` });
+        }
       }
 
       const page_size = 30;

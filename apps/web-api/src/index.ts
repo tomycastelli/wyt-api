@@ -9,11 +9,10 @@ import {
   type BlockchainsName,
   CoinsService,
   EveryBlockainsName,
-  type SavedWallet,
   WalletsService,
   blockchains,
 } from "@repo/domain";
-import { type Context, Hono } from "hono";
+import { Hono } from "hono";
 import { prettyJSON } from "hono/pretty-json";
 import { requestId } from "hono/request-id";
 import { trimTrailingSlash } from "hono/trailing-slash";
@@ -21,7 +20,7 @@ import { getPath } from "hono/utils/url";
 import "dotenv/config";
 import { arktypeValidator } from "@hono/arktype-validator";
 import { type } from "arktype";
-import { Queue, QueueOptions } from "bullmq";
+import { Queue, type QueueOptions } from "bullmq";
 import { bearerAuth } from "hono/bearer-auth";
 import { compress } from "hono/compress";
 import type { BlankEnv, BlankSchema } from "hono/types";
@@ -38,12 +37,6 @@ declare global {
 
 BigInt.prototype.toJSON = function () {
   return Number(this);
-};
-
-export const validate_page = (page: number, c: Context) => {
-  if (page < 1) {
-    return c.json({ error: `invalid page (${page} is less than 1)` });
-  }
 };
 
 // Parsea una string de unix timestamp en segundos a una Date
@@ -158,7 +151,8 @@ export const create_app = async (
 
   // BullMQ para procesos de larga duración
   const backfill_queue = new Queue<{
-    wallet: SavedWallet;
+    address: string;
+    blockchain: BlockchainsName;
   }>("backfillQueue", queue_options);
 
   const wallet_jobs_queue = new Queue<WalletJobsQueue>(
@@ -224,7 +218,8 @@ export const create_app = async (
 
     for (const wallet of pending_wallets) {
       await backfill_queue.add("backfillWallet", {
-        wallet,
+        address: wallet.address,
+        blockchain: wallet.blockchain,
       });
     }
   }

@@ -172,6 +172,13 @@ export class WalletsService<
     return valued_transactions;
   }
 
+  public async walletExists(
+    address: string,
+    blockchain: BlockchainsName,
+  ): Promise<boolean> {
+    return this.walletsRepository.walletExists(address, blockchain);
+  }
+
   public async getWallet(
     address: string,
     blockchain: BlockchainsName,
@@ -235,7 +242,8 @@ export class WalletsService<
   /** Consigue las dos puntas de tiempo del historial de una [Wallet] y devuelve los chunks de tiempo. \
   A su vez, guarda la fecha de la primera transacción hecha por la [Wallet] */
   public async getHistoryTimeChunks(
-    saved_wallet: SavedWallet,
+    address: string,
+    blockchain: BlockchainsName,
     chunk_amount: number,
   ): Promise<{
     chunks: { from_block: number; to_block: number }[];
@@ -243,7 +251,7 @@ export class WalletsService<
   }> {
     // Primero veo la primera y última transacción hecha por la Wallet
     const { first_block, last_block, first_date } =
-      await this.walletsProvider.getWalletTimes(saved_wallet);
+      await this.walletsProvider.getWalletTimes(address, blockchain);
 
     const chunks: { from_block: number; to_block: number }[] = [];
 
@@ -461,6 +469,8 @@ export class WalletsService<
     const transaction_frequency = Math.round(
       new_transactions.length / hours_range,
     );
+
+    console.log({ transaction_frequency });
 
     // Actualizo sus posesiones y su transaction_frequency
     const { valued_wallet, new_coins: new_wallet_coins } =

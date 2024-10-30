@@ -9,7 +9,6 @@ import {
 import {
   type BlockchainsName,
   CoinsService,
-  type SavedWallet,
   WalletsService,
 } from "@repo/domain";
 import {
@@ -106,7 +105,8 @@ const queue_options: QueueOptions = {
 };
 
 new Queue<{
-  wallet: SavedWallet;
+  address: string;
+  blockchain: BlockchainsName;
 }>("backfillQueue", queue_options);
 
 const coin_jobs_queue = new Queue<CoinJobsQueue>(

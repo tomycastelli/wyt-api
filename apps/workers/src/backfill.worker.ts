@@ -1,7 +1,7 @@
 import {
+  type BlockchainsName,
   type CoinsProvider,
   type CoinsRepository,
-  type SavedWallet,
   type WalletsRepository,
   type WalletsService,
   type WalletsStreamsProvider,
@@ -25,16 +25,24 @@ export const setupBackfillWorker = (
   queue_events: QueueEvents,
   redis_url: string,
 ): Worker<{
-  wallet: SavedWallet;
+  address: string;
+  blockchain: BlockchainsName;
 }> => {
-  const add_chunks = async (wallet: SavedWallet): Promise<void> => {
+  const add_chunks = async (
+    address: string,
+    blockchain: BlockchainsName,
+  ): Promise<void> => {
     let first_date: Date = new Date();
-    const ecosystem = blockchains[wallet.blockchain].ecosystem;
+    const ecosystem = blockchains[blockchain].ecosystem;
 
     if (ecosystem === "ethereum") {
       // Consigo los chunks
       const { chunks, first_date: first_date_from_history } =
-        await wallets_service.getHistoryTimeChunks(wallet, CHUNK_AMOUNT);
+        await wallets_service.getHistoryTimeChunks(
+          address,
+          blockchain,
+          CHUNK_AMOUNT,
+        );
 
       first_date = first_date_from_history;
 
@@ -46,8 +54,8 @@ export const setupBackfillWorker = (
             data: {
               from_block: c.from_block,
               to_block: c.to_block,
-              address: wallet.address,
-              blockchain: wallet.blockchain,
+              address: address,
+              blockchain: blockchain,
               total_chunks: CHUNK_AMOUNT,
             },
             opts: {
@@ -91,8 +99,8 @@ export const setupBackfillWorker = (
       const job = await chunk_queue_events.add(
         "backfill_unique_chunk",
         {
-          address: wallet.address,
-          blockchain: wallet.blockchain,
+          address: address,
+          blockchain: blockchain,
           // Si no es ethereum el ecosistema, no se usan
           from_block: 0,
           to_block: 0,
@@ -114,8 +122,8 @@ export const setupBackfillWorker = (
 
     // Termino el proceso
     await wallets_service.changeBackfillStatus(
-      wallet.address,
-      wallet.blockchain,
+      address,
+      blockchain,
       "complete",
       first_date,
     );
@@ -127,15 +135,16 @@ export const setupBackfillWorker = (
   };
 
   const backfillWorker = new Worker<{
-    wallet: SavedWallet;
+    address: string;
+    blockchain: BlockchainsName;
   }>(
     "backfillQueue",
     async (job) => {
       console.log(
-        `Starting backfill for wallet: ${job.data.wallet.blockchain}:${job.data.wallet.address}`,
+        `Starting backfill for wallet: ${job.data.blockchain}:${job.data.address}`,
       );
 
-      await add_chunks(job.data.wallet);
+      await add_chunks(job.data.address, job.data.blockchain);
     },
     {
       connection: {
@@ -161,7 +170,7 @@ export const setupBackfillWorker = (
 
   backfillWorker.on("completed", (job) => {
     console.log(
-      `Chunks for job: ${job.id}, for wallet ${job.data.wallet.address} have been sent`,
+      `Chunks for job: ${job.id}, for wallet ${job.data.blockchain}:${job.data.address} have been sent`,
     );
   });
 

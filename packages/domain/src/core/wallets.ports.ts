@@ -17,7 +17,10 @@ export interface WalletsProvider {
   ): Promise<Wallet | null>;
 
   /** Busca el primer y último bloque de una [Wallet] */
-  getWalletTimes(wallet_data: Wallet): Promise<{
+  getWalletTimes(
+    address: string,
+    blockchain: BlockchainsName,
+  ): Promise<{
     first_block: number;
     last_block: number;
     first_date: Date;
@@ -94,6 +97,9 @@ export interface WalletsRepository {
     address: string,
     blockchain: BlockchainsName,
   ): Promise<SavedWallet | undefined>;
+
+  /** Chequea la existencia de una [Wallet], es mas rapido */
+  walletExists(address: string, blockchain: BlockchainsName): Promise<boolean>;
 
   /** Consigue las [Wallet]s cuyo historial no esta completo */
   getPendingWallets(): Promise<SavedWallet[]>;

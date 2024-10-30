@@ -38,8 +38,8 @@ export const setupWalletsWorker = (
               out_of_total: counter / wallets.length,
             });
           }
+          break;
         }
-
         case "updateOneWallet": {
           const wallet = await wallets_service.getWallet(
             payload.data.wallet!.address,
@@ -49,6 +49,8 @@ export const setupWalletsWorker = (
           if (!wallet) return;
 
           await wallets_service.updateWallet(wallet);
+
+          break;
         }
       }
     },

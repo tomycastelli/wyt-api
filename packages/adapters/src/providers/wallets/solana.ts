@@ -114,9 +114,10 @@ export class SolanaProvider implements WalletsProvider {
   }
 
   async getWalletTimes(
-    wallet_data: Wallet,
+    address: string,
+    _blockchain: BlockchainsName,
   ): Promise<{ first_block: number; last_block: number; first_date: Date }> {
-    const public_key = new PublicKey(wallet_data.address);
+    const public_key = new PublicKey(address);
     let loop_cursor: string | undefined = undefined;
     let is_first_time = true;
 

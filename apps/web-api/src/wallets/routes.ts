@@ -6,19 +6,15 @@ import type {
   WalletsProviderAdapters,
 } from "@repo/adapters";
 import {
+  type BlockchainsName,
   EveryBlockainsName,
-  type SavedWallet,
   type WalletsService,
 } from "@repo/domain";
 import { type } from "arktype";
 import type { Queue } from "bullmq";
 import { Hono } from "hono";
 import type { BlankEnv, BlankSchema } from "hono/types";
-import {
-  second_timestamp,
-  validate_page,
-  type WalletJobsQueue,
-} from "../index.js";
+import { type WalletJobsQueue, second_timestamp } from "../index.js";
 
 export const setup_wallets_routes = (
   wallets_service: WalletsService<
@@ -29,7 +25,8 @@ export const setup_wallets_routes = (
   >,
   base_url: string,
   backfill_queue: Queue<{
-    wallet: SavedWallet;
+    address: string;
+    blockchain: BlockchainsName;
   }>,
   wallet_jobs_queue: Queue<WalletJobsQueue>,
 ): Hono<BlankEnv, BlankSchema, "/"> => {
@@ -57,7 +54,8 @@ export const setup_wallets_routes = (
 
       // Enviar a una queue
       await backfill_queue.add("backfillWallet", {
-        wallet: wallet_data.valued_wallet,
+        address: wallet_data.valued_wallet.address,
+        blockchain: wallet_data.valued_wallet.blockchain,
       });
 
       return c.json(wallet_data.valued_wallet);
@@ -110,8 +108,10 @@ export const setup_wallets_routes = (
       const { blockchain } = c.req.valid("param");
       const { page, ids } = c.req.valid("query");
 
-      if (page) {
-        validate_page(page, c);
+      if (page !== undefined) {
+        if (page < 1) {
+          return c.json({ error: `invalid page (${page} is less than 1)` });
+        }
       }
 
       const wallets = await wallets_service.getValuedWalletsByBlockchain(
@@ -145,9 +145,28 @@ export const setup_wallets_routes = (
       const { blockchain, address } = c.req.valid("param");
       const { page, from, to } = c.req.valid("query");
 
-      if (page) {
-        validate_page(page, c);
+      console.log({ blockchain, address, page });
+
+      if (page !== undefined) {
+        if (page < 1) {
+          return c.json({ error: `invalid page (${page} is less than 1)` });
+        }
       }
+
+      if (!(await wallets_service.walletExists(address, blockchain))) {
+        return c.notFound();
+      }
+
+      // Mando a actualizar la wallet
+      wallet_jobs_queue.add("update wallet by transactions fetched", {
+        jobName: "updateOneWallet",
+        data: {
+          wallet: {
+            address,
+            blockchain,
+          },
+        },
+      });
 
       const transactions = await wallets_service.getTransactionsByWallet(
         address,
@@ -182,8 +201,10 @@ export const setup_wallets_routes = (
       const { blockchain, address } = c.req.valid("param");
       const { page, graph, transactions } = c.req.valid("query");
 
-      if (page) {
-        validate_page(page, c);
+      if (page !== undefined) {
+        if (page < 1) {
+          return c.json({ error: `invalid page (${page} is less than 1)` });
+        }
       }
 
       const wallet_data = await wallets_service.getValuedWalletData(

@@ -42,16 +42,17 @@ export class WalletsProviderAdapters implements WalletsStreamsProvider {
   }
 
   async getWalletTimes(
-    wallet_data: Wallet,
+    address: string,
+    blockchain: BlockchainsName,
   ): Promise<{ first_block: number; last_block: number; first_date: Date }> {
-    const ecosystem = blockchains[wallet_data.blockchain].ecosystem;
+    const ecosystem = blockchains[blockchain].ecosystem;
     switch (ecosystem) {
       case "ethereum":
-        return this.ethereumProvider.getWalletTimes(wallet_data);
+        return this.ethereumProvider.getWalletTimes(address, blockchain);
       case "bitcoin":
-        return this.bitcoinProvider.getWalletTimes(wallet_data);
+        return this.bitcoinProvider.getWalletTimes(address, blockchain);
       case "solana":
-        return this.solanaProvider.getWalletTimes(wallet_data);
+        return this.solanaProvider.getWalletTimes(address, blockchain);
     }
   }
 
