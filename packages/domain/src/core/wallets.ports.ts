@@ -105,11 +105,12 @@ export interface WalletsRepository {
   getPendingWallets(): Promise<SavedWallet[]>;
 
   /** Consigue una lista de [Wallet]s segun la blockchain con un filtrado por ids opcional. \
-  Tamaño de página: **20** */
+  Tamaño de página: **10** */
   getWalletsByBlockchain(
     blockchain: BlockchainsName,
     wallets_page: number,
-    ids?: number[],
+    ids: number[] | undefined,
+    include_nfts: boolean,
   ): Promise<SavedWallet[]>;
 
   /** Consigue una lista de [Wallet]s segun un rango de frecuencia de transacciones */

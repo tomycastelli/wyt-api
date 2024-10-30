@@ -88,43 +88,6 @@ export const setup_wallets_routes = (
   );
 
   wallets_routes.get(
-    "/list/:blockchain",
-    arktypeValidator(
-      "param",
-      type({
-        blockchain: ["===", ...EveryBlockainsName],
-      }),
-    ),
-    arktypeValidator(
-      "query",
-      type({
-        "page?": type("string").pipe((s) => Number.parseInt(s)),
-        "ids?": type("string[]").pipe((strs) =>
-          strs.map((s) => Number.parseInt(s)),
-        ),
-      }),
-    ),
-    async (c) => {
-      const { blockchain } = c.req.valid("param");
-      const { page, ids } = c.req.valid("query");
-
-      if (page !== undefined) {
-        if (page < 1) {
-          return c.json({ error: `invalid page (${page} is less than 1)` });
-        }
-      }
-
-      const wallets = await wallets_service.getValuedWalletsByBlockchain(
-        blockchain,
-        page ?? 1,
-        ids,
-      );
-
-      return c.json(wallets);
-    },
-  );
-
-  wallets_routes.get(
     "/transactions/:blockchain/:address",
     arktypeValidator(
       "param",
@@ -248,6 +211,45 @@ export const setup_wallets_routes = (
       }
 
       return c.json(return_object);
+    },
+  );
+
+  wallets_routes.get(
+    "/:blockchain",
+    arktypeValidator(
+      "param",
+      type({
+        blockchain: ["===", ...EveryBlockainsName],
+      }),
+    ),
+    arktypeValidator(
+      "query",
+      type({
+        "page?": type("string").pipe((s) => Number.parseInt(s)),
+        "ids?": type("string[]").pipe((strs) =>
+          strs.map((s) => Number.parseInt(s)),
+        ),
+        "include_nfts?": type("'true'|'false'").pipe((s) => s === "true"),
+      }),
+    ),
+    async (c) => {
+      const { blockchain } = c.req.valid("param");
+      const { page, ids, include_nfts } = c.req.valid("query");
+
+      if (page !== undefined) {
+        if (page < 1) {
+          return c.json({ error: `invalid page (${page} is less than 1)` });
+        }
+      }
+
+      const wallets = await wallets_service.getValuedWalletsByBlockchain(
+        blockchain,
+        page ?? 1,
+        ids,
+        include_nfts === true,
+      );
+
+      return c.json(wallets);
     },
   );
 

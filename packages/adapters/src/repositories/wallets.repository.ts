@@ -242,62 +242,114 @@ export class WalletsPostgres implements WalletsRepository {
   async getWalletsByBlockchain(
     blockchain: BlockchainsName,
     wallets_page: number,
-    ids?: number[],
+    ids: number[] | undefined,
+    include_nfts: boolean,
   ): Promise<SavedWallet[]> {
-    const page_size = 20;
-    const saved_wallets = await this.db.query.wallets.findMany({
-      where: (wallets, { eq, and, inArray }) =>
-        and(
-          eq(wallets.blockchain, blockchain),
-          ids ? inArray(wallets.id, ids) : undefined,
-        ),
-      with: {
-        walletCoins: {
-          with: {
-            coin: {
-              with: {
-                contracts: true,
+    const page_size = 10;
+    const mapped_wallets: SavedWallet[] = [];
+    if (include_nfts) {
+      const saved_wallets = await this.db.query.wallets.findMany({
+        where: (wallets, { eq, and, inArray }) =>
+          and(
+            eq(wallets.blockchain, blockchain),
+            ids ? inArray(wallets.id, ids) : undefined,
+          ),
+        with: {
+          walletCoins: {
+            with: {
+              coin: {
+                with: {
+                  contracts: true,
+                },
+              },
+            },
+          },
+          walletNFTs: {
+            with: {
+              nft: true,
+            },
+          },
+        },
+        limit: page_size,
+        offset: (wallets_page - 1) * page_size,
+      });
+
+      for (const saved_wallet of saved_wallets) {
+        const wallet_coins: WalletCoin[] = saved_wallet.walletCoins.map(
+          (wc) => ({
+            coin_address: wc.coin.contracts.find(
+              (c) => c.blockchain === blockchain,
+            )!.contract_address,
+            value: BigInt(wc.value),
+          }),
+        );
+
+        const wallet_nfts: WalletCoin[] = saved_wallet.walletNFTs.map((wn) => ({
+          coin_address: wn.nft.contract_address,
+          token_id: wn.nft.token_id,
+          value: 0n,
+        }));
+
+        mapped_wallets.push({
+          id: saved_wallet.id,
+          address: saved_wallet.address,
+          alias: saved_wallet.alias,
+          backfill_status: saved_wallet.backfill_status,
+          blockchain: saved_wallet.blockchain,
+          first_transfer_date: saved_wallet.first_transfer_date,
+          last_update: saved_wallet.last_update,
+          transaction_frequency: saved_wallet.transaction_frequency,
+          native_value: BigInt(saved_wallet.native_value),
+          coins: [...wallet_coins, ...wallet_nfts],
+        });
+      }
+    } else {
+      // Sin nfts
+      const saved_wallets = await this.db.query.wallets.findMany({
+        where: (wallets, { eq, and, inArray }) =>
+          and(
+            eq(wallets.blockchain, blockchain),
+            ids ? inArray(wallets.id, ids) : undefined,
+          ),
+        with: {
+          walletCoins: {
+            with: {
+              coin: {
+                with: {
+                  contracts: true,
+                },
               },
             },
           },
         },
-        walletNFTs: {
-          with: {
-            nft: true,
-          },
-        },
-      },
-      limit: page_size,
-      offset: (wallets_page - 1) * page_size,
-    });
+        limit: page_size,
+        offset: (wallets_page - 1) * page_size,
+      });
 
-    const mapped_wallets: SavedWallet[] = saved_wallets.map((saved_wallet) => {
-      const wallet_coins: WalletCoin[] = saved_wallet.walletCoins.map((wc) => ({
-        coin_address: wc.coin.contracts.find(
-          (c) => c.blockchain === blockchain,
-        )!.contract_address,
-        value: BigInt(wc.value),
-      }));
+      for (const saved_wallet of saved_wallets) {
+        const wallet_coins: WalletCoin[] = saved_wallet.walletCoins.map(
+          (wc) => ({
+            coin_address: wc.coin.contracts.find(
+              (c) => c.blockchain === blockchain,
+            )!.contract_address,
+            value: BigInt(wc.value),
+          }),
+        );
 
-      const wallet_nfts: WalletCoin[] = saved_wallet.walletNFTs.map((wn) => ({
-        coin_address: wn.nft.contract_address,
-        token_id: wn.nft.token_id,
-        value: 0n,
-      }));
-
-      return {
-        id: saved_wallet.id,
-        address: saved_wallet.address,
-        alias: saved_wallet.alias,
-        backfill_status: saved_wallet.backfill_status,
-        blockchain: saved_wallet.blockchain,
-        first_transfer_date: saved_wallet.first_transfer_date,
-        last_update: saved_wallet.last_update,
-        transaction_frequency: saved_wallet.transaction_frequency,
-        native_value: BigInt(saved_wallet.native_value),
-        coins: [...wallet_coins, ...wallet_nfts],
-      };
-    });
+        mapped_wallets.push({
+          id: saved_wallet.id,
+          address: saved_wallet.address,
+          alias: saved_wallet.alias,
+          backfill_status: saved_wallet.backfill_status,
+          blockchain: saved_wallet.blockchain,
+          first_transfer_date: saved_wallet.first_transfer_date,
+          last_update: saved_wallet.last_update,
+          transaction_frequency: saved_wallet.transaction_frequency,
+          native_value: BigInt(saved_wallet.native_value),
+          coins: wallet_coins,
+        });
+      }
+    }
 
     return mapped_wallets;
   }

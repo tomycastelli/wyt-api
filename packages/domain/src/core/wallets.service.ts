@@ -212,12 +212,14 @@ export class WalletsService<
   public async getValuedWalletsByBlockchain(
     blockchain: BlockchainsName,
     wallets_page: number,
-    ids?: number[],
+    ids: number[] | undefined,
+    include_nfts: boolean,
   ): Promise<ValuedWallet[]> {
     const saved_wallets = await this.walletsRepository.getWalletsByBlockchain(
       blockchain,
       wallets_page,
       ids,
+      include_nfts,
     );
 
     const valued_wallets = await Promise.all(
@@ -234,6 +236,8 @@ export class WalletsService<
     const saved_wallets = await this.walletsRepository.getWalletsByBlockchain(
       blockchain,
       page,
+      undefined,
+      false,
     );
 
     return saved_wallets;
