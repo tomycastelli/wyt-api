@@ -466,11 +466,9 @@ export class WalletsService<
     const hours_range =
       Math.abs(new Date().getTime() - saved_wallet.last_update.getTime()) /
       3.6e6;
-    const transaction_frequency = Math.round(
-      new_transactions.length / hours_range,
+    const transaction_frequency = Number(
+      (new_transactions.length / hours_range).toFixed(6),
     );
-
-    console.log({ transaction_frequency });
 
     // Actualizo sus posesiones y su transaction_frequency
     const { valued_wallet, new_coins: new_wallet_coins } =

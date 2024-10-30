@@ -7,6 +7,7 @@ import {
   pgEnum,
   pgTable,
   primaryKey,
+  real,
   text,
   timestamp,
   uniqueIndex,
@@ -162,22 +163,6 @@ export const contracts = pgTable(
   },
 );
 
-export const coinsNames = pgTable(
-  "coins_names",
-  {
-    coin_id: integer("coin_id")
-      .references(() => coins.id, { onDelete: "cascade", onUpdate: "cascade" })
-      .notNull(),
-    provider: providersEnum("provider").notNull(),
-    provider_coin_name: varchar("provider_coin_name").notNull(),
-  },
-  (table) => {
-    return {
-      pk: primaryKey({ columns: [table.coin_id, table.provider] }),
-    };
-  },
-);
-
 export const nfts = pgTable(
   "nfts",
   {
@@ -217,7 +202,7 @@ export const wallets = pgTable(
       mode: "date",
       withTimezone: false,
     }).notNull(),
-    transaction_frequency: integer("transaction_frequency"),
+    transaction_frequency: real("transaction_frequency"),
   },
   (table) => {
     return {
