@@ -190,12 +190,29 @@ export const setup_wallets_routes = (
 
       const return_object: { [key: string]: any } = wallet_data;
 
+      // Calculo el cambio de 24hs
+      const last_day_graph = await wallets_service.getWalletValueChangeGraph(
+        wallet_data,
+        "day",
+      );
+      const value_usd_change_percentage_24h =
+        ((last_day_graph.unified[last_day_graph.unified.length - 1].value_usd -
+          last_day_graph.unified[0].value_usd) /
+          last_day_graph.unified[0].value_usd) *
+        100;
+      return_object.value_usd_change_percentage_24h =
+        value_usd_change_percentage_24h;
+
       if (graph) {
-        const wallet_graph = await wallets_service.getWalletValueChangeGraph(
-          wallet_data,
-          graph,
-        );
-        return_object.graph = wallet_graph;
+        if (graph === "day") {
+          return_object.graph = last_day_graph;
+        } else {
+          const wallet_graph = await wallets_service.getWalletValueChangeGraph(
+            wallet_data,
+            graph,
+          );
+          return_object.graph = wallet_graph;
+        }
       }
 
       if (transactions === true) {

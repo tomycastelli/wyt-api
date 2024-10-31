@@ -259,6 +259,30 @@ export const walletNFTs = pgTable(
   },
 );
 
+export const walletsValuations = pgTable(
+  "wallets_valuations",
+  {
+    wallet_id: integer("wallet_id")
+      .references(() => wallets.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      })
+      .notNull(),
+    timestamp: timestamp("timestamp", {
+      mode: "date",
+      withTimezone: false,
+    }).notNull(),
+    value_usd: largeDecimalNumber("value_usd").notNull(),
+  },
+  (table) => {
+    return {
+      pk: primaryKey({
+        columns: [table.wallet_id, table.timestamp],
+      }),
+    };
+  },
+);
+
 export const transactions = pgTable(
   "transactions",
   {

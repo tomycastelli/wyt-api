@@ -197,7 +197,7 @@ export class WalletsService<
   public async getValuedWalletData(
     address: string,
     blockchain: BlockchainsName,
-  ): Promise<ValuedWallet | undefined> {
+  ): Promise<ValuedSavedWallet | undefined> {
     // Consigo la [Wallet]
     const saved_wallet = await this.walletsRepository.getWallet(
       address,
@@ -207,7 +207,11 @@ export class WalletsService<
 
     const { valued_wallet } = await this.getValuedWallet(saved_wallet);
 
-    return valued_wallet;
+    return {
+      id: saved_wallet.id,
+      last_update: saved_wallet.last_update,
+      ...valued_wallet,
+    };
   }
 
   public async getValuedWalletsByBlockchain(
@@ -828,24 +832,24 @@ export class WalletsService<
     date: Date,
     time_range: "day" | "week" | "month" | "year",
   ): Date {
-    const newDate = new Date(date.getTime()); // Create a copy of the input date
+    const newDate = new Date(date.getTime());
 
     switch (time_range) {
       case "day":
-        newDate.setUTCDate(newDate.getDate() - 1);
+        newDate.setUTCDate(newDate.getUTCDate() - 1);
         newDate.setUTCMinutes(0, 0, 0);
         break;
       case "week":
-        newDate.setUTCDate(newDate.getDate() - 7);
+        newDate.setUTCDate(newDate.getUTCDate() - 7);
         newDate.setUTCHours(0, 0, 0, 0);
         break;
       case "month":
-        newDate.setUTCMonth(newDate.getMonth() - 1);
+        newDate.setUTCMonth(newDate.getUTCMonth() - 1);
         newDate.setUTCHours(0, 0, 0, 0);
         break;
       case "year":
-        newDate.setUTCFullYear(newDate.getFullYear() - 1);
-        newDate.setUTCMonth(newDate.getMonth(), 1);
+        newDate.setUTCFullYear(newDate.getUTCFullYear() - 1);
+        newDate.setUTCMonth(newDate.getUTCMonth(), 1);
         newDate.setUTCHours(0, 0, 0, 0);
         break;
     }
@@ -862,7 +866,7 @@ export class WalletsService<
   - Anual: diaria
   */
   public async getWalletValueChangeGraph(
-    valued_wallet: ValuedWallet,
+    valued_wallet: ValuedSavedWallet,
     time_range: "day" | "week" | "month",
   ) {
     // Necesito saber las posesiones de la [Wallet] en el rango dado
@@ -870,6 +874,13 @@ export class WalletsService<
     const current_date = new Date();
 
     const granularity = time_range === "day" ? "hourly" : "daily";
+
+    // Genero un rango relleno con la granularidad necesaria
+    const full_date_range = generateFilledDateRange(
+      this.subtractTime(current_date, time_range),
+      current_date,
+      granularity,
+    ).sort((a, b) => b - a);
 
     const transactions = await this.walletsRepository.getTransactions(
       valued_wallet.address,
@@ -1008,12 +1019,6 @@ export class WalletsService<
     // Listo los mapeos.
     // Voy a generar ahora una lista del tipo [ValueChangeGraph] con el balance de cada [Coin] en todo el rango de dias.
     // Vamos de mas reciente a mas viejo. Si no hubo movimientos ese dia, agarro el balance del anterior (el dia o hora mas adelante)
-    const full_date_range = generateFilledDateRange(
-      this.subtractTime(current_date, time_range),
-      current_date,
-      granularity,
-    ).sort((a, b) => b - a);
-
     // Ahora por cada coin, consigo su lista de timestamps (que son las keys del map), pido las candelas y calculo el value_usd
     for (const [coin_id, time_value_map] of net_changes_map) {
       const this_coin_graph: {
@@ -1098,6 +1103,17 @@ export class WalletsService<
 
       return acc;
     }, [] as ValueChangeGraph);
+
+    if (unified_graph.length > 0) {
+      // Guardo las valuaciones
+      await this.walletsRepository.saveWalletValuations(
+        unified_graph.map((ug) => ({
+          wallet_id: valued_wallet.id,
+          timestamp: ug.timestamp,
+          value_usd: ug.value_usd,
+        })),
+      );
+    }
 
     return { unified: unified_graph, coins: coins_graphs, missing_prices };
   }

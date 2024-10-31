@@ -137,6 +137,24 @@ export interface WalletsRepository {
     order: "DESC" | "ASC",
   ): Promise<Date | null>;
 
+  /** Guarda la valuación de una [Wallet] en USD en un momento dado */
+  saveWalletValuations(
+    valuations: { wallet_id: number; timestamp: Date; value_usd: number }[],
+  ): Promise<void>;
+
+  /** Consigue la valuación de la [Wallet] dada una fecha */
+  getWalletValuation(
+    wallet_id: number,
+    timestamp: Date,
+  ): Promise<number | undefined>;
+
+  /** Consigue la valuación de la [Wallet] dado un rango */
+  getWalletValuations(
+    wallet_id: number,
+    from_date: Date,
+    to_date: Date,
+  ): Promise<number[]>;
+
   /** Guarda una lista de [Transaction]s sin afectar el estado de la [Wallet].
   _Pensado para hacer backfill inicial del historial o actualizar redes sin transacciones detalladas_ */
   saveTransactions(

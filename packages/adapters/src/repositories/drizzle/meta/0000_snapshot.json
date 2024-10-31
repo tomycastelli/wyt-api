@@ -1,5 +1,5 @@
 {
-  "id": "35063fe9-d831-4c6c-b181-288e7c72b1bb",
+  "id": "6d0d1d27-f69b-4e5a-a8dc-5727dcc93166",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -95,6 +95,12 @@
         },
         "name": {
           "name": "name",
+          "type": "varchar(70)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "display_name": {
+          "name": "display_name",
           "type": "varchar(70)",
           "primaryKey": false,
           "notNull": false
@@ -208,50 +214,6 @@
           "columns": ["name"]
         }
       }
-    },
-    "public.coins_names": {
-      "name": "coins_names",
-      "schema": "",
-      "columns": {
-        "coin_id": {
-          "name": "coin_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "provider": {
-          "name": "provider",
-          "type": "providers",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "provider_coin_name": {
-          "name": "provider_coin_name",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "coins_names_coin_id_coins_id_fk": {
-          "name": "coins_names_coin_id_coins_id_fk",
-          "tableFrom": "coins_names",
-          "tableTo": "coins",
-          "columnsFrom": ["coin_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "cascade"
-        }
-      },
-      "compositePrimaryKeys": {
-        "coins_names_coin_id_provider_pk": {
-          "name": "coins_names_coin_id_provider_pk",
-          "columns": ["coin_id", "provider"]
-        }
-      },
-      "uniqueConstraints": {}
     },
     "public.contracts": {
       "name": "contracts",
@@ -788,6 +750,12 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true
+        },
+        "transaction_frequency": {
+          "name": "transaction_frequency",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
@@ -815,6 +783,49 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.wallets_valuations": {
+      "name": "wallets_valuations",
+      "schema": "",
+      "columns": {
+        "wallet_id": {
+          "name": "wallet_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "timestamp": {
+          "name": "timestamp",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value_usd": {
+          "name": "value_usd",
+          "type": "numeric(24, 6)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "wallets_valuations_wallet_id_wallets_id_fk": {
+          "name": "wallets_valuations_wallet_id_wallets_id_fk",
+          "tableFrom": "wallets_valuations",
+          "tableTo": "wallets",
+          "columnsFrom": ["wallet_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "wallets_valuations_wallet_id_timestamp_pk": {
+          "name": "wallets_valuations_wallet_id_timestamp_pk",
+          "columns": ["wallet_id", "timestamp"]
+        }
+      },
       "uniqueConstraints": {}
     }
   },

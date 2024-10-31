@@ -905,6 +905,51 @@ export class WalletsPostgres implements WalletsRepository {
     return saved_wallets;
   }
 
+  async getWalletValuation(
+    wallet_id: number,
+    timestamp: Date,
+  ): Promise<number | undefined> {
+    const [valuation] = await this.db
+      .select({ value_usd: schema.walletsValuations.value_usd })
+      .from(schema.walletsValuations)
+      .where(
+        and(
+          eq(schema.walletsValuations.wallet_id, wallet_id),
+          eq(schema.walletsValuations.timestamp, timestamp),
+        ),
+      );
+
+    if (!valuation) return undefined;
+
+    return valuation.value_usd;
+  }
+
+  async getWalletValuations(
+    wallet_id: number,
+    from_date: Date,
+    to_date: Date,
+  ): Promise<number[]> {
+    const valuations = await this.db
+      .select({ value_usd: schema.walletsValuations.value_usd })
+      .from(schema.walletsValuations)
+      .where(
+        and(
+          eq(schema.walletsValuations.wallet_id, wallet_id),
+          gte(schema.walletsValuations.timestamp, from_date),
+          lt(schema.walletsValuations.timestamp, to_date),
+        ),
+      );
+
+    if (valuations.length === 0) return [];
+    return valuations.map((v) => v.value_usd);
+  }
+
+  async saveWalletValuations(
+    valuations: { wallet_id: number; timestamp: Date; value_usd: number }[],
+  ): Promise<void> {
+    await this.db.insert(schema.walletsValuations).values(valuations);
+  }
+
   async getLatestTransactionDate(
     wallet_data: Wallet,
     order: "DESC" | "ASC",
