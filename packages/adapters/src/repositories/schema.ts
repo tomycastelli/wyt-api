@@ -22,14 +22,14 @@ function lower(email: AnyPgColumn): SQL {
 
 const largeDecimalNumber = customType<{ data: number }>({
   dataType() {
-    return "numeric(24, 6)";
+    return "numeric(30, 6)";
   },
   fromDriver(value) {
     return Number(value);
   },
   toDriver(value) {
     const roundedValue = Number(
-      Number(value.toString().slice(0, 24)).toFixed(6),
+      Number(value.toString().slice(0, 30)).toFixed(6),
     );
 
     return roundedValue;

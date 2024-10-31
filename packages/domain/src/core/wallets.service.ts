@@ -240,7 +240,7 @@ export class WalletsService<
       });
     }
 
-    return valued_wallets;
+    return valued_wallets.sort((a, b) => b.total_value_usd - a.total_value_usd);
   }
 
   public async getWalletsByBlockchain(
@@ -882,6 +882,7 @@ export class WalletsService<
       granularity,
     ).sort((a, b) => b - a);
 
+    console.time("txDataQuery");
     const transactions = await this.walletsRepository.getTransactions(
       valued_wallet.address,
       valued_wallet.blockchain,
@@ -890,6 +891,7 @@ export class WalletsService<
       this.subtractTime(current_date, time_range),
       current_date,
     );
+    console.timeEnd("txDataQuery");
 
     // Veo como fue el saldo neto de los valores de las [Coin]s involucradas en [Transaction]s desde ahora hasta el 'from_date'
     /** Map => coin_id: { time_key: value } */
@@ -903,11 +905,13 @@ export class WalletsService<
       blockchains[valued_wallet.blockchain].decimal_places,
     );
 
+    console.time("Coining transactions");
     // Asumo que no hay [Coin]s nuevas porque ya existen las transacciones en el sistema
     const { coined_transactions } = await this.getCoinedTransactions(
       transactions,
       valued_wallet.blockchain,
     );
+    console.timeEnd("Coining transactions");
 
     for (const transaction of coined_transactions) {
       const transaction_time_key = this.getTimeKey(
@@ -1010,6 +1014,7 @@ export class WalletsService<
       }
     }
 
+    console.time("Calculating prices");
     const coins_graphs: {
       timestamp: number;
       value: bigint;
@@ -1086,6 +1091,7 @@ export class WalletsService<
       // Pusheo al grafico unificado de todas las [Coin]s
       coins_graphs.push(...this_coin_graph.map((c) => ({ ...c, coin_id })));
     }
+    console.timeEnd("Calculating prices");
 
     // Ahora que tengo eso, agrupo por fecha sumando sus valores en usd de cada [Coin]
     const unified_graph = coins_graphs.reduce((acc, item) => {

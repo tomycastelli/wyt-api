@@ -294,6 +294,7 @@ export class WalletsPostgres implements WalletsRepository {
         },
         limit: page_size,
         offset: (wallets_page - 1) * page_size,
+        orderBy: desc(schema.wallets.transaction_frequency),
       });
 
       for (const saved_wallet of saved_wallets) {
@@ -815,7 +816,6 @@ export class WalletsPostgres implements WalletsRepository {
       .limit(sql.placeholder("queryLimit"))
       .prepare("transactions_query");
 
-    console.time("txDataQuery");
     // Me aseguro tener 20 transacciones, por mas que el array tenga mas porque haya mas de 20 transfers
     const transactions_data = await transactions_query.execute({
       queryOffset:
@@ -824,7 +824,6 @@ export class WalletsPostgres implements WalletsRepository {
       walletAddress: wallet_address.toLowerCase(),
       blockchain,
     });
-    console.timeEnd("txDataQuery");
 
     const mapped_transactions = transactions_data.reduce((acc, transaction) => {
       // Uso el hash ya que la entidad Transaction no tiene id
