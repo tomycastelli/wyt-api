@@ -38,7 +38,7 @@ export interface CoinsRepository {
   /** Devuelve todas las candelas que se encuentren en los tiempos dados */
   getCandlesByDateList(
     frequency: "hourly" | "daily",
-    coin_id: number,
+    coin_ids: number[],
     timestamps: Date[],
   ): Promise<Candle[]>;
   getCoinById(coin_id: number): Promise<SavedCoin | undefined>;

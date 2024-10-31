@@ -278,7 +278,7 @@ export class CoinsPostgres implements CoinsRepository {
 
   async getCandlesByDateList(
     frequency: "hourly" | "daily",
-    coin_id: number,
+    coin_ids: number[],
     timestamps: Date[],
   ): Promise<Candle[]> {
     const candles = await this.db
@@ -287,7 +287,7 @@ export class CoinsPostgres implements CoinsRepository {
       .where(
         and(
           eq(schema.candles.frequency, frequency),
-          eq(schema.candles.coin_id, coin_id),
+          inArray(schema.candles.coin_id, coin_ids),
           inArray(schema.candles.timestamp, timestamps),
         ),
       );

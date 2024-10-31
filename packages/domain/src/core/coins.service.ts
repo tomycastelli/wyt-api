@@ -251,49 +251,58 @@ export class CoinsService<
   /** Devuelve las candelas segun la lista de fechas dadas */
   public async getCandlesByDateList(
     frequency: "daily" | "hourly",
-    coin_id: number,
+    coin_ids: number[],
     timestamps: Date[],
   ): Promise<Candle[]> {
     const candles = await this.coinsRepository.getCandlesByDateList(
       frequency,
-      coin_id,
+      coin_ids,
       timestamps,
     );
 
-    const candle_timestamps = candles.map((c) => c.timestamp.getTime());
+    const all_candles: Candle[] = [];
 
-    const missing_timestamps = timestamps
-      .filter((t) => !candle_timestamps.includes(t.getTime()))
-      .map((t) => t.getTime());
+    // Para cada [Coin] me fijo si estan todos los timestamps
+    for (const coin_id of coin_ids) {
+      const candle_timestamps = candles
+        .filter((c) => c.coin_id === coin_id)
+        .map((c) => c.timestamp.getTime());
 
-    if (missing_timestamps.length > 0) {
-      const coin = await this.coinsRepository.getCoinById(coin_id);
-      if (!coin) return [];
-      // Se las paso al proveedor
-      const new_candles = await this.coinsProvider.getCandlesByDateRange(
-        frequency,
-        coin.name,
-        new Date(Math.min(...missing_timestamps)),
-        new Date(Math.max(...missing_timestamps)),
-      );
+      const missing_timestamps = timestamps
+        .filter((t) => !candle_timestamps.includes(t.getTime()))
+        .map((t) => t.getTime());
 
-      // Puede ser que haya traido de más, asi que me fijo de descartar esas
-      const filtered_new_candles = new_candles
-        .filter((c) => !candle_timestamps.includes(c.timestamp.getTime()))
-        .map((c) => ({ ...c, coin_id }));
+      if (missing_timestamps.length > 0) {
+        const coin = await this.coinsRepository.getCoinById(coin_id);
+        if (!coin) return [];
+        // Se las paso al proveedor
+        const new_candles = await this.coinsProvider.getCandlesByDateRange(
+          frequency,
+          coin.name,
+          new Date(Math.min(...missing_timestamps)),
+          new Date(Math.max(...missing_timestamps)),
+        );
 
-      // Las guardo
-      await this.coinsRepository.saveCandles(filtered_new_candles);
+        // Puede ser que haya traido de más, asi que me fijo de descartar esas
+        const filtered_new_candles = new_candles
+          .filter((c) => !candle_timestamps.includes(c.timestamp.getTime()))
+          .map((c) => ({ ...c, coin_id }));
 
-      const total_candles = [...candles, ...filtered_new_candles].sort(
-        (a, b) => b.timestamp.getTime() - a.timestamp.getTime(),
-      );
+        // Las guardo
+        await this.coinsRepository.saveCandles(filtered_new_candles);
 
-      return total_candles;
+        const total_candles = [...candles, ...filtered_new_candles].sort(
+          (a, b) => b.timestamp.getTime() - a.timestamp.getTime(),
+        );
+
+        all_candles.push(...total_candles);
+      }
+
+      // Ya el repositorio tiene todas las candelas requeridas
+      all_candles.push(...candles);
     }
 
-    // Ya el repositorio tiene todas las candelas requeridas
-    return candles;
+    return all_candles;
   }
 
   /** Actualiza todos los datos relacionados a las [Coin]s */

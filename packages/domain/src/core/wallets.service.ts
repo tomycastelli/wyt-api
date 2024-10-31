@@ -783,14 +783,20 @@ export class WalletsService<
 
     total_value_usd += native_value_usd;
 
+    let native_percentage_in_wallet = 100;
+
     // Calculo porcentajes y ordeno de mayor a menor
     const valued_wallet_coins: ValuedWalletCoin[] = partial_valued_wallet_coins
-      .map((c) => ({
-        ...c,
-        percentage_in_wallet: Number(
-          ((c.value_usd / total_value_usd) * 100).toFixed(4),
-        ),
-      }))
+      .map((c) => {
+        const percentage_in_wallet = Number(
+          ((c.value_usd / total_value_usd) * 100).toFixed(6),
+        );
+        native_percentage_in_wallet -= percentage_in_wallet;
+        return {
+          ...c,
+          percentage_in_wallet,
+        };
+      })
       .sort((a, b) => b.percentage_in_wallet - a.percentage_in_wallet);
 
     const valued_wallet: ValuedWallet = {
@@ -803,6 +809,9 @@ export class WalletsService<
       formated_native_value: formatBlockchainValue(
         wallet_data.native_value,
         decimal_places,
+      ),
+      native_percentage_in_wallet: Number(
+        native_percentage_in_wallet.toFixed(6),
       ),
       transaction_frequency: wallet_data.transaction_frequency,
       native_value_usd,
@@ -1014,14 +1023,21 @@ export class WalletsService<
       }
     }
 
-    console.time("Calculating prices");
     const coins_graphs: {
       timestamp: number;
       value: bigint;
       value_usd: number;
       coin_id: number;
     }[] = [];
-    // Listo los mapeos.
+    console.time("Getting candles");
+    // Consigo las candelas para todas las [Coin]s
+    const all_candles = await this.coinsService.getCandlesByDateList(
+      granularity,
+      net_changes_map.keys().toArray(),
+      full_date_range.map((d) => new Date(d)),
+    );
+    console.timeEnd("Getting candles");
+
     // Voy a generar ahora una lista del tipo [ValueChangeGraph] con el balance de cada [Coin] en todo el rango de dias.
     // Vamos de mas reciente a mas viejo. Si no hubo movimientos ese dia, agarro el balance del anterior (el dia o hora mas adelante)
     // Ahora por cada coin, consigo su lista de timestamps (que son las keys del map), pido las candelas y calculo el value_usd
@@ -1031,10 +1047,8 @@ export class WalletsService<
         value: bigint;
         value_usd: number;
       }[] = [];
-      const full_range_candles = await this.coinsService.getCandlesByDateList(
-        granularity,
-        coin_id,
-        full_date_range.map((d) => new Date(d)),
+      const full_range_candles = all_candles.filter(
+        (c) => c.coin_id === coin_id,
       );
 
       // Voy por cada timestamp y hago el grafico para esa coin
@@ -1091,7 +1105,6 @@ export class WalletsService<
       // Pusheo al grafico unificado de todas las [Coin]s
       coins_graphs.push(...this_coin_graph.map((c) => ({ ...c, coin_id })));
     }
-    console.timeEnd("Calculating prices");
 
     // Ahora que tengo eso, agrupo por fecha sumando sus valores en usd de cada [Coin]
     const unified_graph = coins_graphs.reduce((acc, item) => {

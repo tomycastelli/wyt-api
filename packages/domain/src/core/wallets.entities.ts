@@ -50,6 +50,7 @@ export const coinedWalletType = walletType.merge({
 export const valuedWalletType = coinedWalletType.merge({
   total_value_usd: "number",
   native_value_usd: "number",
+  native_percentage_in_wallet: "number",
   coins: valuedWalletCoin.array(),
 });
 
