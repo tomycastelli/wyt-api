@@ -219,16 +219,25 @@ export class WalletsPostgres implements WalletsRepository {
 
     if (!saved_wallet) return undefined;
 
-    const wallet_coins: WalletCoin[] = saved_wallet.walletCoins.map((wc) => ({
-      coin_address: wc.coin.contracts.find((c) => c.blockchain === blockchain)!
-        .contract_address,
-      value: BigInt(wc.value),
-    }));
+    const wallet_coins: WalletCoin[] = saved_wallet.walletCoins.map((wc) => {
+      const contract = wc.coin.contracts.find(
+        (c) => c.blockchain === blockchain,
+      )!;
+      return {
+        coin_address: contract.contract_address,
+        value: BigInt(wc.value),
+        formated_value: formatBlockchainValue(
+          BigInt(wc.value),
+          contract.decimal_place,
+        ),
+      };
+    });
 
     const wallet_nfts: WalletCoin[] = saved_wallet.walletNFTs.map((wn) => ({
       coin_address: wn.nft.contract_address,
       token_id: wn.nft.token_id,
       value: 0n,
+      formated_value: 0,
     }));
 
     return {
@@ -289,18 +298,26 @@ export class WalletsPostgres implements WalletsRepository {
 
       for (const saved_wallet of saved_wallets) {
         const wallet_coins: WalletCoin[] = saved_wallet.walletCoins.map(
-          (wc) => ({
-            coin_address: wc.coin.contracts.find(
+          (wc) => {
+            const contract = wc.coin.contracts.find(
               (c) => c.blockchain === blockchain,
-            )!.contract_address,
-            value: BigInt(wc.value),
-          }),
+            )!;
+            return {
+              coin_address: contract.contract_address,
+              value: BigInt(wc.value),
+              formated_value: formatBlockchainValue(
+                BigInt(wc.value),
+                contract.decimal_place,
+              ),
+            };
+          },
         );
 
         const wallet_nfts: WalletCoin[] = saved_wallet.walletNFTs.map((wn) => ({
           coin_address: wn.nft.contract_address,
           token_id: wn.nft.token_id,
           value: 0n,
+          formated_value: 0,
         }));
 
         mapped_wallets.push({
@@ -348,12 +365,19 @@ export class WalletsPostgres implements WalletsRepository {
 
       for (const saved_wallet of saved_wallets) {
         const wallet_coins: WalletCoin[] = saved_wallet.walletCoins.map(
-          (wc) => ({
-            coin_address: wc.coin.contracts.find(
+          (wc) => {
+            const contract = wc.coin.contracts.find(
               (c) => c.blockchain === blockchain,
-            )!.contract_address,
-            value: BigInt(wc.value),
-          }),
+            )!;
+            return {
+              coin_address: contract.contract_address,
+              value: BigInt(wc.value),
+              formated_value: formatBlockchainValue(
+                BigInt(wc.value),
+                contract.decimal_place,
+              ),
+            };
+          },
         );
 
         mapped_wallets.push({
@@ -412,17 +436,25 @@ export class WalletsPostgres implements WalletsRepository {
     });
 
     const mapped_wallets: SavedWallet[] = saved_wallets.map((saved_wallet) => {
-      const wallet_coins: WalletCoin[] = saved_wallet.walletCoins.map((wc) => ({
-        coin_address: wc.coin.contracts.find(
+      const wallet_coins: WalletCoin[] = saved_wallet.walletCoins.map((wc) => {
+        const contract = wc.coin.contracts.find(
           (c) => c.blockchain === saved_wallet.blockchain,
-        )!.contract_address,
-        value: BigInt(wc.value),
-      }));
+        )!;
+        return {
+          coin_address: contract.contract_address,
+          value: BigInt(wc.value),
+          formated_value: formatBlockchainValue(
+            BigInt(wc.value),
+            contract.decimal_place,
+          ),
+        };
+      });
 
       const wallet_nfts: WalletCoin[] = saved_wallet.walletNFTs.map((wn) => ({
         coin_address: wn.nft.contract_address,
         token_id: wn.nft.token_id,
         value: 0n,
+        formated_value: 0,
       }));
 
       return {
@@ -871,17 +903,25 @@ export class WalletsPostgres implements WalletsRepository {
 
     const saved_wallets: SavedWallet[] = [];
     for (const saved_wallet of pending_wallets) {
-      const wallet_coins: WalletCoin[] = saved_wallet.walletCoins.map((wc) => ({
-        coin_address: wc.coin.contracts.find(
+      const wallet_coins: WalletCoin[] = saved_wallet.walletCoins.map((wc) => {
+        const contract = wc.coin.contracts.find(
           (c) => c.blockchain === saved_wallet.blockchain,
-        )!.contract_address,
-        value: BigInt(wc.value),
-      }));
+        )!;
+        return {
+          coin_address: contract.contract_address,
+          value: BigInt(wc.value),
+          formated_value: formatBlockchainValue(
+            BigInt(wc.value),
+            contract.decimal_place,
+          ),
+        };
+      });
 
       const wallet_nfts: WalletCoin[] = saved_wallet.walletNFTs.map((wn) => ({
         coin_address: wn.nft.contract_address,
         token_id: wn.nft.token_id,
         value: 0n,
+        formated_value: 0,
       }));
 
       saved_wallets.push({
@@ -947,7 +987,10 @@ export class WalletsPostgres implements WalletsRepository {
   async saveWalletValuations(
     valuations: { wallet_id: number; timestamp: Date; value_usd: number }[],
   ): Promise<void> {
-    await this.db.insert(schema.walletsValuations).values(valuations);
+    await this.db
+      .insert(schema.walletsValuations)
+      .values(valuations)
+      .onConflictDoNothing();
   }
 
   async getLatestTransactionDate(

@@ -11,6 +11,7 @@ const blockchain = type(["===", ...EveryBlockainsName]);
 export const walletCoin = type({
   coin_address: "string",
   value: "bigint",
+  formated_value: "number",
   // Si es NFT
   "token_id?": "number",
 });
