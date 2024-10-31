@@ -22,6 +22,7 @@ const tokenAccountType = type({
     mint: "string",
     tokenAmount: {
       amount: "string",
+      uiAmount: "number",
       "+": "delete",
     },
     "+": "delete",
@@ -97,6 +98,7 @@ export class SolanaProvider implements WalletsProvider {
       coins.push({
         coin_address: parsed_data.info.mint,
         value: BigInt(parsed_data.info.tokenAmount.amount),
+        formated_value: parsed_data.info.tokenAmount.uiAmount,
       });
     }
 

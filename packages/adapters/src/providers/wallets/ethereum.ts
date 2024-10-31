@@ -160,6 +160,10 @@ export class EthereumProvider implements WalletsStreamsProvider {
         .map((c) => ({
           coin_address: c.tokenAddress!.lowercase,
           value: c.balance.value.toBigInt(),
+          formated_value: formatBlockchainValue(
+            c.balance.value.toBigInt(),
+            c.decimals,
+          ),
         }));
       wallet_data.coins.push(...coins);
       if (balances_data.hasNext()) {
@@ -187,6 +191,7 @@ export class EthereumProvider implements WalletsStreamsProvider {
         .map((c) => ({
           coin_address: c.tokenAddress.lowercase,
           value: 0n,
+          formated_value: 0,
           token_id: Number(c.tokenId),
         }));
       wallet_data.coins.push(...coins);
