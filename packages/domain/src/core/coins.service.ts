@@ -264,9 +264,8 @@ export class CoinsService<
 
     // Para cada [Coin] me fijo si estan todos los timestamps
     for (const coin_id of coin_ids) {
-      const candle_timestamps = candles
-        .filter((c) => c.coin_id === coin_id)
-        .map((c) => c.timestamp.getTime());
+      const coin_candles = candles.filter((c) => c.coin_id === coin_id);
+      const candle_timestamps = coin_candles.map((c) => c.timestamp.getTime());
 
       const missing_timestamps = timestamps
         .filter((t) => !candle_timestamps.includes(t.getTime()))
@@ -291,9 +290,10 @@ export class CoinsService<
         // Las guardo
         await this.coinsRepository.saveCandles(filtered_new_candles);
 
-        const total_candles = [...candles, ...filtered_new_candles].sort(
-          (a, b) => b.timestamp.getTime() - a.timestamp.getTime(),
-        );
+        const total_candles = [
+          ...coin_candles.filter((c) => c.coin_id),
+          ...filtered_new_candles,
+        ].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
         all_candles.push(...total_candles);
       }
