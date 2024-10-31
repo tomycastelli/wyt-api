@@ -788,13 +788,11 @@ export class WalletsService<
     // Calculo porcentajes y ordeno de mayor a menor
     const valued_wallet_coins: ValuedWalletCoin[] = partial_valued_wallet_coins
       .map((c) => {
-        const percentage_in_wallet = Number(
-          ((c.value_usd / total_value_usd) * 100).toFixed(6),
-        );
+        const percentage_in_wallet = (c.value_usd / total_value_usd) * 100;
         native_percentage_in_wallet -= percentage_in_wallet;
         return {
           ...c,
-          percentage_in_wallet,
+          percentage_in_wallet: Number(percentage_in_wallet.toFixed(6)),
         };
       })
       .sort((a, b) => b.percentage_in_wallet - a.percentage_in_wallet);
@@ -1033,7 +1031,7 @@ export class WalletsService<
     // Consigo las candelas para todas las [Coin]s
     const all_candles = await this.coinsService.getCandlesByDateList(
       granularity,
-      net_changes_map.keys().toArray(),
+      Array.from(net_changes_map.keys()),
       full_date_range.map((d) => new Date(d)),
     );
     console.timeEnd("Getting candles");
