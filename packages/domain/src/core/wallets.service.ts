@@ -215,7 +215,7 @@ export class WalletsService<
     wallets_page: number,
     ids: number[] | undefined,
     include_nfts: boolean,
-  ): Promise<ValuedWallet[]> {
+  ): Promise<ValuedSavedWallet[]> {
     const saved_wallets = await this.walletsRepository.getWalletsByBlockchain(
       blockchain,
       wallets_page,
@@ -224,20 +224,19 @@ export class WalletsService<
     );
 
     // Me quedo con las primeras 10 coins con mayor porcentaje de la wallet
-    const valued_wallets = await Promise.all(
-      saved_wallets.map(
-        async (cw) =>
-          await this.getValuedWallet(cw).then((vw) => ({
-            valued_wallet: {
-              ...vw.valued_wallet,
-              coins: vw.valued_wallet.coins.slice(0, 10),
-            },
-            new_coins: vw.new_coins,
-          })),
-      ),
-    );
+    const valued_wallets: ValuedSavedWallet[] = [];
+    for (const sw of saved_wallets) {
+      const valued_wallet = await this.getValuedWallet(sw);
 
-    return valued_wallets.map((vw) => vw.valued_wallet);
+      valued_wallets.push({
+        id: sw.id,
+        last_update: sw.last_update,
+        ...valued_wallet.valued_wallet,
+        coins: valued_wallet.valued_wallet.coins.slice(0, 10),
+      });
+    }
+
+    return valued_wallets;
   }
 
   public async getWalletsByBlockchain(
