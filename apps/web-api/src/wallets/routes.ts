@@ -177,16 +177,21 @@ export const setup_wallets_routes = (
 
       if (!wallet_data) return c.notFound();
 
-      // Mando a actualizar la wallet
-      wallet_jobs_queue.add("update fetched wallet", {
-        jobName: "updateOneWallet",
-        data: {
-          wallet: {
-            address,
-            blockchain,
+      // Mando a actualizar la wallet si no la actualizo hace 15 minutos
+      if (
+        (new Date().getTime() - wallet_data.last_update.getTime()) / 60_000 >=
+        15
+      ) {
+        wallet_jobs_queue.add("update fetched wallet", {
+          jobName: "updateOneWallet",
+          data: {
+            wallet: {
+              address,
+              blockchain,
+            },
           },
-        },
-      });
+        });
+      }
 
       const return_object: { [key: string]: any } = wallet_data;
 
